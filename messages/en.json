@@ -1,0 +1,528 @@
+{
+  "_meta": {
+    "locale": "en",
+    "reviewStatus": "source"
+  },
+  "meta": {
+    "siteDescription": "ExploreTechify is an external digital and business operations team for growing European businesses — websites, digital presence, business systems, recruitment support, automation and ongoing technical support.",
+    "pages": {
+      "home": {
+        "title": "ExploreTechify — You run the business. We run the digital side.",
+        "description": "An external digital operations team for growing businesses: websites, digital presence, business systems, recruitment support, automation and ongoing technical support."
+      },
+      "services": {
+        "title": "Services",
+        "description": "Six connected service areas — from your digital foundation to ongoing operations, business systems, growth, people and automation."
+      },
+      "howWeWork": {
+        "title": "How We Work",
+        "description": "Understand, build, operate, improve, scale — a long-term model for running the digital side of your business."
+      },
+      "about": {
+        "title": "About",
+        "description": "ExploreTechify is a digital and business operations partner for European businesses that want one accountable team for the digital side."
+      },
+      "work": {
+        "title": "Our Work",
+        "description": "How we approach digital operations for growing businesses."
+      },
+      "contact": {
+        "title": "Contact",
+        "description": "Tell us about your business and what you need. We usually respond within one business day."
+      },
+      "login": {
+        "title": "Client Login",
+        "description": "Sign in to your ExploreTechify workspace."
+      },
+      "signup": {
+        "title": "Create a client account",
+        "description": "Create an account for your company's ExploreTechify workspace."
+      },
+      "forgotPassword": {
+        "title": "Reset your password",
+        "description": "Request a password reset link."
+      },
+      "resetPassword": {
+        "title": "Choose a new password",
+        "description": "Set a new password for your account."
+      }
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "howWeWork": "How We Work",
+    "about": "About",
+    "work": "Our Work",
+    "contact": "Contact",
+    "clientLogin": "Client Login",
+    "language": "Language",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "skipToContent": "Skip to content",
+    "mainNavigation": "Main navigation"
+  },
+  "cta": {
+    "letsWorkTogether": "Let's Work Together",
+    "exploreServices": "Explore Services",
+    "exploreOurServices": "Explore Our Services",
+    "talkToTeam": "Talk to Our Team",
+    "needOngoingSupport": "Need ongoing support? Let's talk.",
+    "learnMore": "Learn more",
+    "viewService": "View service"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Digital & Business Operations Partner",
+      "titleStart": "You run the business.",
+      "titleEnd": "We run the digital side.",
+      "subtitle": "From websites and digital presence to business systems, recruitment, automation and ongoing technical support, ExploreTechify works as an external digital operations team for growing businesses.",
+      "note": "One long-term partner for the digital side of your business."
+    },
+    "board": {
+      "title": "Your digital side, handled",
+      "status": "This week",
+      "items": {
+        "website": "Website content updated",
+        "seo": "Local SEO report shared",
+        "email": "New employee mailbox set up",
+        "crm": "CRM pipeline cleaned up",
+        "hiring": "3 candidates shortlisted",
+        "automation": "Invoice reminders automated"
+      },
+      "done": "Done",
+      "inProgress": "In progress"
+    },
+    "split": {
+      "eyebrow": "A clear division of work",
+      "title": "You focus on running your business. We help run the digital side.",
+      "subtitle": "Most growing companies don't need another vendor for every tool. They need one team that owns the digital side — and coordinates specialists when it makes sense.",
+      "youTitle": "You",
+      "youItems": ["Physical business", "Customers", "Products", "Services", "Sales", "Delivery", "Physical operations", "Business decisions"],
+      "usTitle": "ExploreTechify",
+      "usItems": ["Website", "Online presence", "SEO", "Social media support", "CRM", "Business systems", "Recruitment support", "HR support", "Automation", "Technical support", "Data & reporting", "Digital operations"]
+    },
+    "pillars": {
+      "eyebrow": "What we do",
+      "title": "Six connected areas. One partner.",
+      "subtitle": "Not thirty unrelated services — one operating model for the digital side of your business."
+    },
+    "process": {
+      "eyebrow": "How we work",
+      "title": "A long-term model, not a one-off project",
+      "subtitle": "We start with your business, build what's missing, then keep operating and improving it."
+    },
+    "moreThan": {
+      "eyebrow": "Long-term partnership",
+      "title": "More Than a Website",
+      "subtitle": "Once we know your business, the next request is simple.",
+      "items": [
+        "Need a website update? We handle it.",
+        "Need a new business system? We build it.",
+        "Need recruitment support? We help.",
+        "Need SEO support? We manage it.",
+        "Need automation? We build it.",
+        "Need technical help? We are there."
+      ]
+    },
+    "industries": {
+      "eyebrow": "Built around your business",
+      "title": "The right combination for your industry",
+      "subtitle": "Every business needs a different mix. Choose a profile to see a typical starting point.",
+      "profiles": {
+        "ecommerce": { "title": "E-commerce", "text": "Sell online with a store, inventory and customer systems that work together." },
+        "technology": { "title": "Technology company", "text": "Hire technical talent and run internal systems without distracting your product team." },
+        "localBusiness": { "title": "Local business", "text": "Be found locally, look credible online and turn enquiries into customers." },
+        "hiring": { "title": "Hiring company", "text": "Structured recruitment and onboarding support while you grow the team." },
+        "professional": { "title": "Professional services", "text": "A credible presence, professional email and a simple way to manage clients." },
+        "operations": { "title": "Manufacturing & logistics", "text": "Order flows, dashboards and reporting that reduce manual work." }
+      }
+    },
+    "principles": {
+      "eyebrow": "How we operate",
+      "title": "Honest scope. Accountable delivery.",
+      "items": [
+        { "title": "One accountable team", "text": "One point of contact for the digital side, instead of a vendor per tool." },
+        { "title": "Specialists when needed", "text": "Where a task needs deep specialist expertise, we bring in and coordinate trusted partners — and tell you upfront." },
+        { "title": "Built to last", "text": "We document what we build so your systems stay understandable and yours." }
+      ]
+    },
+    "finalCta": {
+      "title": "Let's take the digital side off your plate.",
+      "subtitle": "Tell us where you are today. We'll suggest a practical starting point — no obligation."
+    }
+  },
+  "services": {
+    "overview": {
+      "eyebrow": "Services",
+      "title": "Everything the digital side of your business needs",
+      "subtitle": "Here is a quick overview of how we can support your business — organised into six areas that work together.",
+      "includes": "Includes",
+      "industryTitle": "Typical combinations by industry",
+      "industrySubtitle": "A starting point — every engagement is shaped around your business."
+    },
+    "detail": {
+      "problemTitle": "The problem",
+      "solutionTitle": "Our approach",
+      "provideTitle": "What we provide",
+      "whoTitle": "Who it is for",
+      "processTitle": "How it works",
+      "deliverablesTitle": "Deliverables",
+      "longTermTitle": "Long-term support",
+      "faqTitle": "Frequently asked questions",
+      "ctaTitle": "Need ongoing support? Let's talk.",
+      "ctaSubtitle": "Tell us what you need and we'll suggest a practical next step.",
+      "otherServices": "Other service areas"
+    },
+    "categories": {
+      "digitalFoundation": {
+        "name": "Digital Foundation",
+        "tagline": "We establish your digital presence.",
+        "summary": "Website, domain, email, Google Business Profile, social profiles and analytics — set up properly from day one.",
+        "heroTitle": "A professional digital foundation from day one",
+        "heroSubtitle": "We set up the essentials every business needs to look credible, be found and communicate professionally.",
+        "problem": "New and growing businesses often end up with a patchwork: a website built by one person, email set up by another, and nobody who knows where the domain is registered.",
+        "solution": "We plan and set up your core digital presence as one coherent foundation, document every account and keep ownership in your company's name.",
+        "whoFor": ["Newly registered companies", "Businesses without a website or with an outdated one", "Companies still using personal email addresses", "Local businesses that want to be found online"],
+        "deliverables": ["A fast, mobile-friendly business website", "Domain, DNS and hosting configured in your name", "Professional business email", "Google Business Profile and social profiles set up", "Analytics and basic SEO in place", "A handover document listing every account"],
+        "longTerm": "After launch we can keep your foundation maintained, secure and up to date as part of ongoing digital operations.",
+        "faq": [
+          { "q": "Do we own the website and domain?", "a": "Yes. Domains and accounts are registered to your company, and we document all access." },
+          { "q": "Can you work with our existing website?", "a": "Yes. We review what you have first and only rebuild when it genuinely makes sense." },
+          { "q": "How long does a typical setup take?", "a": "It depends on scope. A focused foundation is often ready within a few weeks; we agree a timeline before we start." }
+        ]
+      },
+      "digitalOperations": {
+        "name": "Ongoing Digital Operations",
+        "tagline": "We continuously maintain and operate it.",
+        "summary": "Maintenance, content updates, SEO and social media support, technical upkeep and digital asset management.",
+        "heroTitle": "Your digital side, maintained every month",
+        "heroSubtitle": "A website is not a one-time project. We keep everything running, updated and secure — so you don't have to think about it.",
+        "problem": "Websites go stale, plugins break, logins get lost and small updates wait for weeks because nobody owns them.",
+        "solution": "We act as your ongoing digital operations team: one place to send requests, with regular maintenance and clear reporting.",
+        "whoFor": ["Businesses with a website but no one to maintain it", "Teams that want one point of contact for digital requests", "Companies that need regular content or SEO updates", "Growing businesses with several digital tools to look after"],
+        "deliverables": ["Regular updates, backups and security checks", "Content and page updates on request", "SEO and social media support", "Monitoring of uptime and key accounts", "A shared request and ticket overview in your client portal", "Periodic summary of work done"],
+        "longTerm": "Operations is where the partnership lives — we learn your business and handle the digital side as it changes.",
+        "faq": [
+          { "q": "How do we send requests?", "a": "Through your client portal: requests, tickets and direct messages to our team." },
+          { "q": "Do you support websites you didn't build?", "a": "Usually yes, after an initial technical review." },
+          { "q": "Is this a fixed monthly service?", "a": "We agree a scope that fits your needs — from light maintenance to broader operations support." }
+        ]
+      },
+      "businessSystems": {
+        "name": "Business Systems",
+        "tagline": "We build the tools your business needs.",
+        "summary": "CRM, inventory and order management, dashboards, reporting, data management and internal tools.",
+        "heroTitle": "Systems that fit how your business actually works",
+        "heroSubtitle": "From a simple CRM to custom internal tools — we design, configure or build the systems that remove manual work.",
+        "problem": "Many businesses run on spreadsheets, email threads and disconnected tools, which makes reporting slow and mistakes common.",
+        "solution": "We map your workflows first, then configure existing tools or build focused internal systems — keeping them simple and maintainable.",
+        "whoFor": ["Businesses outgrowing spreadsheets", "Teams that need a shared view of customers or orders", "Owners who want reliable numbers without manual work", "Companies with repetitive internal processes"],
+        "deliverables": ["Workflow mapping and system recommendation", "CRM, inventory or order management setup", "Dashboards and reports for key numbers", "Data clean-up and migration", "Custom internal tools where off-the-shelf doesn't fit", "Documentation and team onboarding"],
+        "longTerm": "Systems need care as the business changes. We maintain, extend and improve them over time.",
+        "faq": [
+          { "q": "Do you always build custom software?", "a": "No. We prefer proven existing tools and only build custom when it clearly pays off." },
+          { "q": "Can you connect our existing tools?", "a": "Often yes — through integrations, APIs or automation, depending on the tools." },
+          { "q": "Who owns the data?", "a": "You do. We design systems so data stays accessible and exportable." }
+        ]
+      },
+      "growthVisibility": {
+        "name": "Growth & Visibility",
+        "tagline": "We help improve visibility and digital performance.",
+        "summary": "SEO, local SEO, content, digital marketing and ads support, conversion optimisation and lead generation systems.",
+        "heroTitle": "Be found by the customers who are looking for you",
+        "heroSubtitle": "Practical, measurable support to improve how your business shows up online and converts visitors into enquiries.",
+        "problem": "A website alone doesn't bring customers. Without search visibility, content and a clear path to contact, good businesses stay invisible.",
+        "solution": "We focus on the fundamentals that matter for your market — search, local presence, content and conversion — and coordinate specialists for advanced campaigns.",
+        "whoFor": ["Local businesses that want more enquiries", "Companies with a website that gets little traffic", "Businesses entering a new market", "Teams without in-house marketing capacity"],
+        "deliverables": ["SEO and local SEO improvements", "Content and case-study support", "Google Ads support with specialist coordination", "Conversion improvements on key pages", "Lead capture and follow-up systems", "Clear reporting on what changed"],
+        "longTerm": "Visibility compounds over time. We keep improving step by step and report honestly on results.",
+        "faq": [
+          { "q": "Do you guarantee rankings?", "a": "No one can honestly guarantee rankings. We focus on proven fundamentals and transparent reporting." },
+          { "q": "Do you run paid advertising?", "a": "We support Google Ads setup and management, and bring in specialist partners for larger campaigns." },
+          { "q": "How do we measure progress?", "a": "We agree a few meaningful metrics upfront — such as enquiries, visibility and traffic — and report on them." }
+        ]
+      },
+      "peopleRecruitment": {
+        "name": "People & Recruitment",
+        "tagline": "We support hiring and HR operations.",
+        "summary": "Recruitment support, candidate sourcing, technical recruitment, HR administration, onboarding and HR data.",
+        "heroTitle": "Support for hiring and HR operations",
+        "heroSubtitle": "Structured recruitment and HR administration support for businesses that are growing their team.",
+        "problem": "Hiring takes time owners don't have, and HR administration often lives in scattered documents and inboxes.",
+        "solution": "We support your hiring process end to end — from job posts and sourcing to onboarding — and set up simple HR workflows. Specialist recruiters are coordinated where needed.",
+        "whoFor": ["Companies hiring their first employees", "Technology companies hiring technical roles", "Growing teams without an HR function", "Businesses that want structured onboarding"],
+        "deliverables": ["Job descriptions and job posts", "Candidate sourcing and screening support", "Technical recruitment support", "Recruitment workflow and candidate tracking", "Employee onboarding checklists and accounts", "HR data and document organisation"],
+        "longTerm": "As your team grows, we keep recruitment and HR administration organised and running smoothly.",
+        "faq": [
+          { "q": "Are you a recruitment agency?", "a": "We provide recruitment support and coordination as part of your operations, and work with specialist partners where needed." },
+          { "q": "Do you provide employment law advice?", "a": "No. For legal matters we recommend a qualified local adviser; we handle the administrative and process side." },
+          { "q": "Can you set up employee accounts too?", "a": "Yes — email, tools and access are part of a smooth onboarding." }
+        ]
+      },
+      "automationAi": {
+        "name": "Automation & AI",
+        "tagline": "We reduce repetitive work.",
+        "summary": "Business and workflow automation, AI-assisted workflows, reporting and CRM automation, internal tools.",
+        "heroTitle": "Less repetitive work, more time for the business",
+        "heroSubtitle": "We identify repetitive tasks and automate them with reliable tools — using AI where it genuinely helps.",
+        "problem": "Copying data between systems, sending the same reminders and building the same reports every week costs hours.",
+        "solution": "We look for the processes with the highest manual effort, automate them step by step and keep a human in control where it matters.",
+        "whoFor": ["Teams doing the same manual tasks every week", "Businesses with data spread across several tools", "Owners who want reports without spreadsheets", "Companies curious about practical AI use"],
+        "deliverables": ["Process review and automation opportunities", "Workflow and CRM automations", "Automated reporting", "AI-assisted workflows with human review", "Internal tools for recurring tasks", "Monitoring and documentation"],
+        "longTerm": "Automations need monitoring as tools change. We keep them working and look for the next improvement.",
+        "faq": [
+          { "q": "Is AI required?", "a": "No. Many valuable automations are simple and rule-based. We use AI only where it adds real value." },
+          { "q": "Is our data safe?", "a": "We design automations with data minimisation and access control in mind, and agree what data can be processed." },
+          { "q": "What does a first automation look like?", "a": "Often something small and frequent — like reminders, data entry or a weekly report." }
+        ]
+      }
+    }
+  },
+  "serviceItems": {
+    "businessWebsite": "Business Website",
+    "ecommerce": "E-commerce",
+    "domainHosting": "Domain & Hosting",
+    "businessEmail": "Business Email",
+    "googleBusinessProfile": "Google Business Profile",
+    "socialMediaSetup": "Social Media Setup",
+    "analytics": "Analytics",
+    "basicSeo": "Basic SEO",
+    "websiteMaintenance": "Website Maintenance",
+    "contentUpdates": "Content Updates",
+    "seoSupport": "SEO Support",
+    "socialMediaSupport": "Social Media Support",
+    "technicalMaintenance": "Technical Maintenance",
+    "digitalAssetManagement": "Digital Asset Management",
+    "crm": "CRM",
+    "inventoryManagement": "Inventory Management",
+    "orderManagement": "Order Management",
+    "businessDashboards": "Business Dashboards",
+    "dataManagement": "Data Management",
+    "reporting": "Reporting",
+    "internalTools": "Internal Tools",
+    "workflowSystems": "Workflow Systems",
+    "seo": "SEO",
+    "localSeo": "Local SEO",
+    "contentSupport": "Content Support",
+    "caseStudies": "Case Studies",
+    "digitalMarketingSupport": "Digital Marketing Support",
+    "googleAdsSupport": "Google Ads Support",
+    "conversionOptimization": "Conversion Optimisation",
+    "leadGenerationSystems": "Lead Generation Systems",
+    "recruitmentSupport": "Recruitment Support",
+    "candidateSourcing": "Candidate Sourcing",
+    "technicalRecruitment": "Technical Recruitment",
+    "hrAdministration": "HR Administration",
+    "employeeOnboarding": "Employee Onboarding",
+    "recruitmentWorkflow": "Recruitment Workflow",
+    "hrDataManagement": "HR Data Management",
+    "businessAutomation": "Business Automation",
+    "workflowAutomation": "Workflow Automation",
+    "aiAssistedWorkflows": "AI-assisted Workflows",
+    "reportingAutomation": "Reporting Automation",
+    "crmAutomation": "CRM Automation",
+    "repetitiveTaskAutomation": "Repetitive Task Automation"
+  },
+  "process": {
+    "understand": { "title": "Understand", "text": "Understand the business, goals and current digital setup." },
+    "build": { "title": "Build", "text": "Establish the digital foundation." },
+    "operate": { "title": "Operate", "text": "Continuously maintain and support the digital side." },
+    "improve": { "title": "Improve", "text": "Identify opportunities for automation and efficiency." },
+    "scale": { "title": "Scale", "text": "Expand systems and support as the business grows." }
+  },
+  "howWeWork": {
+    "eyebrow": "How we work",
+    "title": "Five steps to a digital side that runs itself",
+    "subtitle": "We don't hand over a project and disappear. We stay, operate and improve — as your external digital operations team.",
+    "details": {
+      "understand": "A structured conversation about your business, customers, tools and priorities. We review your current setup and agree what matters most.",
+      "build": "We set up or fix the essentials — website, accounts, email, systems — and document everything in your company's name.",
+      "operate": "Ongoing maintenance, updates and support. You send requests through your client portal; we handle them.",
+      "improve": "We regularly look for repetitive work, weak spots and quick wins, and suggest practical improvements.",
+      "scale": "As you grow, we extend systems, support hiring and add capabilities — with specialist partners where it makes sense."
+    },
+    "partnershipTitle": "One partner, many capabilities",
+    "partnershipText": "Our core team handles the digital operations directly. For specialist work — such as advanced legal, accounting or large paid-media campaigns — we coordinate vetted partners so you still have one point of contact."
+  },
+  "about": {
+    "eyebrow": "About ExploreTechify",
+    "title": "An external digital operations team for growing businesses",
+    "subtitle": "We believe business owners should spend their time on customers, products and decisions — not on DNS records, plugin updates and spreadsheets.",
+    "missionTitle": "Our mission",
+    "missionText": "To give growing European businesses one reliable, long-term partner for the digital side — so they can focus on running the business.",
+    "valuesTitle": "What we stand for",
+    "values": [
+      { "title": "Clarity", "text": "Plain language, clear scope and transparent reporting." },
+      { "title": "Ownership", "text": "Your accounts, data and systems stay yours — documented and accessible." },
+      { "title": "Honesty", "text": "We say what we do well, and bring in specialists for what we don't." },
+      { "title": "Continuity", "text": "We build long-term relationships, not one-off projects." }
+    ],
+    "europeTitle": "Focused on European businesses",
+    "europeText": "We work with startups, SMEs and local businesses across Europe, with multilingual support and an understanding of local markets and data-protection expectations."
+  },
+  "work": {
+    "eyebrow": "Our work",
+    "title": "How we support businesses",
+    "subtitle": "Selected engagements and illustrative examples of how we run the digital side for our clients.",
+    "exampleBadge": "Example",
+    "exampleNotice": "This is an illustrative example of a typical engagement, not a real client case study.",
+    "empty": "Case studies will be published here soon.",
+    "industry": "Industry",
+    "challenge": "Challenge",
+    "solution": "Solution",
+    "results": "Results",
+    "services": "Services",
+    "technologies": "Technologies",
+    "testimonial": "Testimonial",
+    "backToWork": "Back to Our Work",
+    "readCase": "Read case"
+  },
+  "contact": {
+    "eyebrow": "Contact",
+    "title": "Let's work together",
+    "subtitle": "Tell us about your business and what you need. We'll reply with a practical suggestion for where to start.",
+    "asideTitle": "What happens next",
+    "asideSteps": [
+      "We review your message and current online presence.",
+      "We reply within one business day with questions or a suggestion.",
+      "If it's a fit, we agree a short call to understand your business."
+    ],
+    "form": {
+      "name": "Name",
+      "company": "Company",
+      "email": "Email",
+      "phone": "Phone",
+      "country": "Country",
+      "industry": "Industry",
+      "website": "Website",
+      "need": "What do you need?",
+      "message": "Message",
+      "preferredContact": "Preferred contact method",
+      "budget": "Budget",
+      "ongoingSupport": "Interested in ongoing support?",
+      "interestedServices": "Interested services",
+      "optional": "optional",
+      "select": "Select…",
+      "submit": "Send message",
+      "sending": "Sending…",
+      "successTitle": "Thank you — message received",
+      "successText": "We'll get back to you within one business day.",
+      "error": "Something went wrong. Please try again or email us directly.",
+      "privacy": "We only use your details to respond to your enquiry.",
+      "needs": {
+        "website": "A new or improved website",
+        "ongoing": "Ongoing digital operations",
+        "systems": "Business systems",
+        "growth": "Growth & visibility",
+        "recruitment": "Recruitment / HR support",
+        "automation": "Automation",
+        "notSure": "Not sure yet — let's talk"
+      },
+      "contactMethods": { "email": "Email", "phone": "Phone", "video": "Video call" },
+      "budgets": { "small": "Under €2,000", "medium": "€2,000 – €10,000", "large": "Over €10,000", "monthly": "Monthly retainer", "unknown": "Not sure yet" },
+      "yes": "Yes",
+      "no": "No",
+      "maybe": "Maybe later"
+    }
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Your name",
+    "company": "Company",
+    "phone": "Phone",
+    "country": "Country",
+    "website": "Website",
+    "industry": "Industry",
+    "preferredLanguage": "Preferred language",
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your ExploreTechify workspace.",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "forgot": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create a client account",
+      "invalid": "Invalid email or password."
+    },
+    "signup": {
+      "title": "Create a client account",
+      "subtitle": "For businesses working with ExploreTechify. New accounts are reviewed by our team before activation.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "passwordHint": "At least 10 characters.",
+      "successTitle": "Account created",
+      "successText": "Thank you! Our team will review and activate your account shortly. You can sign in to see its status."
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a reset link if an account exists.",
+      "submit": "Send reset link",
+      "sent": "If an account exists for that email, a reset link has been sent."
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "submit": "Update password",
+      "success": "Your password has been updated. You can now sign in.",
+      "invalid": "This reset link is invalid or has expired."
+    }
+  },
+  "industries": {
+    "ecommerce": "E-commerce",
+    "retail": "Retail",
+    "technology": "Technology",
+    "professionalServices": "Professional services",
+    "consulting": "Consulting",
+    "construction": "Construction",
+    "manufacturing": "Manufacturing",
+    "printing": "Printing",
+    "design": "Design",
+    "logistics": "Logistics",
+    "hospitality": "Hospitality",
+    "health": "Health & wellness",
+    "realEstate": "Real estate",
+    "localServices": "Local services",
+    "other": "Other"
+  },
+  "footer": {
+    "tagline": "One long-term partner for the digital side of your business.",
+    "servicesTitle": "Services",
+    "companyTitle": "Company",
+    "contactTitle": "Contact",
+    "rights": "All rights reserved.",
+    "responseNote": "Usually responds within one business day."
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page you're looking for doesn't exist or has moved.",
+    "backHome": "Back to home",
+    "genericTitle": "Something went wrong",
+    "genericText": "An unexpected error occurred. Please try again.",
+    "retry": "Try again"
+  },
+  "unsubscribe": {
+    "title": "You have been unsubscribed",
+    "text": "You will no longer receive outreach emails from us at this address.",
+    "invalidTitle": "Invalid link",
+    "invalidText": "This unsubscribe link is invalid. Please reply to the email and we'll remove you manually."
+  },
+  "prospect": {
+    "eyebrow": "Prepared for",
+    "title": "How we could support {company}",
+    "noticedTitle": "What we noticed",
+    "helpTitle": "How we can help",
+    "partnershipTitle": "An ongoing partnership",
+    "partnershipText": "Beyond the first steps, we can keep operating and improving the digital side of your business — website, visibility, systems, recruitment and technical support.",
+    "noWebsite": "We couldn't find a website for your company yet.",
+    "hasWebsite": "Your website is live at {website}.",
+    "noHttps": "Your website doesn't appear to use HTTPS, which affects trust and search visibility.",
+    "noMeta": "Your website is missing a search description, which affects how it appears in search results.",
+    "notMobile": "Your website may not be optimised for mobile devices.",
+    "newlyRegistered": "Your company was registered recently — a good moment to set up the digital foundation properly.",
+    "hiring": "It looks like you may be growing your team.",
+    "disclaimer": "Based on publicly available information. Let us know if anything is out of date."
+  }
+}

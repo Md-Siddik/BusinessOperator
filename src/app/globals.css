@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* ExploreTechify design tokens */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+
+  --color-brand-50: #eef3ff;
+  --color-brand-100: #dce6ff;
+  --color-brand-200: #c0d1ff;
+  --color-brand-300: #94b1fd;
+  --color-brand-400: #6189f8;
+  --color-brand-500: #3d66f0;
+  --color-brand-600: #2849dc;
+  --color-brand-700: #2139b5;
+  --color-brand-800: #203392;
+  --color-brand-900: #1f2f74;
+  --color-brand-950: #151d45;
+
+  --color-ink-50: #f7f8fa;
+  --color-ink-100: #eef0f4;
+  --color-ink-200: #dfe3ea;
+  --color-ink-300: #c4cbd6;
+  --color-ink-400: #98a2b3;
+  --color-ink-500: #6b7588;
+  --color-ink-600: #4c5566;
+  --color-ink-700: #374050;
+  --color-ink-800: #222936;
+  --color-ink-900: #121722;
+  --color-ink-950: #0a0e17;
+
+  --shadow-soft: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px -4px rgb(16 24 40 / 0.08);
+  --shadow-lifted: 0 2px 4px rgb(16 24 40 / 0.04), 0 16px 40px -12px rgb(16 24 40 / 0.18);
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.21, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+}
+
+:root {
+  color-scheme: light;
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #898781;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink-900);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-brand-200);
+}
+
+/* Visible, consistent keyboard focus */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@utility container-page {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (min-width: 640px) { padding-inline: 1.5rem; }
+  @media (min-width: 1024px) { padding-inline: 2rem; }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/* Subtle dotted backdrop used on hero sections */
+@utility bg-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgb(18 23 34 / 0.07) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/* Thin scrollbars inside app panels */
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--color-ink-200) transparent; }
