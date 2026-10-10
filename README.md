@@ -1,6 +1,6 @@
 # ExploreTechify
 
-**A European company intelligence system.** It finds newly registered companies, verifies who they are, finds genuine business contacts and checks them, suggests services that fit (evidence only), and helps you prepare quotations for **manual** communication and follow-up.
+**A European company intelligence system.** It finds newly registered companies, verifies who they are, finds genuine business contacts and checks them, suggests services that fit (evidence only), and helps you prepare quotations for **manual** communication and follow-up.   
 
 ```
 New registration → Verified identity → Business contacts → Verification → Service fit → Saved lead → Quotation draft → Manual contact & follow-up
