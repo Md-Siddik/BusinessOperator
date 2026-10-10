@@ -15,6 +15,7 @@
     "registry:verify": "tsx --conditions=react-server scripts/verify-providers.ts",
     "registry:sync": "tsx --conditions=react-server scripts/registry-sync.ts",
     "migrate": "tsx --conditions=react-server scripts/migrate.ts",
+    "db:migrate-to-atlas": "tsx scripts/migrate-to-atlas.ts",
     "coverage:report": "tsx scripts/coverage-report.ts",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
