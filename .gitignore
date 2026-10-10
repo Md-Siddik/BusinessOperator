@@ -7,7 +7,7 @@ next-env.d.ts
 
 # local data & uploads
 .data/
-storage/
+# storage/
 
 # env
 .env
