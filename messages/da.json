@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Vælg ny adgangskode", "description": "Angiv en ny adgangskode til din konto." }
     }
   },
-  "nav": { "home": "Forside", "services": "Ydelser", "howWeWork": "Sådan arbejder vi", "about": "Om os", "work": "Vores arbejde", "contact": "Kontakt", "clientLogin": "Kundelogin", "language": "Sprog", "openMenu": "Åbn menu", "closeMenu": "Luk menu", "skipToContent": "Gå til indhold", "mainNavigation": "Hovednavigation", "signup": "Opret konto" },
+  "nav": { "home": "Forside", "services": "Ydelser", "howWeWork": "Sådan arbejder vi", "about": "Om os", "work": "Vores arbejde", "contact": "Kontakt", "clientLogin": "Log ind", "language": "Sprog", "openMenu": "Åbn menu", "closeMenu": "Luk menu", "skipToContent": "Gå til indhold", "mainNavigation": "Hovednavigation", "signup": "Opret konto" },
   "cta": { "letsWorkTogether": "Lad os samarbejde", "exploreServices": "Udforsk ydelser", "exploreOurServices": "Udforsk vores ydelser", "talkToTeam": "Tal med vores team", "needOngoingSupport": "Brug for løbende support? Lad os tale sammen.", "learnMore": "Læs mere", "viewService": "Se ydelsen" },
   "home": {
     "hero": { "eyebrow": "Partner for digital drift og forretningsdrift", "titleStart": "Du driver virksomheden.", "titleEnd": "Vi driver det digitale.", "subtitle": "Fra hjemmesider og digital tilstedeværelse til forretningssystemer, rekruttering, automatisering og løbende teknisk support — ExploreTechify fungerer som et eksternt team for digital drift for voksende virksomheder.", "note": "Én langsigtet partner for den digitale side af din virksomhed." },
@@ -163,6 +163,9 @@
     "you": "Dig",
     "team": "ExploreTechify",
     "error": "Beskeden kunne ikke sendes. Prøv igen.",
-    "fullInbox": "Åbn hele indbakken"
+    "fullInbox": "Åbn hele indbakken",
+    "teamTitle": "Kundebeskeder",
+    "noConversations": "Ingen kundesamtaler endnu. Nye beskeder vises her med det samme.",
+    "back": "Tilbage til samtaler"
   }
 }

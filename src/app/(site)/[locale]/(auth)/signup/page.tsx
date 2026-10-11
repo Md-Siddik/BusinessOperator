@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getSessionUser, homeFor } from "@/lib/auth/session";
+import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext, type LocaleParams } from "@/features/site/context";
 import { SignupForm } from "@/components/site/auth-forms";
@@ -9,7 +12,17 @@ export async function generateMetadata({ params }: LocaleParams): Promise<Metada
   return buildMetadata({ locale, path: "/signup", title: t("meta.pages.signup.title"), description: t("meta.pages.signup.description"), enabledLanguages, noIndex: true });
 }
 
+
+/** Already signed in? Go straight to your own area (owner dashboard, staff workspace or client portal). */
+async function redirectIfSignedIn() {
+  const user = await getSessionUser();
+  if (!user) return;
+  if (isActiveSessionUser(user)) redirect(homeFor(user.role));
+  if (isPendingClientUser(user)) redirect("/portal/pending");
+}
+
 export default async function SignupPage({ params }: LocaleParams) {
+  await redirectIfSignedIn();
   const { locale } = await params;
   const { t, messages } = await getPublicContext(locale);
   return (

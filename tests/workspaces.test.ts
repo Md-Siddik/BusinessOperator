@@ -27,6 +27,7 @@ const { GET: unreadRoute } = await import("@/app/api/messages/unread/route");
 const { GET: ticketsRoute } = await import("@/app/api/tickets/route");
 const { GET: chatSessionRoute } = await import("@/app/api/chat/session/route");
 const { GET: opportunitiesRoute } = await import("@/app/api/opportunities/route");
+const { GET: authStatusRoute } = await import("@/app/api/auth/status/route");
 const { getClientSummary } = await import("@/features/clients/summary");
 const { proxy } = await import("@/proxy");
 
@@ -141,6 +142,22 @@ describe("Live chat: signup is required; pending clients can chat but nothing el
     expect(await (await chatSessionRoute(req("/api/chat/session"), ctx())).json()).toMatchObject({ state: "team", inboxHref: "/staff/messages" });
     asActor(t.owner);
     expect(await (await chatSessionRoute(req("/api/chat/session"), ctx())).json()).toMatchObject({ state: "team", inboxHref: "/dashboard/messages" });
+  });
+});
+
+describe("Header auth button status", () => {
+  it("tells each role where its own area is; anonymous visitors are not signed in", async () => {
+    session.current = null;
+    expect(await (await authStatusRoute(req("/api/auth/status"), ctx())).json()).toEqual({ signedIn: false });
+    for (const [u, home] of [[t.owner, "/dashboard"], [t.admin, "/staff"], [t.staff, "/staff"], [t.clientA, "/portal"]] as const) {
+      asActor(u);
+      expect(await (await authStatusRoute(req("/api/auth/status"), ctx())).json()).toMatchObject({ signedIn: true, home });
+    }
+  });
+
+  it("team members get their own id from the chat session (to tell their messages apart)", async () => {
+    asActor(t.admin);
+    expect(await (await chatSessionRoute(req("/api/chat/session"), ctx())).json()).toMatchObject({ state: "team", id: t.admin.actor.id });
   });
 });
 
