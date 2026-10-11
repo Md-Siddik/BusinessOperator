@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/lib/db/connect";
-import { getActor } from "@/lib/auth/session";
+import { getSessionUser } from "@/lib/auth/session";
+import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { channels, getRealtime, type RealtimeEvent } from "@/lib/realtime";
 import { can, isClient, isInternal } from "@/lib/permissions";
 import { canSeeConversationEvent } from "@/features/chat/service";
@@ -13,7 +14,9 @@ export const runtime = "nodejs";
  */
 export async function GET(req: Request) {
   await connectToDatabase();
-  const actor = await getActor();
+  // Active users, plus signed-up clients awaiting approval (live chat only — their own organization).
+  const user = await getSessionUser();
+  const actor = user && (isActiveSessionUser(user) || isPendingClientUser(user)) ? user.actor : null;
   if (!actor) return new Response("Unauthorized", { status: 401 });
 
   const rt = getRealtime();

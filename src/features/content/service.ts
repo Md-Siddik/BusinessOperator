@@ -13,6 +13,10 @@ import { notifyInternal } from "@/features/notifications/service";
 
 /* ───────────── Contact requests (public form) ───────────── */
 
+/** How the visitor would like to work with us (homepage "three ways to work together"). */
+export const ENGAGEMENT_MODELS = ["monthly", "growth", "project", "notSure"] as const;
+export type EngagementModel = (typeof ENGAGEMENT_MODELS)[number];
+
 export const contactRequestSchema = z.object({
   name: z.string().trim().min(2).max(120),
   company: z.string().trim().max(200).optional(),
@@ -22,6 +26,7 @@ export const contactRequestSchema = z.object({
   industry: z.enum(INDUSTRIES).optional().or(z.literal("").transform(() => undefined)),
   website: optionalUrl,
   need: z.string().trim().max(60).optional(),
+  engagement: z.enum(ENGAGEMENT_MODELS).optional().or(z.literal("").transform(() => undefined)),
   message: z.string().trim().min(10, "Please write a few words about what you need").max(5000),
   preferredContact: z.enum(["email", "phone", "video"]).optional().or(z.literal("").transform(() => undefined)),
   budget: z.string().max(40).optional(),

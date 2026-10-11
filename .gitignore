@@ -1,7 +1,8 @@
 node_modules/
 .next/
 out/
-coverage/
+# test coverage reports (root only — app routes/pages named "coverage" must stay tracked)
+/coverage/
 *.tsbuildinfo
 next-env.d.ts
 

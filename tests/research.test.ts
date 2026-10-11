@@ -74,7 +74,7 @@ describe("Contact-first ordering (50 registrations, 20 with direct contacts)", (
 
   it("puts all 20 direct-contact companies first across pages, keeps all 50 visible", async () => {
     const pages = [];
-    for (let page = 1; page <= 5; page++) pages.push(await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Order", pageSize: 10, page }));
+    for (let page = 1; page <= 5; page++) pages.push(await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Order", pageSize: 10, page }));
     expect(pages[0]!.total).toBe(50);
     const flat = pages.flatMap((p) => p.items);
     expect(flat).toHaveLength(50);
@@ -84,10 +84,10 @@ describe("Contact-first ordering (50 registrations, 20 with direct contacts)", (
   });
 
   it("contact filters: email, phone, both and no-direct are applied before pagination", async () => {
-    const both = await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Order", contact: "both" });
-    const email = await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Order", contact: "email" });
-    const phone = await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Order", contact: "phone" });
-    const none = await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Order", contact: "nodirect" });
+    const both = await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Order", contact: "both" });
+    const email = await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Order", contact: "email" });
+    const phone = await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Order", contact: "phone" });
+    const none = await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Order", contact: "nodirect" });
     expect(both.total).toBe(5);
     expect(email.total).toBe(10);
     expect(phone.total).toBe(15);
@@ -95,7 +95,7 @@ describe("Contact-first ordering (50 registrations, 20 with direct contacts)", (
   });
 
   it("counts a company with both email and phone once — 40% direct-contact coverage", async () => {
-    const o = await getRegistrationOverview(t.staff.actor, "NO", "today");
+    const o = await getRegistrationOverview(t.owner.actor, "NO", "today");
     const fixtures = await Company.countDocuments({ countryCode: "NO", registrationDay: today, companyName: /^Order / , "directContact.has": true });
     expect(fixtures).toBe(20);
     expect(o.research.directContacts).toBeGreaterThanOrEqual(20);
@@ -110,7 +110,7 @@ describe("Contact-first ordering (50 registrations, 20 with direct contacts)", (
     const after = await Company.findById(ids[49]).lean<CompanyDoc>();
     expect(after?.registrationDay).toBe(today);
     expect(after?.contactFoundAt).toBeInstanceOf(Date);
-    const first = await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Order", pageSize: 21 });
+    const first = await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Order", pageSize: 21 });
     expect(first.items.map((c) => String(c._id))).toContain(ids[49]);
   });
 });
@@ -208,7 +208,7 @@ describe("Ingestion edge cases", () => {
 
   it("unknown registration dates are stored but never counted as registered today", async () => {
     await ingestCompanies(provider, "NO", [rec("800000002")]);
-    const res = await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Edge 800000002" });
+    const res = await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Edge 800000002" });
     expect(res.total).toBe(0);
     expect(await Company.countDocuments({ sourceId: "800000002" })).toBe(1);
   });
@@ -216,17 +216,17 @@ describe("Ingestion edge cases", () => {
   it("a late-arriving registration belongs to its registration day, and to 'first received' today", async () => {
     const old = addDays(today, -3);
     await ingestCompanies(provider, "NO", [rec("800000003", old)]);
-    expect((await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Edge 800000003" })).total).toBe(0);
-    expect((await listCompanies(t.staff.actor, { country: "NO", range: "custom", from: old, to: old, q: "Edge 800000003" })).total).toBe(1);
-    expect((await listCompanies(t.staff.actor, { country: "NO", range: "today", view: "received", q: "Edge 800000003" })).total).toBe(1);
+    expect((await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Edge 800000003" })).total).toBe(0);
+    expect((await listCompanies(t.owner.actor, { country: "NO", range: "custom", from: old, to: old, q: "Edge 800000003" })).total).toBe(1);
+    expect((await listCompanies(t.owner.actor, { country: "NO", range: "today", view: "received", q: "Edge 800000003" })).total).toBe(1);
   });
 
   it("'contacts found today' includes old registrations whose contact was found today, without relabelling them", async () => {
     const c = await mk({ companyName: "Two Weeks Old AS", registrationDay: addDays(today, -14) });
     await recordContact(c, { type: "EMAIL", value: "new@twoweeks.example", sourceKind: "WEBSITE", source: "Company website", ownership: "CONFIRMED" });
     await recomputeCompanyContacts(c._id);
-    expect((await listCompanies(t.staff.actor, { country: "NO", range: "today", view: "contacts", q: "Two Weeks Old" })).total).toBe(1);
-    expect((await listCompanies(t.staff.actor, { country: "NO", range: "today", q: "Two Weeks Old" })).total).toBe(0);
+    expect((await listCompanies(t.owner.actor, { country: "NO", range: "today", view: "contacts", q: "Two Weeks Old" })).total).toBe(1);
+    expect((await listCompanies(t.owner.actor, { country: "NO", range: "today", q: "Two Weeks Old" })).total).toBe(0);
   });
 
   it("midnight boundaries use the country's local day for timestamp views", () => {
@@ -242,7 +242,7 @@ describe("Ingestion edge cases", () => {
     const r = await syncToday("IE", { trigger: "MANUAL", notify: false });
     expect(r.status).toBe("PARTIAL");
     expect(r.complete).toBe(false);
-    const o = await getRegistrationOverview(t.staff.actor, "IE", "today");
+    const o = await getRegistrationOverview(t.owner.actor, "IE", "today");
     expect(o.selected.complete).toBe(false);
   });
 });

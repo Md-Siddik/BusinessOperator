@@ -56,6 +56,14 @@ export async function loadSessionUser(payload: SessionPayload | null): Promise<S
   };
 }
 
+/**
+ * A signed-up client still awaiting approval (account AND organization pending — never suspended).
+ * Such a user may use the live chat only; every other area still requires approval.
+ */
+export function isPendingClientUser(u: Pick<SessionUser, "status" | "role" | "organizationStatus">) {
+  return u.role === "CLIENT" && u.status === "PENDING_APPROVAL" && u.organizationStatus === "PENDING_APPROVAL";
+}
+
 /** A user may act (call APIs, see data) only when their account — and client org — is active. */
 export function isActiveSessionUser(u: Pick<SessionUser, "status" | "role" | "organizationStatus">) {
   if (u.status !== "ACTIVE") return false;

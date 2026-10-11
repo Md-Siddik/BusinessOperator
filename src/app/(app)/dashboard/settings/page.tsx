@@ -1,8 +1,6 @@
-import { redirect } from "next/navigation";
-import { requireInternalPage } from "@/lib/auth/session";
-import { can } from "@/lib/permissions";
+import { SettingsIndexPage } from "@/components/workspace/settings-index-page";
 
-export default async function SettingsIndex() {
-  const actor = await requireInternalPage();
-  redirect(can(actor, "settings.manage") ? "/dashboard/settings/general" : can(actor, "content.manage") ? "/dashboard/settings/languages" : "/dashboard/settings/security");
+/** Owner dashboard — shared with the staff workspace (/staff) via the same component. */
+export default function Page() {
+  return <SettingsIndexPage base="/dashboard" />;
 }

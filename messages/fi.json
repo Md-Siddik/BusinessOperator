@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Valitse uusi salasana", "description": "Aseta tilillesi uusi salasana." }
     }
   },
-  "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Asiakaskirjautuminen", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio" },
+  "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Asiakaskirjautuminen", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio", "signup": "Rekisteröidy" },
   "cta": { "letsWorkTogether": "Tehdään yhteistyötä", "exploreServices": "Tutustu palveluihin", "exploreOurServices": "Tutustu palveluihimme", "talkToTeam": "Keskustele tiimimme kanssa", "needOngoingSupport": "Tarvitsetko jatkuvaa tukea? Jutellaan.", "learnMore": "Lue lisää", "viewService": "Katso palvelu" },
   "home": {
     "hero": { "eyebrow": "Digitaalisen ja liiketoiminnan toiminnan kumppani", "titleStart": "Sinä pyörität liiketoimintaa.", "titleEnd": "Me hoidamme digitaalisen puolen.", "subtitle": "Verkkosivuista ja digitaalisesta näkyvyydestä liiketoimintajärjestelmiin, rekrytointiin, automaatioon ja jatkuvaan tekniseen tukeen — ExploreTechify toimii kasvavien yritysten ulkoisena digitaalisen toiminnan tiiminä.", "note": "Yksi pitkäaikainen kumppani yrityksesi digitaaliselle puolelle." },
@@ -26,6 +26,29 @@
     "moreThan": { "eyebrow": "Pitkäaikainen kumppanuus", "title": "Enemmän kuin verkkosivut", "subtitle": "Kun tunnemme yrityksesi, seuraava pyyntö on helppo.", "items": ["Tarvitaanko verkkosivuille päivitys? Hoidamme sen.", "Tarvitaanko uusi liiketoimintajärjestelmä? Rakennamme sen.", "Tarvitaanko tukea rekrytointiin? Autamme.", "Tarvitaanko SEO-tukea? Hoidamme sen.", "Tarvitaanko automaatiota? Rakennamme sen.", "Tarvitaanko teknistä apua? Olemme tukena."] },
     "industries": { "eyebrow": "Yrityksesi ehdoilla", "title": "Oikea yhdistelmä toimialallesi", "subtitle": "Jokainen yritys tarvitsee erilaisen kokonaisuuden. Valitse profiili nähdäksesi tyypillisen lähtökohdan.", "profiles": { "ecommerce": { "title": "Verkkokauppa", "text": "Myy verkossa kaupalla, varasto- ja asiakasjärjestelmillä, jotka toimivat yhdessä." }, "technology": { "title": "Teknologiayritys", "text": "Rekrytoi teknisiä osaajia ja pyöritä sisäisiä järjestelmiä häiritsemättä tuotetiimiä." }, "localBusiness": { "title": "Paikallinen yritys", "text": "Tule löydetyksi paikallisesti, näytä luotettavalta verkossa ja muuta yhteydenotot asiakkaiksi." }, "hiring": { "title": "Rekrytoiva yritys", "text": "Jäsenneltyä tukea rekrytointiin ja perehdytykseen tiimin kasvaessa." }, "professional": { "title": "Asiantuntijapalvelut", "text": "Uskottava näkyvyys, ammattimainen sähköposti ja helppo tapa hallita asiakkuuksia." }, "operations": { "title": "Valmistus ja logistiikka", "text": "Tilausprosessit, koontinäkymät ja raportointi, jotka vähentävät käsityötä." } } },
     "principles": { "eyebrow": "Toimintatapamme", "title": "Rehellinen laajuus. Vastuullinen toteutus.", "items": [{ "title": "Yksi vastuullinen tiimi", "text": "Yksi yhteyshenkilö digitaaliselle puolelle sen sijaan, että jokaiselle työkalulle olisi oma toimittaja." }, { "title": "Asiantuntijat tarvittaessa", "text": "Kun tehtävä vaatii syvää erikoisosaamista, koordinoimme luotettavia kumppaneita — ja kerromme siitä etukäteen." }, { "title": "Rakennettu kestämään", "text": "Dokumentoimme rakentamamme, jotta järjestelmät pysyvät ymmärrettävinä ja omistuksessasi." }] },
+    "engagement": {
+      "eyebrow": "Yhteistyön muodot",
+      "title": "Kolme tapaa tehdä yhteistyötä kanssamme",
+      "subtitle": "Valitse yhteistyömalli, joka sopii yrityksellesi tänään.",
+      "cta": "Katso lisätiedot",
+      "models": {
+        "monthly": {
+          "title": "Kuukausikumppanuus",
+          "text": "Jatkuvaa digitaalista ja operatiivista tukea ennakoitavalla kuukausihinnalla.",
+          "points": ["Jatkuva tuki", "Sovittu kuukausittainen laajuus", "Pitkäaikainen yhteistyö"]
+        },
+        "growth": {
+          "title": "Kasvukumppanuus",
+          "text": "Tutustu valikoivaan kumppanuuteen, jossa edistämme yrityksen kasvua erikseen neuvotellun sopimuksen mukaisesti.",
+          "points": ["Valikoidut mahdollisuudet", "Yhteiset kasvutavoitteet", "Yksilöllisesti neuvotellut ehdot"]
+        },
+        "project": {
+          "title": "Tehtäväkohtainen yhteistyö",
+          "text": "Palkkaa meidät selkeästi rajattuun tehtävään tai projektiin, jolle on sovittu laajuus, hinta ja toimitussuunnitelma.",
+          "points": ["Selkeästi rajattu laajuus", "Sovittu projektihinta", "Vaiheittainen toimitus tarvittaessa"]
+        }
+      }
+    },
     "finalCta": { "title": "Otetaan digitaalinen puoli harteiltasi.", "subtitle": "Kerro, missä olette tänään. Ehdotamme käytännöllisen lähtökohdan — ilman sitoumuksia." }
   },
   "services": {
@@ -43,12 +66,73 @@
   "serviceItems": { "businessWebsite": "Yrityksen verkkosivut", "ecommerce": "Verkkokauppa", "domainHosting": "Verkkotunnus ja palvelin", "businessEmail": "Yrityssähköposti", "googleBusinessProfile": "Google-yritysprofiili", "socialMediaSetup": "Somekanavien käyttöönotto", "analytics": "Analytiikka", "basicSeo": "Perus-SEO", "websiteMaintenance": "Verkkosivujen ylläpito", "contentUpdates": "Sisältöpäivitykset", "seoSupport": "SEO-tuki", "socialMediaSupport": "Somen tuki", "technicalMaintenance": "Tekninen ylläpito", "digitalAssetManagement": "Digitaalisten aineistojen hallinta", "crm": "CRM", "inventoryManagement": "Varastonhallinta", "orderManagement": "Tilaustenhallinta", "businessDashboards": "Liiketoiminnan koontinäkymät", "dataManagement": "Tiedonhallinta", "reporting": "Raportointi", "internalTools": "Sisäiset työkalut", "workflowSystems": "Työnkulkujärjestelmät", "seo": "SEO", "localSeo": "Paikallinen SEO", "contentSupport": "Sisältötuki", "caseStudies": "Asiakastarinat", "digitalMarketingSupport": "Digimarkkinoinnin tuki", "googleAdsSupport": "Google Ads -tuki", "conversionOptimization": "Konversio-optimointi", "leadGenerationSystems": "Liidien hankinnan järjestelmät", "recruitmentSupport": "Rekrytoinnin tuki", "candidateSourcing": "Hakijoiden etsintä", "technicalRecruitment": "Tekninen rekrytointi", "hrAdministration": "HR-hallinto", "employeeOnboarding": "Työntekijöiden perehdytys", "recruitmentWorkflow": "Rekrytointiprosessi", "hrDataManagement": "HR-tiedonhallinta", "businessAutomation": "Liiketoiminnan automaatio", "workflowAutomation": "Työnkulkujen automaatio", "aiAssistedWorkflows": "Tekoälyavusteiset työnkulut", "reportingAutomation": "Raportoinnin automaatio", "crmAutomation": "CRM-automaatio", "repetitiveTaskAutomation": "Rutiinitehtävien automaatio" },
   "process": { "understand": { "title": "Ymmärrä", "text": "Ymmärrämme liiketoiminnan, tavoitteet ja nykyisen digitaalisen ympäristön." }, "build": { "title": "Rakenna", "text": "Luomme digitaalisen perustan." }, "operate": { "title": "Ylläpidä", "text": "Ylläpidämme ja tuemme digitaalista puolta jatkuvasti." }, "improve": { "title": "Kehitä", "text": "Tunnistamme automaation ja tehostamisen mahdollisuudet." }, "scale": { "title": "Skaalaa", "text": "Laajennamme järjestelmiä ja tukea yrityksen kasvaessa." } },
   "howWeWork": { "eyebrow": "Näin toimimme", "title": "Viisi askelta digitaaliseen puoleen, joka vain toimii", "subtitle": "Emme luovuta projektia ja katoa. Jäämme, ylläpidämme ja kehitämme — ulkoisena digitaalisen toiminnan tiiminäsi.", "details": { "understand": "Jäsennelty keskustelu liiketoiminnastasi, asiakkaistasi, työkaluistasi ja prioriteeteistasi. Käymme läpi nykytilan ja sovimme, mikä on tärkeintä.", "build": "Pystytämme tai korjaamme perusasiat — verkkosivut, tilit, sähköpostin, järjestelmät — ja dokumentoimme kaiken yrityksesi nimissä.", "operate": "Jatkuva ylläpito, päivitykset ja tuki. Lähetät pyynnöt asiakasportaalin kautta; me hoidamme ne.", "improve": "Etsimme säännöllisesti rutiinityötä, heikkoja kohtia ja nopeita voittoja ja ehdotamme käytännön parannuksia.", "scale": "Kasvaessasi laajennamme järjestelmiä, tuemme rekrytointia ja lisäämme osaamista — erikoistuneiden kumppanien avulla, kun se on järkevää." }, "partnershipTitle": "Yksi kumppani, monta osaamista", "partnershipText": "Ydintiimimme hoitaa digitaalisen toiminnan suoraan. Erikoistehtäviin — kuten vaativiin juridisiin tai kirjanpidollisiin kysymyksiin tai suuriin mainoskampanjoihin — koordinoimme tarkastettuja kumppaneita, joten sinulla on edelleen yksi yhteyshenkilö." },
+  "engagement": {
+    "eyebrow": "Yhteistyömalli",
+    "otherModels": "Muut yhteistyömallit",
+    "models": {
+      "monthly": {
+        "title": "Kuukausikumppanuus",
+        "subtitle": "Jatkuvaa digitaalista ja operatiivista tukea ennakoitavalla kuukausihinnalla — yksi tiimi, joka tuntee yrityksesi ja pitää digitaalisen puolen toiminnassa.",
+        "sections": [
+          { "title": "Mitä kuukausikumppanuus tarkoittaa", "text": "Sen sijaan, että aloittaisit uuden projektin aina kun jotain pitää tehdä, teet yhteistyötä ExploreTechifyn kanssa jatkuvasti. Sovimme yhdessä kuukausittaisen laajuuden ja hoidamme sovitut työt joka kuukausi yhtenä vastuullisena tiiminä." },
+          { "title": "Tyypillistä jatkuvaa tukea", "items": ["Verkkosivujen päivitykset, sisältömuutokset ja ylläpito", "Hakukoneoptimoinnin ja digitaalisen näkyvyyden seuranta", "Yrityssähköposti, tilit ja käyttäjähallinta", "CRM- ja liiketoimintajärjestelmien tuki", "Rekrytoinnin ja HR-hallinnon tuki", "Automaatioiden kehittäminen ja tekninen tuki", "Säännöllinen raportointi tehdystä työstä"] },
+          { "title": "Laajuus, vastuut, prioriteetit ja viestintä", "text": "Ennen aloitusta sovimme kirjallisesti, mitä kuukausittainen laajuus kattaa, kuka vastaa mistäkin kummallakin puolella, miten prioriteetit asetetaan sekä miten ja kuinka usein viestimme. Sovitun laajuuden ulkopuoliset pyynnöt käydään kanssasi läpi ennen kuin lisätyö aloitetaan." },
+          { "title": "Kuukausihinta ja laskutus", "text": "Kuukausihinta perustuu sovittuun laajuuteen, ja se kirjataan kirjalliseen tarjoukseen ennen työn aloittamista. Vakiohinnastoa ei ole — hinta, laskutusväli ja maksuehdot sovitaan kanssasi yksilöllisesti." },
+          { "title": "Mukautuminen yrityksen muuttuessa", "text": "Tarpeesi muuttuvat ajan myötä. Laajuutta voidaan tarkastella yhdessä sovituin väliajoin ja kasvattaa tai pienentää, ja kaikki laajuuden tai hinnan muutokset sovitaan kirjallisesti." }
+        ],
+        "ctaTitle": "Keskustellaan jatkuvista tarpeistasi",
+        "ctaText": "Kerro, missä tarvitset apua tänään. Ehdotamme käytännöllistä kuukausittaista laajuutta — ilman sitoumuksia.",
+        "cta": "Keskustele kuukausikumppanuudesta"
+      },
+      "growth": {
+        "title": "Kasvukumppanuus",
+        "subtitle": "Valikoiva kumppanuus, jossa edistämme yrityksen kasvua erikseen neuvotellun sopimuksen mukaisesti.",
+        "sections": [
+          { "title": "Kasvukumppanuuden tarkoitus", "text": "Joillakin yrityksillä on vahva potentiaali, mutta sen hyödyntäminen vaatii enemmän kuin palveluntarjoajan. Valikoiduissa tapauksissa ExploreTechify voi sitoutua vahvemmin ja työskennellä omistajien rinnalla yhteisten kasvutavoitteiden eteen." },
+          { "title": "Mitä voimme tuoda mukanamme", "items": ["Tekninen kehitys ja digitaaliset järjestelmät", "Digitaalinen näkyvyys, markkinoinnin tuki ja hakukoneoptimointi", "Operatiivinen rakenne, prosessit ja automaatio", "Liiketoiminnan rakentamisen tuki, kuten rekrytointi ja raportointi"] },
+          { "title": "Jokainen mahdollisuus arvioidaan erikseen", "text": "Kasvukumppanuus ei ole vakiopaketti, eikä se ole kaikkien asiakkaiden saatavilla. Jokainen mahdollisuus arvioidaan omana kokonaisuutenaan — yritys, sen suunnitelmat, mukana olevat ihmiset ja se, sopiiko yhteistyö molemmille. Projektin aloittaminen kanssamme ei itsessään luo kumppanuutta." },
+          {
+            "title": "Mahdolliset rakenteet",
+            "text": "Jos kumppanuudesta sovitaan, sen rakenne neuvotellaan erikseen. Jokaisella vaihtoehdolla on erilaiset oikeudelliset, verotukselliset ja kaupalliset vaikutukset.",
+            "structures": [
+              { "title": "Voitonjako", "text": "Saamme sovitun osuuden määritellyn toiminnan voitosta tai liikevaihdosta sovitun ajan. Kyse on sopimusperusteisesta järjestelystä — se ei tee meistä yrityksen omistajaa." },
+              { "title": "Osakeomistus", "text": "Meistä tulee osakkeenomistaja, kun hankimme yhtiön osakkeita. Tähän liittyy omistajan oikeuksia ja velvollisuuksia, ja se edellyttää arvonmääritystä, yhtiöasiakirjoja ja sovellettavan yhtiöoikeuden noudattamista." },
+              { "title": "Yhdistelmäjärjestely", "text": "Yhdistelmä — esimerkiksi alennettu hinta yhdessä voitonjaon tai osakeomistuksen kanssa. Jokainen osa määritellään ja dokumentoidaan erikseen." }
+            ]
+          },
+          { "title": "Tärkeää tietää", "items": ["Osakeomistusta, sijoitusta tai voitonjakoa ei taata.", "ExploreTechify ei automaattisesti sijoita asiakkaan yritykseen eikä automaattisesti saa osakkeita projektin aloittamisen perusteella.", "Vastuut, arvonmääritys, omistus, päätöksenteko, riskit ja muut ehdot edellyttävät erillistä due diligence -selvitystä ja tarvittaessa kirjallisia sopimuksia.", "Suosittelemme, että molemmat osapuolet hankkivat riippumatonta oikeudellista ja taloudellista neuvontaa."] }
+        ],
+        "ctaTitle": "Voisiko tämä sopia teille?",
+        "ctaText": "Kerro yrityksestäsi ja siitä, mihin haluat sen viedä. Kerromme rehellisesti, onko kasvukumppanuus järkevä.",
+        "cta": "Keskustele kasvukumppanuudesta"
+      },
+      "project": {
+        "title": "Tehtäväkohtainen yhteistyö",
+        "subtitle": "Palkkaa meidät selkeästi rajattuun tehtävään tai projektiin, jolle on sovittu laajuus, hinta ja toimitussuunnitelma.",
+        "sections": [
+          { "title": "Tehtävän tai projektin pyytäminen", "text": "Kerro, mitä tarvitset — esimerkiksi uudet verkkosivut, tietyn integraation, automaation tai kertaluonteisen käyttöönoton. Jaa taustatiedot, jotka sinulla on; lyhyt kuvaus riittää alkuun." },
+          { "title": "Vaatimusten ja toimitusten määrittely", "text": "Käymme pyyntösi läpi, esitämme tarkentavia kysymyksiä ja sovimme tarvittaessa lyhyen puhelun. Määrittelemme yhdessä vaatimukset, mitä toimitetaan ja mikä jää laajuuden ulkopuolelle." },
+          { "title": "Tarjous, laajuus ja aikataulu", "text": "Saat kirjallisen tarjouksen, jossa on sovittu laajuus, hinta ja arvioitu aikataulu. Työ alkaa vasta, kun olet hyväksynyt sen." },
+          { "title": "Välitavoitteet ja tarkastus", "text": "Tarvittaessa suuremmat projektit jaetaan välitavoitteisiin. Tarkastat jokaisen välitavoitteen ennen kuin jatkamme, joten palautteesi on osa toteutusta." },
+          { "title": "Maksujärjestelyt", "text": "Maksuehdot — esimerkiksi ennakkomaksu, maksu välitavoitteittain tai maksu toimituksen yhteydessä — sovitaan jokaiselle projektille ennen työn aloittamista. Kaikille projekteille yhteistä maksukäytäntöä ei ole." }
+        ],
+        "ctaTitle": "Onko mielessäsi tehtävä tai projekti?",
+        "ctaText": "Lähetä meille lyhyt kuvaus. Vastaamme kysymyksillä tai ehdotuksella seuraavasta askeleesta.",
+        "cta": "Lähetä projektitiedustelu"
+      }
+    }
+  },
   "about": { "eyebrow": "Tietoa ExploreTechifystä", "title": "Ulkoinen digitaalisen toiminnan tiimi kasvaville yrityksille", "subtitle": "Uskomme, että yrittäjien kuuluu käyttää aikansa asiakkaisiin, tuotteisiin ja päätöksiin — ei DNS-tietueisiin, lisäosapäivityksiin ja taulukoihin.", "missionTitle": "Missiomme", "missionText": "Antaa kasvaville eurooppalaisille yrityksille yksi luotettava, pitkäaikainen kumppani digitaaliselle puolelle — jotta ne voivat keskittyä liiketoimintaansa.", "valuesTitle": "Mitä edustamme", "values": [{ "title": "Selkeys", "text": "Selkeä kieli, selkeä laajuus ja läpinäkyvä raportointi." }, { "title": "Omistajuus", "text": "Tilisi, datasi ja järjestelmäsi pysyvät sinun — dokumentoituina ja saatavilla." }, { "title": "Rehellisyys", "text": "Kerromme, missä olemme hyviä, ja tuomme asiantuntijat muuhun." }, { "title": "Jatkuvuus", "text": "Rakennamme pitkiä asiakassuhteita, emme kertaprojekteja." }], "europeTitle": "Keskittyminen eurooppalaisiin yrityksiin", "europeText": "Työskentelemme startupien, pk-yritysten ja paikallisten yritysten kanssa kaikkialla Euroopassa — monikielisesti ja paikalliset markkinat sekä tietosuojaodotukset ymmärtäen." },
   "work": { "eyebrow": "Työmme", "title": "Miten tuemme yrityksiä", "subtitle": "Valittuja toimeksiantoja ja havainnollistavia esimerkkejä siitä, miten hoidamme asiakkaidemme digitaalista puolta.", "exampleBadge": "Esimerkki", "exampleNotice": "Tämä on havainnollistava esimerkki tyypillisestä toimeksiannosta, ei todellinen asiakastarina.", "empty": "Asiakastarinoita julkaistaan täällä pian.", "industry": "Toimiala", "challenge": "Haaste", "solution": "Ratkaisu", "results": "Tulokset", "services": "Palvelut", "technologies": "Teknologiat", "testimonial": "Asiakkaan kommentti", "backToWork": "Takaisin: Työmme", "readCase": "Lue tarina" },
   "contact": {
     "eyebrow": "Yhteystiedot", "title": "Tehdään yhteistyötä", "subtitle": "Kerro yrityksestäsi ja tarpeistasi. Vastaamme käytännöllisellä ehdotuksella siitä, mistä kannattaa aloittaa.", "asideTitle": "Mitä seuraavaksi tapahtuu",
     "asideSteps": ["Käymme läpi viestisi ja nykyisen näkyvyytesi verkossa.", "Vastaamme yhden arkipäivän kuluessa kysymyksillä tai ehdotuksella.", "Jos yhteistyö sopii, sovimme lyhyen puhelun yrityksesi ymmärtämiseksi."],
-    "form": { "name": "Nimi", "company": "Yritys", "email": "Sähköposti", "phone": "Puhelin", "country": "Maa", "industry": "Toimiala", "website": "Verkkosivut", "need": "Mitä tarvitset?", "message": "Viesti", "preferredContact": "Toivottu yhteydenottotapa", "budget": "Budjetti", "ongoingSupport": "Kiinnostaako jatkuva tuki?", "interestedServices": "Kiinnostavat palvelut", "optional": "valinnainen", "select": "Valitse…", "submit": "Lähetä viesti", "sending": "Lähetetään…", "successTitle": "Kiitos — viesti vastaanotettu", "successText": "Palaamme asiaan yhden arkipäivän kuluessa.", "error": "Jokin meni pieleen. Yritä uudelleen tai lähetä meille sähköpostia suoraan.", "privacy": "Käytämme tietojasi vain yhteydenottoosi vastaamiseen.", "needs": { "website": "Uudet tai paremmat verkkosivut", "ongoing": "Jatkuva digitaalinen toiminta", "systems": "Liiketoimintajärjestelmät", "growth": "Kasvu ja näkyvyys", "recruitment": "Rekrytointi / HR-tuki", "automation": "Automaatio", "notSure": "En ole varma — jutellaan" }, "contactMethods": { "email": "Sähköposti", "phone": "Puhelin", "video": "Videopuhelu" }, "budgets": { "small": "Alle 2 000 €", "medium": "2 000 – 10 000 €", "large": "Yli 10 000 €", "monthly": "Kuukausisopimus", "unknown": "En ole vielä varma" }, "yes": "Kyllä", "no": "Ei", "maybe": "Ehkä myöhemmin" }
+    "form": { "engagement": "Toivottu yhteistyömalli", "engagements": {
+      "monthly": "Kuukausikumppanuus",
+      "growth": "Kasvukumppanuus",
+      "project": "Tehtäväkohtainen yhteistyö",
+      "notSure": "En ole vielä varma"
+    }, "name": "Nimi", "company": "Yritys", "email": "Sähköposti", "phone": "Puhelin", "country": "Maa", "industry": "Toimiala", "website": "Verkkosivut", "need": "Mitä tarvitset?", "message": "Viesti", "preferredContact": "Toivottu yhteydenottotapa", "budget": "Budjetti", "ongoingSupport": "Kiinnostaako jatkuva tuki?", "interestedServices": "Kiinnostavat palvelut", "optional": "valinnainen", "select": "Valitse…", "submit": "Lähetä viesti", "sending": "Lähetetään…", "successTitle": "Kiitos — viesti vastaanotettu", "successText": "Palaamme asiaan yhden arkipäivän kuluessa.", "error": "Jokin meni pieleen. Yritä uudelleen tai lähetä meille sähköpostia suoraan.", "privacy": "Käytämme tietojasi vain yhteydenottoosi vastaamiseen.", "needs": { "website": "Uudet tai paremmat verkkosivut", "ongoing": "Jatkuva digitaalinen toiminta", "systems": "Liiketoimintajärjestelmät", "growth": "Kasvu ja näkyvyys", "recruitment": "Rekrytointi / HR-tuki", "automation": "Automaatio", "notSure": "En ole varma — jutellaan" }, "contactMethods": { "email": "Sähköposti", "phone": "Puhelin", "video": "Videopuhelu" }, "budgets": { "small": "Alle 2 000 €", "medium": "2 000 – 10 000 €", "large": "Yli 10 000 €", "monthly": "Kuukausisopimus", "unknown": "En ole vielä varma" }, "yes": "Kyllä", "no": "Ei", "maybe": "Ehkä myöhemmin" }
   },
   "auth": {
     "email": "Sähköposti", "password": "Salasana", "name": "Nimesi", "company": "Yritys", "phone": "Puhelin", "country": "Maa", "website": "Verkkosivut", "industry": "Toimiala", "preferredLanguage": "Ensisijainen kieli",
@@ -61,5 +145,24 @@
   "footer": { "tagline": "Yksi pitkäaikainen kumppani yrityksesi digitaaliselle puolelle.", "servicesTitle": "Palvelut", "companyTitle": "Yritys", "contactTitle": "Yhteystiedot", "rights": "Kaikki oikeudet pidätetään.", "responseNote": "Vastaamme yleensä yhden arkipäivän kuluessa." },
   "errors": { "notFoundTitle": "Sivua ei löytynyt", "notFoundText": "Etsimääsi sivua ei ole olemassa tai se on siirretty.", "backHome": "Etusivulle", "genericTitle": "Jokin meni pieleen", "genericText": "Tapahtui odottamaton virhe. Yritä uudelleen.", "retry": "Yritä uudelleen" },
   "unsubscribe": { "title": "Tilauksesi on peruttu", "text": "Et enää saa meiltä yhteydenottosähköposteja tähän osoitteeseen.", "invalidTitle": "Virheellinen linkki", "invalidText": "Tämä peruutuslinkki on virheellinen. Vastaa sähköpostiin, niin poistamme sinut käsin." },
-  "prospect": { "eyebrow": "Laadittu yritykselle", "title": "Miten voisimme tukea yritystä {company}", "noticedTitle": "Mitä huomasimme", "helpTitle": "Miten voimme auttaa", "partnershipTitle": "Jatkuva kumppanuus", "partnershipText": "Ensimmäisten askelten jälkeen voimme jatkaa yrityksesi digitaalisen puolen ylläpitoa ja kehittämistä — verkkosivut, näkyvyys, järjestelmät, rekrytointi ja tekninen tuki.", "noWebsite": "Emme vielä löytäneet yrityksellesi verkkosivuja.", "hasWebsite": "Verkkosivusi ovat osoitteessa {website}.", "noHttps": "Sivustosi ei näytä käyttävän HTTPS:ää, mikä vaikuttaa luotettavuuteen ja hakunäkyvyyteen.", "noMeta": "Sivustoltasi puuttuu hakukuvaus, mikä vaikuttaa siihen, miten se näkyy hakutuloksissa.", "notMobile": "Sivustoasi ei ehkä ole optimoitu mobiililaitteille.", "newlyRegistered": "Yrityksesi on rekisteröity äskettäin — hyvä hetki rakentaa digitaalinen perusta kunnolla.", "hiring": "Näyttää siltä, että saatatte kasvattaa tiimiänne.", "disclaimer": "Perustuu julkisesti saatavilla oleviin tietoihin. Kerro meille, jos jokin ei enää pidä paikkaansa." }
+  "prospect": { "eyebrow": "Laadittu yritykselle", "title": "Miten voisimme tukea yritystä {company}", "noticedTitle": "Mitä huomasimme", "helpTitle": "Miten voimme auttaa", "partnershipTitle": "Jatkuva kumppanuus", "partnershipText": "Ensimmäisten askelten jälkeen voimme jatkaa yrityksesi digitaalisen puolen ylläpitoa ja kehittämistä — verkkosivut, näkyvyys, järjestelmät, rekrytointi ja tekninen tuki.", "noWebsite": "Emme vielä löytäneet yrityksellesi verkkosivuja.", "hasWebsite": "Verkkosivusi ovat osoitteessa {website}.", "noHttps": "Sivustosi ei näytä käyttävän HTTPS:ää, mikä vaikuttaa luotettavuuteen ja hakunäkyvyyteen.", "noMeta": "Sivustoltasi puuttuu hakukuvaus, mikä vaikuttaa siihen, miten se näkyy hakutuloksissa.", "notMobile": "Sivustoasi ei ehkä ole optimoitu mobiililaitteille.", "newlyRegistered": "Yrityksesi on rekisteröity äskettäin — hyvä hetki rakentaa digitaalinen perusta kunnolla.", "hiring": "Näyttää siltä, että saatatte kasvattaa tiimiänne.", "disclaimer": "Perustuu julkisesti saatavilla oleviin tietoihin. Kerro meille, jos jokin ei enää pidä paikkaansa." },
+  "chatWidget": {
+    "open": "Lähetä viesti",
+    "close": "Sulje chat",
+    "title": "Keskustele ExploreTechifyn kanssa",
+    "signupTitle": "Rekisteröidy lähettääksesi viestin",
+    "signupText": "Luo maksuton asiakastili keskustellaksesi tiimimme kanssa. Keskustelu tallentuu tilillesi, joten voit jatkaa sitä milloin tahansa.",
+    "signup": "Rekisteröidy",
+    "login": "Kirjaudu",
+    "teamText": "Olet kirjautunut tiimin jäsenenä. Asiakaskeskustelut löytyvät saapuneista viesteistäsi.",
+    "openInbox": "Avaa viestit",
+    "placeholder": "Kirjoita viesti…",
+    "send": "Lähetä",
+    "empty": "Kerro, mitä tarvitset – vastaamme tänne.",
+    "pending": "Tilisi odottaa hyväksyntää. Voit jo keskustella kanssamme täällä.",
+    "you": "Sinä",
+    "team": "ExploreTechify",
+    "error": "Viestiä ei voitu lähettää. Yritä uudelleen.",
+    "fullInbox": "Avaa kaikki viestit"
+  }
 }

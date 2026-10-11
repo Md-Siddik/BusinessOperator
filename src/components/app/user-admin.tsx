@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Plus } from "lucide-react";
-import { PERMISSION_LABELS, PERMISSIONS, ROLE_DEFAULT_PERMISSIONS, type Permission } from "@/lib/permissions";
+import { PERMISSION_LABELS, ROLE_DEFAULT_PERMISSIONS, STAFF_AREA_PERMISSIONS, type Permission } from "@/lib/permissions";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select } from "@/components/ui/form";
@@ -15,7 +15,7 @@ function PermissionChecklist({ selected, disabled }: { selected: string[]; disab
     <fieldset disabled={disabled}>
       <legend className="mb-2 text-sm font-medium">Permissions</legend>
       <div className="grid gap-1.5 sm:grid-cols-2">
-        {PERMISSIONS.map((p) => (
+        {STAFF_AREA_PERMISSIONS.map((p) => (
           <Checkbox key={p} name="permissions" value={p} defaultChecked={selected.includes(p)} label={<span><code className="text-xs text-ink-500">{p}</code><br />{PERMISSION_LABELS[p]}</span>} />
         ))}
       </div>

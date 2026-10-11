@@ -3,7 +3,7 @@ import { z } from "zod";
 import { AuditLog, User, type AuditLogDoc, type UserDoc } from "@/models";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
-import { canAssignRole, can, PERMISSIONS, ROLE_DEFAULT_PERMISSIONS, type Actor, type Role } from "@/lib/permissions";
+import { canAssignRole, can, ROLE_DEFAULT_PERMISSIONS, STAFF_AREA_PERMISSIONS, type Actor, type Role } from "@/lib/permissions";
 import { hashPassword } from "@/lib/auth/password";
 import { escapeRegex } from "@/lib/utils";
 import { emailSchema, paginate, parseObjectId, passwordSchema } from "@/lib/validation";
@@ -29,7 +29,7 @@ export const createUserSchema = z.object({
   email: emailSchema,
   role: z.enum(["ADMIN", "STAFF"]),
   password: passwordSchema,
-  permissions: z.array(z.enum(PERMISSIONS)).optional(),
+  permissions: z.array(z.enum(STAFF_AREA_PERMISSIONS)).optional(),
 });
 
 export async function createInternalUser(actor: Actor, input: unknown) {
@@ -46,7 +46,7 @@ export async function createInternalUser(actor: Actor, input: unknown) {
 export const updateUserSchema = z.object({
   role: z.enum(["OWNER", "ADMIN", "STAFF"]).optional(),
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
-  permissions: z.array(z.enum(PERMISSIONS)).optional(),
+  permissions: z.array(z.enum(STAFF_AREA_PERMISSIONS)).optional(),
   name: z.string().trim().min(2).max(120).optional(),
 });
 

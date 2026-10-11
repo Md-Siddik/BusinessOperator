@@ -57,8 +57,17 @@ describe("API authorization", () => {
     expect((await listCompaniesRoute(req("/api/companies?country=NO"), ctx)).status).toBe(401);
   });
 
+  it("company intelligence is owner-only: ADMIN and STAFF (staff workspace) get 403", async () => {
+    for (const u of [t.staff, t.admin]) {
+      as(u);
+      expect((await listCompaniesRoute(req("/api/companies?country=NO"), ctx)).status).toBe(403);
+      expect((await inboxRoute(req("/api/inbox"), ctx)).status).toBe(403);
+      expect((await quotationsRoute(req("/api/quotations"), ctx)).status).toBe(403);
+    }
+  });
+
   it("GET /api/companies?country=NO defaults to today and only returns Norway (database-side)", async () => {
-    as(t.staff);
+    as(t.owner);
     const res = await listCompaniesRoute(req("/api/companies?country=NO"), ctx);
     expect(res.status).toBe(200);
     const body = (await res.json()) as { items: { countryCode: string; companyName: string; email?: string }[] };
@@ -83,7 +92,7 @@ describe("API authorization", () => {
   });
 
   it("validates input and returns structured errors without stack traces", async () => {
-    as(t.staff);
+    as(t.owner);
     const res = await listCompaniesRoute(req("/api/companies?country=ZZ"), ctx);
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: { message: string; stack?: unknown } };
@@ -96,7 +105,7 @@ describe("API authorization", () => {
     expect((await researchStatusRoute(req("/api/research/status"), ctx)).status).toBe(403);
     expect((await inboxRoute(req("/api/inbox"), ctx)).status).toBe(403);
     expect((await quotationsRoute(req("/api/quotations"), ctx)).status).toBe(403);
-    as(t.staff);
+    as(t.owner);
     expect((await inboxRoute(req("/api/inbox"), ctx)).status).toBe(200);
   });
 

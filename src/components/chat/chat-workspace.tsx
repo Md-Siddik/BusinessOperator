@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ui/feedback";
 import { useToast } from "@/components/ui/toast";
 import { useRealtimeEvents } from "@/components/app/live-counts";
+import { useWorkspaceBase } from "@/hooks/use-workspace-base";
 
 export type ChatMode = "client" | "internal";
 
@@ -81,7 +82,8 @@ export function ChatWorkspace({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
-  const basePath = mode === "client" ? "/portal/messages" : "/dashboard/messages";
+  const workspaceBase = useWorkspaceBase();
+  const basePath = mode === "client" ? "/portal/messages" : `${workspaceBase}/messages`;
 
   const refreshList = useCallback(async (q = query, status = statusFilter) => {
     const params = new URLSearchParams();

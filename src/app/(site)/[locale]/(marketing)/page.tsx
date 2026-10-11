@@ -4,6 +4,7 @@ import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext, type LocaleParams } from "@/features/site/context";
 import { CtaBand, HomeHero, MoreThanWebsite, ProcessSteps, SectionHeading, ServicePillars, SplitSection } from "@/components/site/sections";
 import { IndustryProfiles } from "@/components/site/industry-profiles";
+import { EngagementModels } from "@/components/site/engagement-models";
 
 export async function generateMetadata({ params }: LocaleParams): Promise<Metadata> {
   const { locale } = await params;
@@ -67,6 +68,8 @@ export default async function HomePage({ params }: LocaleParams) {
           </div>
         </div>
       </section>
+
+      <EngagementModels locale={locale} t={t} list={list} />
 
       <CtaBand locale={locale} t={t} />
     </>

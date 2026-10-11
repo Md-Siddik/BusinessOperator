@@ -3,16 +3,28 @@ import { z, ZodError } from "zod";
 import { connectToDatabase, DatabaseUnavailableError } from "@/lib/db/connect";
 import { AppError, Errors } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth/session";
-import { isActiveSessionUser } from "@/lib/auth/actor";
-import { can, isInternal, type Actor, type Permission } from "@/lib/permissions";
+import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
+import { can, isInternal, isOwner, isStaffMember, type Actor, type Permission } from "@/lib/permissions";
 import { enforceRateLimit, type RateLimitRule } from "@/lib/rate-limit";
 
 type Options = {
   auth?: "required" | "optional" | "none";
-  /** Restrict to OWNER/ADMIN/STAFF. */
+  /**
+   * Internal API of the owner dashboard → OWNER only. ADMIN/STAFF never reach these
+   * (they use the staff workspace); combine with `staff` to open a route to them too.
+   */
   internal?: boolean;
+  /** Also allow ADMIN/STAFF (staff workspace: client data and website maintenance). */
+  staff?: boolean;
+  /** Restrict to the OWNER role (role checked on the server; not a delegable permission). */
+  ownerOnly?: boolean;
   /** Restrict to CLIENT users. */
   clientOnly?: boolean;
+  /**
+   * Let a signed-up client whose account is still awaiting approval use this route
+   * (live chat only). Their organization must be pending — never suspended.
+   */
+  allowPendingClient?: boolean;
   permission?: Permission;
   rateLimit?: RateLimitRule;
 };
@@ -81,10 +93,12 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       let actor: Actor | null = null;
       if (auth !== "none") {
         const user = await getSessionUser();
-        actor = user && isActiveSessionUser(user) ? user.actor : null;
+        actor = user && (isActiveSessionUser(user) || (options.allowPendingClient && isPendingClientUser(user))) ? user.actor : null;
       }
       if (auth === "required" && !actor) throw Errors.unauthorized();
-      if (options.internal && !isInternal(actor)) throw Errors.forbidden();
+      if (options.internal && !(isOwner(actor) || (options.staff && isStaffMember(actor)))) throw Errors.forbidden();
+      if (options.staff && !options.internal && !isInternal(actor)) throw Errors.forbidden();
+      if (options.ownerOnly && !isOwner(actor)) throw Errors.forbidden();
       if (options.clientOnly && actor?.role !== "CLIENT") throw Errors.forbidden();
       if (options.permission && !can(actor, options.permission)) throw Errors.forbidden();
 

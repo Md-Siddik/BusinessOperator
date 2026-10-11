@@ -63,7 +63,7 @@ type FullTicket = SupportTicketDoc & {
   createdBy?: { name: string } | unknown;
 };
 
-export function TicketDetail({ ticket, mode, staff = [], canAssign = false }: { ticket: FullTicket; mode: "client" | "internal"; staff?: { id: string; name: string }[]; canAssign?: boolean }) {
+export function TicketDetail({ ticket, mode, staff = [], canAssign = false, base = "/dashboard" }: { ticket: FullTicket; mode: "client" | "internal"; staff?: { id: string; name: string }[]; canAssign?: boolean; base?: "/dashboard" | "/staff" }) {
   const org = ticket.organizationId as unknown as { _id: string; name: string };
   const assignee = ticket.assignedTo as unknown as { _id: string; name: string } | null | undefined;
   const comments = ticket.comments.map((c) => ({
@@ -96,7 +96,7 @@ export function TicketDetail({ ticket, mode, staff = [], canAssign = false }: { 
             <DescriptionList
               items={[
                 { label: "Type", value: ticket.kind === "REQUEST" ? humanize(ticket.requestType ?? "OTHER") : "Support ticket" },
-                ...(mode === "internal" ? [{ label: "Client", value: <Link className="text-brand-700" href={`/dashboard/clients/${org._id}`}>{org.name}</Link> }] : []),
+                ...(mode === "internal" ? [{ label: "Client", value: <Link className="text-brand-700" href={`${base}/clients/${org._id}`}>{org.name}</Link> }] : []),
                 { label: "Status", value: <StatusBadge status={ticket.status} /> },
                 { label: "Priority", value: <StatusBadge status={ticket.priority} /> },
                 { label: "Assigned staff", value: assignee?.name ?? "Not yet assigned" },

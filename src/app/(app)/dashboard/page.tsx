@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { requireInternalPage } from "@/lib/auth/session";
-import { can } from "@/lib/permissions";
 
-/** The first screen after login is today's new company registrations. */
+/** The first screen after login is the owner overview: clients, today's new companies, decisions. */
 export default async function DashboardHome({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
-  const actor = await requireInternalPage();
+  await requireInternalPage();
   const { denied } = await searchParams;
   const suffix = denied ? "?denied=1" : "";
-  redirect(can(actor, "companies.read") ? `/dashboard/today${suffix}` : `/dashboard/overview${suffix}`);
+  redirect(`/dashboard/overview${suffix}`);
 }

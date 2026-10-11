@@ -19,6 +19,7 @@ export type HeaderLabels = {
   work: string;
   contact: string;
   clientLogin: string;
+  signup: string;
   cta: string;
   language: string;
   openMenu: string;
@@ -64,6 +65,9 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
           <Link href={lp("/login")} className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:text-ink-900 md:inline-flex">
             {labels.clientLogin}
           </Link>
+          <ButtonLink href={lp("/signup")} size="sm" variant="outline" className="hidden md:inline-flex">
+            {labels.signup}
+          </ButtonLink>
           <ButtonLink href={lp("/contact")} size="sm" className="hidden sm:inline-flex">
             {labels.cta}
           </ButtonLink>
@@ -91,6 +95,9 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
           ))}
           <Link href={lp("/login")} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-base font-medium text-ink-800 hover:bg-ink-50">
             {labels.clientLogin}
+          </Link>
+          <Link href={lp("/signup")} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-base font-medium text-ink-800 hover:bg-ink-50">
+            {labels.signup}
           </Link>
         </nav>
         <div className="space-y-3 border-t border-ink-100 p-4">

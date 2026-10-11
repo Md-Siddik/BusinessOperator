@@ -1,4 +1,5 @@
-import { Check, ExternalLink, Minus } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check, ExternalLink, Minus } from "lucide-react";
 import { requireInternalPage } from "@/lib/auth/session";
 import { can } from "@/lib/permissions";
 import { formatDateTime, formatRelative } from "@/lib/utils/format";
@@ -45,6 +46,11 @@ export default async function SourcesPage() {
         eyebrow="Company Intelligence"
         title="Data sources"
         description="Which official source feeds each country, what it provides, how fresh it is, and every synchronization run. Nothing is labelled real-time unless the source is. Jurisdictions without an adapter are listed under European coverage."
+        actions={
+          <Link href="/dashboard/coverage" className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline">
+            European coverage <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        }
       />
 
       <ul className="grid gap-4 lg:grid-cols-2">

@@ -6,6 +6,7 @@ import { requireClientPage } from "@/lib/auth/session";
 import { Organization } from "@/models";
 import { unreadConversationCount } from "@/features/chat/service";
 import { unreadNotificationCount } from "@/features/notifications/service";
+import { ChatWidget } from "@/components/chat/chat-widget";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     { items: [{ href: "/portal", label: "Overview", icon: "overview" }] },
     {
       title: "Workspace",
+      collapsible: true,
       items: [
         { href: "/portal/messages", label: "Messages", icon: "messages", badge: "messages" },
         { href: "/portal/requests", label: "Requests", icon: "queue" },
@@ -31,6 +33,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     },
     {
       title: "Account",
+      collapsible: true,
       items: [
         { href: "/portal/notifications", label: "Notifications", icon: "notifications", badge: "notifications" },
         { href: "/portal/profile", label: "Company & profile", icon: "profile" },
@@ -49,7 +52,10 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   return (
     <LiveCountsProvider initial={{ messages, notifications }}>
       <AppShell groups={groups} brandLabel="Client workspace" homeHref="/portal" topbar={topbar}>
-        {children}
+        <>
+          {children}
+          <ChatWidget />
+        </>
       </AppShell>
     </LiveCountsProvider>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useWorkspaceBase } from "@/hooks/use-workspace-base";
 import { useState, type FormEvent } from "react";
 import { Ban, CheckCircle2, Plus, Upload, UserPlus } from "lucide-react";
 import { SERVICE_CATEGORIES } from "@/config/services";
@@ -204,6 +205,7 @@ export function DocumentUpload({ orgId, internal }: { orgId: string; internal: b
 export function ProjectEditor({ orgs, staff, project }: { orgs: { id: string; name: string }[]; staff: { id: string; name: string }[]; project?: { id: string; organizationId: string; name: string; description?: string; status: string; startDate?: string; dueDate?: string; assignedStaff: string[] } }) {
   const { pending, errors, run, router } = useRun();
   const [open, setOpen] = useState(false);
+  const workspaceBase = useWorkspaceBase();
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -219,7 +221,7 @@ export function ProjectEditor({ orgs, staff, project }: { orgs: { id: string; na
     void run("proj", () => (project ? apiFetch(`/api/projects/${project.id}`, { method: "PATCH", body }) : apiFetch<{ _id: string }>("/api/projects", { body })), "Project saved").then((r) => {
       if (!r) return;
       setOpen(false);
-      if (!project) router.push(`/dashboard/projects/${(r as { _id: string })._id}`);
+      if (!project) router.push(`${workspaceBase}/projects/${(r as { _id: string })._id}`);
     });
   }
   return (
