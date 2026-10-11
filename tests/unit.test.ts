@@ -20,20 +20,29 @@ describe("RBAC", () => {
     for (const p of PERMISSIONS) expect(can(actor("OWNER"), p)).toBe(true);
     for (const p of PERMISSIONS) expect(can(actor("CLIENT", ["companies.read"] as never), p)).toBe(false);
   });
-  it("staff defaults exclude management permissions", () => {
+  it("staff (staff workspace) only hold client-data and website permissions", () => {
     const s = actor("STAFF");
-    expect(can(s, "companies.read")).toBe(true);
-    expect(can(s, "users.manage")).toBe(false);
-    expect(can(s, "outreach.approve")).toBe(false);
-    expect(can(s, "chat.manage")).toBe(false);
+    expect(can(s, "chat.manage")).toBe(true);
+    expect(can(s, "tickets.manage")).toBe(true);
+    expect(can(s, "content.manage")).toBe(true);
+    expect(can(s, "clients.manage")).toBe(false);
+    for (const p of ["companies.read", "companies.export", "outreach.manage", "outreach.approve", "analytics.view", "registry.sync", "users.manage", "settings.manage", "audit.view"] as const) {
+      expect(can(s, p)).toBe(false);
+      expect(can(actor("ADMIN"), p)).toBe(false);
+    }
+    expect(can(actor("ADMIN"), "clients.manage")).toBe(true);
   });
-  it("only the owner may assign admin/owner roles", () => {
+  it("owner-dashboard permissions stored on an old ADMIN/STAFF account are never effective", () => {
+    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual(["chat.manage", "clients.manage", "content.manage", "projects.manage", "tickets.manage"]);
+    expect(effectivePermissions("STAFF", ["companies.read", "outreach.manage"])).toEqual([]);
+  });
+  it("only the owner may assign roles", () => {
     expect(canAssignRole(actor("OWNER"), "ADMIN")).toBe(true);
     expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "ADMIN")).toBe(false);
-    expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "STAFF")).toBe(true);
+    expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "STAFF")).toBe(false);
   });
   it("ignores unknown stored permissions", () => {
-    expect(effectivePermissions("ADMIN", ["companies.read", "hack.everything"])).toEqual(["companies.read"]);
+    expect(effectivePermissions("ADMIN", ["tickets.manage", "hack.everything"])).toEqual(["tickets.manage"]);
   });
 });
 

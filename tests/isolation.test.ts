@@ -83,6 +83,11 @@ describe("Organization isolation — Client A must never access Client B's data"
 describe("Chat security & behaviour", () => {
   let convB: string;
   let attachmentId: string;
+  /** A staff member WITHOUT chat.manage (the owner can narrow staff permissions per user). */
+  let limited: Awaited<ReturnType<typeof makeUser>>;
+  beforeAll(async () => {
+    limited = await makeUser("STAFF", { permissions: ["tickets.manage"] });
+  });
 
   it("clients start conversations only in their own organization", async () => {
     const r = await startConversation(t.clientB.actor, { subject: "Need help", topic: "WEBSITE", body: "Hello", organizationId: String(t.orgA._id) }, [
@@ -106,15 +111,15 @@ describe("Chat security & behaviour", () => {
   });
 
   it("staff without chat.manage only see conversations assigned to them", async () => {
-    await expectRejects(getConversation(t.staff.actor, convB), 404);
-    expect((await listConversations(t.staff.actor, {})).length).toBe(0);
-    await expectRejects(updateConversation(t.staff.actor, convB, { assignedTo: t.staff.actor.id }), 404);
-    await updateConversation(t.admin.actor, convB, { assignedTo: t.staff.actor.id });
-    const visible = await listConversations(t.staff.actor, {});
+    await expectRejects(getConversation(limited.actor, convB), 404);
+    expect((await listConversations(limited.actor, {})).length).toBe(0);
+    await expectRejects(updateConversation(limited.actor, convB, { assignedTo: limited.actor.id }), 404);
+    await updateConversation(t.admin.actor, convB, { assignedTo: limited.actor.id });
+    const visible = await listConversations(limited.actor, {});
     expect(visible.map((c) => String(c._id))).toEqual([convB]);
     // Assigned staff may change status but not reassign.
-    await updateConversation(t.staff.actor, convB, { status: "IN_PROGRESS" });
-    await expectRejects(updateConversation(t.staff.actor, convB, { assignedTo: t.admin.actor.id }), 403);
+    await updateConversation(limited.actor, convB, { status: "IN_PROGRESS" });
+    await expectRejects(updateConversation(limited.actor, convB, { assignedTo: t.admin.actor.id }), 403);
   });
 
   it("messages are created, delivered and marked read with unread counts", async () => {
@@ -134,11 +139,11 @@ describe("Chat security & behaviour", () => {
   });
 
   it("realtime events are filtered with the same rules", () => {
-    const evt = { organizationId: String(t.orgB._id), assignedTo: t.staff.actor.id, participantIds: [t.clientB.actor.id] };
+    const evt = { organizationId: String(t.orgB._id), assignedTo: limited.actor.id, participantIds: [t.clientB.actor.id] };
     expect(canSeeConversationEvent(t.clientB.actor, evt)).toBe(true);
     expect(canSeeConversationEvent(t.clientA.actor, evt)).toBe(false);
-    expect(canSeeConversationEvent(t.staff.actor, evt)).toBe(true);
-    expect(canSeeConversationEvent(t.staff.actor, { ...evt, assignedTo: null })).toBe(false);
+    expect(canSeeConversationEvent(limited.actor, evt)).toBe(true);
+    expect(canSeeConversationEvent(limited.actor, { ...evt, assignedTo: null })).toBe(false);
     expect(canSeeConversationEvent(t.owner.actor, { ...evt, assignedTo: null })).toBe(true);
   });
 

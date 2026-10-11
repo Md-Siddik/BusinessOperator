@@ -1,13 +1,13 @@
 import { readJson, route } from "@/lib/api/handler";
 import { RATE_LIMITS } from "@/lib/rate-limit";
-import { setSessionCookie } from "@/lib/auth/session";
+import { homeFor, setSessionCookie } from "@/lib/auth/session";
 import { authenticate } from "@/features/auth/service";
 
+/** After login, go to `next` only when it lies inside the user's own area. */
 function safeNext(next: unknown, role: string) {
-  const fallback = role === "CLIENT" ? "/portal" : "/dashboard";
-  if (typeof next !== "string" || !next.startsWith("/") || next.startsWith("//")) return fallback;
-  if (role === "CLIENT" ? !next.startsWith("/portal") : !next.startsWith("/dashboard")) return fallback;
-  return next;
+  const home = homeFor(role);
+  if (typeof next !== "string" || !next.startsWith("/") || next.startsWith("//")) return home;
+  return next === home || next.startsWith(`${home}/`) || next.startsWith(`${home}?`) ? next : home;
 }
 
 export const POST = route({ auth: "none", rateLimit: RATE_LIMITS.login }, async ({ req, ip }) => {

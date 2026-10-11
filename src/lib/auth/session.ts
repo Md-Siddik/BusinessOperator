@@ -37,14 +37,42 @@ export const getActor = cache(async (): Promise<Actor | null> => {
   return user.actor;
 });
 
-/** For internal pages: redirect unless an active OWNER/ADMIN/STAFF user (with optional permission). */
+/** Home of each role: owner dashboard, staff workspace, client portal. */
+export function homeFor(role: string) {
+  return role === "OWNER" ? "/dashboard" : role === "CLIENT" ? "/portal" : "/staff";
+}
+
+/**
+ * For owner-dashboard pages (/dashboard): OWNER only. ADMIN/STAFF are sent to the
+ * staff workspace, clients to their portal.
+ */
 export async function requireInternalPage(permission?: Permission): Promise<Actor> {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/dashboard");
-  if (!isInternal(user.actor)) redirect("/portal");
+  if (!isOwner(user.actor)) redirect(homeFor(user.role));
   if (!isActiveSessionUser(user)) redirect("/login");
   if (permission && !can(user.actor, permission)) redirect("/dashboard?denied=1");
   return user.actor;
+}
+
+/**
+ * For staff-workspace pages (/staff): ADMIN and STAFF (client data and website maintenance).
+ * The owner works in the owner dashboard and is redirected there.
+ */
+export async function requireStaffPage(permission?: Permission): Promise<Actor> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/staff");
+  if (user.role === "OWNER") redirect("/dashboard");
+  if (!isInternal(user.actor)) redirect(homeFor(user.role));
+  if (!isActiveSessionUser(user)) redirect("/login");
+  if (permission && !can(user.actor, permission)) redirect("/staff?denied=1");
+  return user.actor;
+}
+
+/** Pages shared by the owner dashboard and the staff workspace pick their guard by base path. */
+export type WorkspaceBase = "/dashboard" | "/staff";
+export function requireWorkspacePage(base: WorkspaceBase, permission?: Permission) {
+  return base === "/staff" ? requireStaffPage(permission) : requireInternalPage(permission);
 }
 
 /**
@@ -63,7 +91,7 @@ export async function requireOwnerPage(): Promise<Actor> {
 export async function requireClientPage(): Promise<Actor> {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/portal");
-  if (user.role !== "CLIENT") redirect("/dashboard");
+  if (user.role !== "CLIENT") redirect(homeFor(user.role));
   if (!isActiveSessionUser(user)) redirect("/portal/pending");
   return user.actor;
 }

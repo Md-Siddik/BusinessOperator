@@ -7,9 +7,11 @@ import { addSuppression, checkSuppression } from "@/features/outreach/suppressio
 import { approveMessage, createDraftForCompany, sendApprovedMessage, submitForReview } from "@/features/outreach/service";
 import { authenticate, signupClient } from "@/features/auth/service";
 import { setOrganizationStatus } from "@/features/clients/service";
-import { expectRejects, makeTenants } from "./helpers";
+import { expectRejects, makeTenants, makeUser } from "./helpers";
 
 let t: Awaited<ReturnType<typeof makeTenants>>;
+/** A second owner: outreach needs a different person to approve (no self-approval). */
+let owner2: Awaited<ReturnType<typeof makeUser>>;
 let templateId: string;
 
 async function makeCompany(email: string) {
@@ -18,6 +20,7 @@ async function makeCompany(email: string) {
 
 beforeAll(async () => {
   t = await makeTenants();
+  owner2 = await makeUser("OWNER");
   const tpl = await EmailTemplate.create({ name: "T", subject: "Hello {{companyName}}", body: "Hi {{contactName|there}}, about {{companyName}} in {{country}}.", countryCode: "NO", languageCode: "en" });
   templateId = String(tpl._id);
 });
@@ -25,53 +28,61 @@ beforeAll(async () => {
 describe("Email compliance", () => {
   it("draft → review → approve → send, with personalization from facts only", async () => {
     const c = await makeCompany("ok@acme.example");
-    const draft = await createDraftForCompany(t.staff.actor, { companyId: String(c._id), templateId });
+    const draft = await createDraftForCompany(t.owner.actor, { companyId: String(c._id), templateId });
     expect(draft.status).toBe("DRAFT");
     expect(draft.body).toBe("Hi there, about Test ok@acme.example in Norway.");
     expect((draft.personalization as { missing: string[] }).missing).toContain("contactName");
-    await expectRejects(approveMessage(t.admin.actor, String(draft._id)), 400); // not yet submitted
-    await submitForReview(t.staff.actor, String(draft._id));
-    await expectRejects(approveMessage(t.staff.actor, String(draft._id)), 403); // staff can't approve
-    await approveMessage(t.admin.actor, String(draft._id));
-    await sendApprovedMessage(t.admin.actor, String(draft._id));
+    await expectRejects(approveMessage(owner2.actor, String(draft._id)), 400); // not yet submitted
+    await submitForReview(t.owner.actor, String(draft._id));
+    await expectRejects(approveMessage(t.staff.actor, String(draft._id)), 403); // staff workspace: no outreach
+    await expectRejects(approveMessage(t.admin.actor, String(draft._id)), 403);
+    await approveMessage(owner2.actor, String(draft._id));
+    await sendApprovedMessage(owner2.actor, String(draft._id));
     const sent = await EmailMessage.findById(draft._id).lean<EmailMessageDoc>();
     expect(sent?.status).toBe("SENT");
     expect(sent?.simulated).toBe(true);
     expect((await Company.findById(c._id).lean<CompanyDoc>())?.lead?.stage).toBe("CONTACTED");
   });
 
+  it("outreach belongs to the owner dashboard: ADMIN and STAFF cannot draft", async () => {
+    const c = await makeCompany("staff@acme.example");
+    await expectRejects(createDraftForCompany(t.staff.actor, { companyId: String(c._id), templateId }), 403);
+    await expectRejects(createDraftForCompany(t.admin.actor, { companyId: String(c._id), templateId }), 403);
+  });
+
   it("availability is not permission: uncleared companies cannot be drafted", async () => {
     const c = await makeCompany("review@acme.example");
     await Company.updateOne({ _id: c._id }, { $set: { "eligibility.status": "NEEDS_REVIEW" } });
-    await expectRejects(createDraftForCompany(t.staff.actor, { companyId: String(c._id), templateId }), 400);
+    await expectRejects(createDraftForCompany(t.owner.actor, { companyId: String(c._id), templateId }), 400);
     await Company.updateOne({ _id: c._id }, { $set: { "eligibility.status": "RESTRICTED" } });
-    await expectRejects(createDraftForCompany(t.staff.actor, { companyId: String(c._id), templateId }), 400);
+    await expectRejects(createDraftForCompany(t.owner.actor, { companyId: String(c._id), templateId }), 400);
   });
 
-  it("a second person must approve (no self-approval)", async () => {
+  it("outreach is owner-only, and the owner may approve their own drafts", async () => {
     const c = await makeCompany("self@acme.example");
-    const draft = await createDraftForCompany(t.admin.actor, { companyId: String(c._id), templateId });
-    await submitForReview(t.admin.actor, String(draft._id));
+    const draft = await createDraftForCompany(owner2.actor, { companyId: String(c._id), templateId });
+    await submitForReview(owner2.actor, String(draft._id));
     await expectRejects(approveMessage(t.admin.actor, String(draft._id)), 403);
+    await approveMessage(owner2.actor, String(draft._id));
   });
 
   it("suppressed addresses cannot be drafted, approved or sent", async () => {
-    await addSuppression(t.admin.actor, { email: "optout@acme.example", reason: "OPT_OUT" });
+    await addSuppression(owner2.actor, { email: "optout@acme.example", reason: "OPT_OUT" });
     const blocked = await makeCompany("optout@acme.example");
-    await expectRejects(createDraftForCompany(t.staff.actor, { companyId: String(blocked._id), templateId }), 400);
+    await expectRejects(createDraftForCompany(t.owner.actor, { companyId: String(blocked._id), templateId }), 400);
 
     // Opt-out arriving between approval and sending is caught at send time.
     const late = await makeCompany("late@later.example");
-    const draft = await createDraftForCompany(t.staff.actor, { companyId: String(late._id), templateId });
-    await submitForReview(t.staff.actor, String(draft._id));
-    await approveMessage(t.admin.actor, String(draft._id));
+    const draft = await createDraftForCompany(t.owner.actor, { companyId: String(late._id), templateId });
+    await submitForReview(t.owner.actor, String(draft._id));
+    await approveMessage(owner2.actor, String(draft._id));
     await addSuppression(null, { email: "late@later.example", reason: "OPT_OUT" }, "unsubscribe-link");
-    await expectRejects(sendApprovedMessage(t.admin.actor, String(draft._id)), 400);
+    await expectRejects(sendApprovedMessage(owner2.actor, String(draft._id)), 400);
     expect((await EmailMessage.findById(draft._id).lean<EmailMessageDoc>())?.status).toBe("SUPPRESSED");
   });
 
   it("domain-level suppression covers every address at the domain", async () => {
-    await addSuppression(t.admin.actor, { domain: "blocked-domain.example", reason: "DO_NOT_CONTACT" });
+    await addSuppression(owner2.actor, { domain: "blocked-domain.example", reason: "DO_NOT_CONTACT" });
     expect((await checkSuppression("Anyone@Blocked-Domain.example")).suppressed).toBe(true);
     expect((await checkSuppression("someone@fine.example")).suppressed).toBe(false);
   });

@@ -165,47 +165,47 @@ describe("Today view (registration date, not import date)", () => {
   it("Norway + Today returns only companies whose registry date is today in Oslo", async () => {
     // Imported right now, but registered yesterday — must NOT appear in today's list.
     await Company.create({ companyName: "Imported Now AS", countryCode: "NO", source: "manual-test", sourceId: "x1", registrationDay: noYesterday });
-    const res = await listCompanies(t.staff.actor, { country: "NO", range: "today", pageSize: 100 });
+    const res = await listCompanies(t.owner.actor, { country: "NO", range: "today", pageSize: 100 });
     expect(res.items.map((c) => c.companyName).sort()).toEqual(["Fjord Digital AS", "Kaffebar Oslo AS", "Tom Holding AS"]);
     expect(res.items.every((c) => c.registrationDay === noToday && c.countryCode === "NO")).toBe(true);
   });
 
   it("the overview shows today's count first, from the registry snapshot", async () => {
-    const o = await getRegistrationOverview(t.staff.actor, "NO", "today");
+    const o = await getRegistrationOverview(t.owner.actor, "NO", "today");
     expect(o.quick.today).toBe(3);
     expect(o.selected).toMatchObject({ known: true, total: 3, withEmail: 1, fullyContactable: 1 });
     expect(o.timeline[0]).toEqual({ date: noToday, count: 3 });
   });
 
   it("contact availability filters and completeness sorting work server-side", async () => {
-    const withEmail = await listCompanies(t.staff.actor, { country: "NO", range: "today", contact: "email" });
+    const withEmail = await listCompanies(t.owner.actor, { country: "NO", range: "today", contact: "email" });
     expect(withEmail.items.map((c) => c.companyName)).toEqual(["Fjord Digital AS"]);
-    const withPhone = await listCompanies(t.staff.actor, { country: "NO", range: "today", contact: "phone" });
+    const withPhone = await listCompanies(t.owner.actor, { country: "NO", range: "today", contact: "phone" });
     expect(withPhone.items.map((c) => c.companyName).sort()).toEqual(["Fjord Digital AS", "Kaffebar Oslo AS"]);
-    const none = await listCompanies(t.staff.actor, { country: "NO", range: "today", contact: "none" });
+    const none = await listCompanies(t.owner.actor, { country: "NO", range: "today", contact: "none" });
     expect(none.items.map((c) => c.companyName)).toEqual(["Tom Holding AS"]);
-    const sorted = await listCompanies(t.staff.actor, { country: "NO", range: "today", sort: "completeness" });
+    const sorted = await listCompanies(t.owner.actor, { country: "NO", range: "today", sort: "completeness" });
     expect(sorted.items[0]!.companyName).toBe("Fjord Digital AS");
   });
 });
 
 describe("Country filtering", () => {
   it("Norway filtering never returns another country's companies", async () => {
-    const res = await listCompanies(t.staff.actor, { country: "NO", range: "all", pageSize: 100 });
+    const res = await listCompanies(t.owner.actor, { country: "NO", range: "all", pageSize: 100 });
     expect(res.total).toBeGreaterThan(0);
     expect(new Set(res.items.map((c) => c.countryCode))).toEqual(new Set(["NO"]));
   });
 
   it("search terms cannot widen the country scope", async () => {
-    const res = await listCompanies(t.staff.actor, { country: "SE", range: "all", q: ".*" });
+    const res = await listCompanies(t.owner.actor, { country: "SE", range: "all", q: ".*" });
     expect(res.items.every((c) => c.countryCode === "SE")).toBe(true);
   });
 
   it("mixed views require an explicit ALL, each country on its own local date", async () => {
-    const all = await listCompanies(t.staff.actor, { country: "ALL", range: "today", pageSize: 100 });
+    const all = await listCompanies(t.owner.actor, { country: "ALL", range: "today", pageSize: 100 });
     expect(new Set(all.items.map((c) => c.countryCode))).toEqual(new Set(["NO", "SE"]));
-    await expectRejects(listCompanies(t.staff.actor, { country: "XX" }), 400);
-    await expectRejects(listCompanies(t.staff.actor, {}), 400);
+    await expectRejects(listCompanies(t.owner.actor, { country: "XX" }), 400);
+    await expectRejects(listCompanies(t.owner.actor, {}), 400);
   });
 
   it("clients can never access company intelligence", async () => {
@@ -287,33 +287,35 @@ describe("Brønnøysund normalization (real API record shape)", () => {
 describe("Qualification & CRM", () => {
   it("records relevance and saved leads, filterable on the daily list", async () => {
     const c = await Company.findOne({ countryCode: "NO", companyName: "Fjord Digital AS" }).lean<CompanyDoc>();
-    await qualifyCompany(t.staff.actor, String(c!._id), { relevance: "RELEVANT", saved: true });
-    const relevant = await listCompanies(t.staff.actor, { country: "NO", range: "today", relevance: "RELEVANT" });
+    await qualifyCompany(t.owner.actor, String(c!._id), { relevance: "RELEVANT", saved: true });
+    const relevant = await listCompanies(t.owner.actor, { country: "NO", range: "today", relevance: "RELEVANT" });
     expect(relevant.items.map((x) => x.companyName)).toEqual(["Fjord Digital AS"]);
-    const saved = await listCompanies(t.staff.actor, { country: "NO", range: "all", saved: "yes" });
+    const saved = await listCompanies(t.owner.actor, { country: "NO", range: "all", saved: "yes" });
     expect(saved.total).toBe(1);
   });
 
   it("stage changes are logged; Do Not Contact suppresses the email", async () => {
     const c = await Company.findOne({ countryCode: "NO", email: { $exists: true } }).lean<CompanyDoc>();
-    await changeStage(t.admin.actor, String(c!._id), { stage: "DO_NOT_CONTACT", note: "Asked not to be contacted" });
+    await changeStage(t.owner.actor, String(c!._id), { stage: "DO_NOT_CONTACT", note: "Asked not to be contacted" });
     const updated = await Company.findById(c!._id).lean<CompanyDoc>();
     expect(updated?.lead?.stage).toBe("DO_NOT_CONTACT");
     expect(await CrmActivity.countDocuments({ companyId: c!._id, type: "STAGE_CHANGE" })).toBe(1);
     expect(await SuppressionEntry.exists({ email: c!.email })).toBeTruthy();
   });
 
-  it("staff can only work on leads assigned to them", async () => {
+  it("CRM is owner-only: ADMIN and STAFF (staff workspace) cannot read or change leads", async () => {
     const c = await Company.findOne({ countryCode: "SE" }).lean<CompanyDoc>();
-    await expectRejects(changeStage(t.staff.actor, String(c!._id), { stage: "RESEARCHING" }), 403);
-    await expectRejects(assignLead(t.staff.actor, String(c!._id), { userId: t.staff.actor.id }), 403);
-    await assignLead(t.admin.actor, String(c!._id), { userId: t.staff.actor.id });
-    await changeStage(t.staff.actor, String(c!._id), { stage: "RESEARCHING" });
-    const fu = await createFollowUp(t.staff.actor, String(c!._id), { dueAt: new Date(Date.now() - 86_400_000).toISOString(), type: "CALL" });
-    expect(String(fu.assignedTo)).toBe(t.staff.actor.id);
-    const overdue = (await listFollowUps(t.staff.actor, { country: "SE", bucket: "overdue" })) as unknown as { _id: unknown }[];
+    for (const u of [t.staff, t.admin]) {
+      await expectRejects(changeStage(u.actor, String(c!._id), { stage: "RESEARCHING" }), 403);
+      await expectRejects(assignLead(u.actor, String(c!._id), { userId: u.actor.id }), 403);
+      await expectRejects(listCompanies(u.actor, { country: "SE", range: "all" }), 403);
+    }
+    await changeStage(t.owner.actor, String(c!._id), { stage: "RESEARCHING" });
+    const fu = await createFollowUp(t.owner.actor, String(c!._id), { dueAt: new Date(Date.now() - 86_400_000).toISOString(), type: "CALL" });
+    expect(String(fu.assignedTo)).toBe(t.owner.actor.id);
+    const overdue = (await listFollowUps(t.owner.actor, { country: "SE", bucket: "overdue" })) as unknown as { _id: unknown }[];
     expect(overdue.some((f) => String(f._id) === String(fu._id))).toBe(true);
-    const noCountry = (await listFollowUps(t.staff.actor, { country: "NO", bucket: "overdue" })) as unknown[];
+    const noCountry = (await listFollowUps(t.owner.actor, { country: "NO", bucket: "overdue" })) as unknown[];
     expect(noCountry).toHaveLength(0);
   });
 

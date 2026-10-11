@@ -48,10 +48,20 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "audit.view": "View audit logs",
 };
 
+/**
+ * Access model:
+ *  - OWNER  → the owner dashboard (/dashboard): everything, including every internal API.
+ *  - ADMIN / STAFF → the staff workspace (/staff): client data and website maintenance only.
+ *    They can never hold company-intelligence, CRM, outreach, analytics, user or system
+ *    permissions — `effectivePermissions` filters to this list whatever is stored.
+ *  - CLIENT → the client portal (/portal).
+ */
+export const STAFF_AREA_PERMISSIONS = ["clients.manage", "chat.manage", "tickets.manage", "projects.manage", "content.manage"] as const satisfies readonly Permission[];
+
 export const ROLE_DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
   OWNER: [...PERMISSIONS],
-  ADMIN: PERMISSIONS.filter((p) => p !== "users.manage" && p !== "settings.manage"),
-  STAFF: ["companies.read", "outreach.manage", "analytics.view"],
+  ADMIN: [...STAFF_AREA_PERMISSIONS],
+  STAFF: ["chat.manage", "tickets.manage", "projects.manage", "content.manage"],
   CLIENT: [],
 };
 
@@ -66,6 +76,11 @@ export type Actor = {
 
 export function isInternal(actor: Pick<Actor, "role"> | null | undefined): boolean {
   return !!actor && INTERNAL_ROLES.includes(actor.role);
+}
+
+/** ADMIN or STAFF — users of the staff workspace. */
+export function isStaffMember(actor: Pick<Actor, "role"> | null | undefined): boolean {
+  return actor?.role === "ADMIN" || actor?.role === "STAFF";
 }
 
 /**
@@ -85,7 +100,8 @@ export function effectivePermissions(role: Role, stored?: string[] | null): Perm
   if (role === "OWNER") return [...PERMISSIONS];
   if (role === "CLIENT") return [];
   const source = stored && stored.length > 0 ? stored : ROLE_DEFAULT_PERMISSIONS[role];
-  return source.filter((p): p is Permission => (PERMISSIONS as readonly string[]).includes(p));
+  // Staff can only ever hold staff-area permissions (older stored lists may contain more).
+  return source.filter((p): p is Permission => (STAFF_AREA_PERMISSIONS as readonly string[]).includes(p));
 }
 
 export function can(actor: Actor | null | undefined, permission: Permission): boolean {
@@ -99,9 +115,7 @@ export function canAny(actor: Actor | null | undefined, permissions: Permission[
   return permissions.some((p) => can(actor, p));
 }
 
-/** Only the Owner may create/promote/remove admins or other owners. */
+/** Only the Owner manages internal users and roles. */
 export function canAssignRole(actor: Actor, targetRole: Role): boolean {
-  if (actor.role === "OWNER") return true;
-  if (!can(actor, "users.manage")) return false;
-  return targetRole === "STAFF" || targetRole === "CLIENT";
+  return actor.role === "OWNER" && (ROLES as readonly string[]).includes(targetRole);
 }

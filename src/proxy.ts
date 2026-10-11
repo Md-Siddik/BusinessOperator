@@ -7,11 +7,18 @@ import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
  *  1. Locale routing — English is served at clean URLs ("/services") by an
  *     internal rewrite to "/en/services"; "/en/..." redirects to the clean URL;
  *     "/de/...", "/no/..." etc. pass through.
- *  2. Coarse auth gating for /dashboard and /portal (signature check only).
- *     Real authorization happens server-side on every page and API call.
+ *  2. Coarse auth gating per area (signature check only). Real authorization
+ *     happens server-side on every page and API call:
+ *       /dashboard → OWNER · /staff → ADMIN, STAFF · /portal → CLIENT
  */
-const APP_PREFIXES = ["/dashboard", "/portal"];
-const NON_LOCALIZED = ["/api", "/_next", "/dashboard", "/portal", "/favicon", "/icon", "/apple-icon", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/manifest"];
+const APP_PREFIXES = ["/dashboard", "/staff", "/portal"];
+const NON_LOCALIZED = ["/api", "/_next", "/dashboard", "/staff", "/portal", "/favicon", "/icon", "/apple-icon", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/manifest"];
+/** Owner-dashboard sections that also exist in the staff workspace (client data, website maintenance). */
+const STAFF_SECTIONS = ["clients", "messages", "tickets", "projects", "services", "notifications", "settings"];
+
+function homeFor(role: string) {
+  return role === "OWNER" ? "/dashboard" : role === "CLIENT" ? "/portal" : "/staff";
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -23,12 +30,23 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }
-    if (pathname.startsWith("/dashboard") && session.role === "CLIENT") return NextResponse.redirect(new URL("/portal", request.url));
-    // Owner-only module: other roles get a plain 404 before any rendering (pages and APIs re-check server-side).
-    if ((pathname === "/dashboard/opportunities" || pathname.startsWith("/dashboard/opportunities/")) && session.role !== "OWNER") {
-      return new NextResponse("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+    const area = pathname.split("/")[1];
+    if (area === "dashboard" && session.role !== "OWNER") {
+      // Owner-only module: other roles get a plain 404 before any rendering.
+      if (pathname === "/dashboard/opportunities" || pathname.startsWith("/dashboard/opportunities/")) {
+        return new NextResponse("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+      }
+      if (session.role === "CLIENT") return NextResponse.redirect(new URL("/portal", request.url));
+      // ADMIN/STAFF: links to shared sections (e.g. from notifications or emails) open in the staff workspace.
+      const section = pathname.split("/")[2] ?? "";
+      const target = STAFF_SECTIONS.includes(section) ? `/staff${pathname.slice("/dashboard".length)}${search}` : "/staff";
+      return NextResponse.redirect(new URL(target, request.url));
     }
-    if (pathname.startsWith("/portal") && session.role !== "CLIENT") return NextResponse.redirect(new URL("/dashboard", request.url));
+    if (area === "staff" && session.role !== "ADMIN" && session.role !== "STAFF") {
+      if (session.role === "OWNER") return NextResponse.redirect(new URL(`/dashboard${pathname.slice("/staff".length)}${search}`, request.url));
+      return NextResponse.redirect(new URL(homeFor(session.role), request.url));
+    }
+    if (area === "portal" && session.role !== "CLIENT") return NextResponse.redirect(new URL(homeFor(session.role), request.url));
     return NextResponse.next();
   }
 
