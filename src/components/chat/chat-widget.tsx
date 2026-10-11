@@ -18,6 +18,7 @@ import { DEFAULT_CHAT_LABELS, type ChatWidgetLabels } from "./chat-widget-labels
  * fallback keeps the chat live even if a proxy or host blocks the stream.
  * Availability is the configured working-hours text — never a fake "online" indicator.
  */
+
 type Availability = { text: string; withinHours: boolean };
 type Session =
   | { state: "anonymous"; availability: Availability }
