@@ -4,7 +4,7 @@ import { RATE_LIMITS, enforceRateLimit } from "@/lib/rate-limit";
 import { sendMessage } from "@/features/chat/service";
 
 /** Send a message: JSON {body} or multipart (body + files). */
-export const POST = route<{ id: string }>({ rateLimit: RATE_LIMITS.message }, async ({ req, actor, params, ip }) => {
+export const POST = route<{ id: string }>({ rateLimit: RATE_LIMITS.message, allowPendingClient: true }, async ({ req, actor, params, ip }) => {
   if (req.headers.get("content-type")?.includes("multipart/form-data")) {
     const form = await req.formData();
     const files = await readUploads(form);

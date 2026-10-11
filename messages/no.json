@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Velg nytt passord", "description": "Angi et nytt passord for kontoen din." }
     }
   },
-  "nav": { "home": "Hjem", "services": "Tjenester", "howWeWork": "Slik jobber vi", "about": "Om oss", "work": "Vårt arbeid", "contact": "Kontakt", "clientLogin": "Kundeinnlogging", "language": "Språk", "openMenu": "Åpne meny", "closeMenu": "Lukk meny", "skipToContent": "Hopp til innhold", "mainNavigation": "Hovednavigasjon" },
+  "nav": { "home": "Hjem", "services": "Tjenester", "howWeWork": "Slik jobber vi", "about": "Om oss", "work": "Vårt arbeid", "contact": "Kontakt", "clientLogin": "Kundeinnlogging", "language": "Språk", "openMenu": "Åpne meny", "closeMenu": "Lukk meny", "skipToContent": "Hopp til innhold", "mainNavigation": "Hovednavigasjon", "signup": "Registrer deg" },
   "cta": { "letsWorkTogether": "La oss samarbeide", "exploreServices": "Utforsk tjenester", "exploreOurServices": "Utforsk tjenestene våre", "talkToTeam": "Snakk med teamet vårt", "needOngoingSupport": "Trenger du løpende støtte? La oss snakke.", "learnMore": "Les mer", "viewService": "Se tjenesten" },
   "home": {
     "hero": { "eyebrow": "Partner for digital drift og forretningsdrift", "titleStart": "Du driver bedriften.", "titleEnd": "Vi driver det digitale.", "subtitle": "Fra nettsider og digital tilstedeværelse til forretningssystemer, rekruttering, automatisering og løpende teknisk støtte — ExploreTechify fungerer som et eksternt team for digital drift for voksende bedrifter.", "note": "Én langsiktig partner for den digitale siden av bedriften din." },
@@ -145,5 +145,24 @@
   "footer": { "tagline": "Én langsiktig partner for den digitale siden av bedriften din.", "servicesTitle": "Tjenester", "companyTitle": "Selskapet", "contactTitle": "Kontakt", "rights": "Alle rettigheter forbeholdt.", "responseNote": "Svarer vanligvis innen én virkedag." },
   "errors": { "notFoundTitle": "Siden finnes ikke", "notFoundText": "Siden du leter etter finnes ikke eller er flyttet.", "backHome": "Til forsiden", "genericTitle": "Noe gikk galt", "genericText": "En uventet feil oppstod. Prøv igjen.", "retry": "Prøv igjen" },
   "unsubscribe": { "title": "Du er avmeldt", "text": "Du vil ikke lenger motta henvendelser på e-post fra oss på denne adressen.", "invalidTitle": "Ugyldig lenke", "invalidText": "Denne avmeldingslenken er ugyldig. Svar på e-posten, så fjerner vi deg manuelt." },
-  "prospect": { "eyebrow": "Laget for", "title": "Hvordan vi kan støtte {company}", "noticedTitle": "Det vi har lagt merke til", "helpTitle": "Hvordan vi kan hjelpe", "partnershipTitle": "Et løpende partnerskap", "partnershipText": "Utover de første stegene kan vi fortsette å drifte og forbedre den digitale siden av bedriften — nettside, synlighet, systemer, rekruttering og teknisk støtte.", "noWebsite": "Vi har ikke funnet noen nettside for bedriften din ennå.", "hasWebsite": "Nettsiden din er tilgjengelig på {website}.", "noHttps": "Nettsiden ser ikke ut til å bruke HTTPS, noe som påvirker tillit og synlighet i søk.", "noMeta": "Nettsiden mangler en søkebeskrivelse, noe som påvirker hvordan den vises i søkeresultater.", "notMobile": "Nettsiden er kanskje ikke tilpasset mobil.", "newlyRegistered": "Bedriften ble nylig registrert — et godt tidspunkt å sette opp det digitale fundamentet riktig.", "hiring": "Det ser ut til at dere kanskje utvider teamet.", "disclaimer": "Basert på offentlig tilgjengelig informasjon. Si fra hvis noe ikke stemmer lenger." }
+  "prospect": { "eyebrow": "Laget for", "title": "Hvordan vi kan støtte {company}", "noticedTitle": "Det vi har lagt merke til", "helpTitle": "Hvordan vi kan hjelpe", "partnershipTitle": "Et løpende partnerskap", "partnershipText": "Utover de første stegene kan vi fortsette å drifte og forbedre den digitale siden av bedriften — nettside, synlighet, systemer, rekruttering og teknisk støtte.", "noWebsite": "Vi har ikke funnet noen nettside for bedriften din ennå.", "hasWebsite": "Nettsiden din er tilgjengelig på {website}.", "noHttps": "Nettsiden ser ikke ut til å bruke HTTPS, noe som påvirker tillit og synlighet i søk.", "noMeta": "Nettsiden mangler en søkebeskrivelse, noe som påvirker hvordan den vises i søkeresultater.", "notMobile": "Nettsiden er kanskje ikke tilpasset mobil.", "newlyRegistered": "Bedriften ble nylig registrert — et godt tidspunkt å sette opp det digitale fundamentet riktig.", "hiring": "Det ser ut til at dere kanskje utvider teamet.", "disclaimer": "Basert på offentlig tilgjengelig informasjon. Si fra hvis noe ikke stemmer lenger." },
+  "chatWidget": {
+    "open": "Send oss en melding",
+    "close": "Lukk chat",
+    "title": "Chat med ExploreTechify",
+    "signupTitle": "Registrer deg for å sende oss en melding",
+    "signupText": "Opprett en gratis kundekonto for å chatte med teamet vårt. Samtalen lagres i kontoen din, så du kan fortsette når som helst.",
+    "signup": "Registrer deg",
+    "login": "Logg inn",
+    "teamText": "Du er logget inn som teammedlem. Kundesamtaler finner du i innboksen din.",
+    "openInbox": "Åpne innboks",
+    "placeholder": "Skriv en melding …",
+    "send": "Send",
+    "empty": "Fortell oss hva du trenger – vi svarer her.",
+    "pending": "Kontoen din venter på godkjenning. Du kan allerede chatte med oss her.",
+    "you": "Deg",
+    "team": "ExploreTechify",
+    "error": "Meldingen kunne ikke sendes. Prøv igjen.",
+    "fullInbox": "Åpne hele innboksen"
+  }
 }

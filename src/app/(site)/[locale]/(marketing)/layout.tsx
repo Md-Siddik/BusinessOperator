@@ -15,6 +15,7 @@ export default async function MarketingLayout({ children, params }: { children: 
     work: t("nav.work"),
     contact: t("nav.contact"),
     clientLogin: t("nav.clientLogin"),
+    signup: t("nav.signup"),
     cta: t("cta.letsWorkTogether"),
     language: t("nav.language"),
     openMenu: t("nav.openMenu"),

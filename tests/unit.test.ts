@@ -151,3 +151,16 @@ describe("Tokens", () => {
     expect(p).toBeTruthy();
   });
 });
+
+describe("Chat widget texts", () => {
+  it("every widget label is translated in every language (server layouts read these keys)", async () => {
+    const { DEFAULT_CHAT_LABELS } = await import("@/components/chat/chat-widget-labels");
+    const keys = Object.keys(DEFAULT_CHAT_LABELS);
+    expect(keys.length).toBeGreaterThan(10);
+    for (const code of LANGUAGE_CODES) {
+      const t = createTranslator(getBaseMessages(code)).t;
+      for (const k of keys) expect(t(`chatWidget.${k}`), `${code} chatWidget.${k}`).toBeTruthy();
+      expect(t("nav.signup")).toBeTruthy();
+    }
+  });
+});

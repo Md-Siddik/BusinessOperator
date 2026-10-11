@@ -60,7 +60,8 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "skipToContent": "Skip to content",
-    "mainNavigation": "Main navigation"
+    "mainNavigation": "Main navigation",
+    "signup": "Sign up"
   },
   "cta": {
     "letsWorkTogether": "Let's Work Together",
@@ -610,5 +611,24 @@
     "newlyRegistered": "Your company was registered recently — a good moment to set up the digital foundation properly.",
     "hiring": "It looks like you may be growing your team.",
     "disclaimer": "Based on publicly available information. Let us know if anything is out of date."
+  },
+  "chatWidget": {
+    "open": "Message us",
+    "close": "Close chat",
+    "title": "Chat with ExploreTechify",
+    "signupTitle": "Sign up to message us",
+    "signupText": "Create a free client account to chat with our team. Your conversation stays in your account, so you can pick it up any time.",
+    "signup": "Sign up",
+    "login": "Log in",
+    "teamText": "You're signed in as a team member. Client conversations are in your inbox.",
+    "openInbox": "Open inbox",
+    "placeholder": "Write a message…",
+    "send": "Send",
+    "empty": "Tell us what you need — we'll reply here.",
+    "pending": "Your account is awaiting approval. You can already chat with us here.",
+    "you": "You",
+    "team": "ExploreTechify",
+    "error": "Message could not be sent. Please try again.",
+    "fullInbox": "Open full inbox"
   }
 }

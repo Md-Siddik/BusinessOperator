@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Valitse uusi salasana", "description": "Aseta tilillesi uusi salasana." }
     }
   },
-  "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Asiakaskirjautuminen", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio" },
+  "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Asiakaskirjautuminen", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio", "signup": "Rekisteröidy" },
   "cta": { "letsWorkTogether": "Tehdään yhteistyötä", "exploreServices": "Tutustu palveluihin", "exploreOurServices": "Tutustu palveluihimme", "talkToTeam": "Keskustele tiimimme kanssa", "needOngoingSupport": "Tarvitsetko jatkuvaa tukea? Jutellaan.", "learnMore": "Lue lisää", "viewService": "Katso palvelu" },
   "home": {
     "hero": { "eyebrow": "Digitaalisen ja liiketoiminnan toiminnan kumppani", "titleStart": "Sinä pyörität liiketoimintaa.", "titleEnd": "Me hoidamme digitaalisen puolen.", "subtitle": "Verkkosivuista ja digitaalisesta näkyvyydestä liiketoimintajärjestelmiin, rekrytointiin, automaatioon ja jatkuvaan tekniseen tukeen — ExploreTechify toimii kasvavien yritysten ulkoisena digitaalisen toiminnan tiiminä.", "note": "Yksi pitkäaikainen kumppani yrityksesi digitaaliselle puolelle." },
@@ -145,5 +145,24 @@
   "footer": { "tagline": "Yksi pitkäaikainen kumppani yrityksesi digitaaliselle puolelle.", "servicesTitle": "Palvelut", "companyTitle": "Yritys", "contactTitle": "Yhteystiedot", "rights": "Kaikki oikeudet pidätetään.", "responseNote": "Vastaamme yleensä yhden arkipäivän kuluessa." },
   "errors": { "notFoundTitle": "Sivua ei löytynyt", "notFoundText": "Etsimääsi sivua ei ole olemassa tai se on siirretty.", "backHome": "Etusivulle", "genericTitle": "Jokin meni pieleen", "genericText": "Tapahtui odottamaton virhe. Yritä uudelleen.", "retry": "Yritä uudelleen" },
   "unsubscribe": { "title": "Tilauksesi on peruttu", "text": "Et enää saa meiltä yhteydenottosähköposteja tähän osoitteeseen.", "invalidTitle": "Virheellinen linkki", "invalidText": "Tämä peruutuslinkki on virheellinen. Vastaa sähköpostiin, niin poistamme sinut käsin." },
-  "prospect": { "eyebrow": "Laadittu yritykselle", "title": "Miten voisimme tukea yritystä {company}", "noticedTitle": "Mitä huomasimme", "helpTitle": "Miten voimme auttaa", "partnershipTitle": "Jatkuva kumppanuus", "partnershipText": "Ensimmäisten askelten jälkeen voimme jatkaa yrityksesi digitaalisen puolen ylläpitoa ja kehittämistä — verkkosivut, näkyvyys, järjestelmät, rekrytointi ja tekninen tuki.", "noWebsite": "Emme vielä löytäneet yrityksellesi verkkosivuja.", "hasWebsite": "Verkkosivusi ovat osoitteessa {website}.", "noHttps": "Sivustosi ei näytä käyttävän HTTPS:ää, mikä vaikuttaa luotettavuuteen ja hakunäkyvyyteen.", "noMeta": "Sivustoltasi puuttuu hakukuvaus, mikä vaikuttaa siihen, miten se näkyy hakutuloksissa.", "notMobile": "Sivustoasi ei ehkä ole optimoitu mobiililaitteille.", "newlyRegistered": "Yrityksesi on rekisteröity äskettäin — hyvä hetki rakentaa digitaalinen perusta kunnolla.", "hiring": "Näyttää siltä, että saatatte kasvattaa tiimiänne.", "disclaimer": "Perustuu julkisesti saatavilla oleviin tietoihin. Kerro meille, jos jokin ei enää pidä paikkaansa." }
+  "prospect": { "eyebrow": "Laadittu yritykselle", "title": "Miten voisimme tukea yritystä {company}", "noticedTitle": "Mitä huomasimme", "helpTitle": "Miten voimme auttaa", "partnershipTitle": "Jatkuva kumppanuus", "partnershipText": "Ensimmäisten askelten jälkeen voimme jatkaa yrityksesi digitaalisen puolen ylläpitoa ja kehittämistä — verkkosivut, näkyvyys, järjestelmät, rekrytointi ja tekninen tuki.", "noWebsite": "Emme vielä löytäneet yrityksellesi verkkosivuja.", "hasWebsite": "Verkkosivusi ovat osoitteessa {website}.", "noHttps": "Sivustosi ei näytä käyttävän HTTPS:ää, mikä vaikuttaa luotettavuuteen ja hakunäkyvyyteen.", "noMeta": "Sivustoltasi puuttuu hakukuvaus, mikä vaikuttaa siihen, miten se näkyy hakutuloksissa.", "notMobile": "Sivustoasi ei ehkä ole optimoitu mobiililaitteille.", "newlyRegistered": "Yrityksesi on rekisteröity äskettäin — hyvä hetki rakentaa digitaalinen perusta kunnolla.", "hiring": "Näyttää siltä, että saatatte kasvattaa tiimiänne.", "disclaimer": "Perustuu julkisesti saatavilla oleviin tietoihin. Kerro meille, jos jokin ei enää pidä paikkaansa." },
+  "chatWidget": {
+    "open": "Lähetä viesti",
+    "close": "Sulje chat",
+    "title": "Keskustele ExploreTechifyn kanssa",
+    "signupTitle": "Rekisteröidy lähettääksesi viestin",
+    "signupText": "Luo maksuton asiakastili keskustellaksesi tiimimme kanssa. Keskustelu tallentuu tilillesi, joten voit jatkaa sitä milloin tahansa.",
+    "signup": "Rekisteröidy",
+    "login": "Kirjaudu",
+    "teamText": "Olet kirjautunut tiimin jäsenenä. Asiakaskeskustelut löytyvät saapuneista viesteistäsi.",
+    "openInbox": "Avaa viestit",
+    "placeholder": "Kirjoita viesti…",
+    "send": "Lähetä",
+    "empty": "Kerro, mitä tarvitset – vastaamme tänne.",
+    "pending": "Tilisi odottaa hyväksyntää. Voit jo keskustella kanssamme täällä.",
+    "you": "Sinä",
+    "team": "ExploreTechify",
+    "error": "Viestiä ei voitu lähettää. Yritä uudelleen.",
+    "fullInbox": "Avaa kaikki viestit"
+  }
 }

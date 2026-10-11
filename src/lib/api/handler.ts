@@ -3,7 +3,7 @@ import { z, ZodError } from "zod";
 import { connectToDatabase, DatabaseUnavailableError } from "@/lib/db/connect";
 import { AppError, Errors } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth/session";
-import { isActiveSessionUser } from "@/lib/auth/actor";
+import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { can, isInternal, isOwner, isStaffMember, type Actor, type Permission } from "@/lib/permissions";
 import { enforceRateLimit, type RateLimitRule } from "@/lib/rate-limit";
 
@@ -20,6 +20,11 @@ type Options = {
   ownerOnly?: boolean;
   /** Restrict to CLIENT users. */
   clientOnly?: boolean;
+  /**
+   * Let a signed-up client whose account is still awaiting approval use this route
+   * (live chat only). Their organization must be pending — never suspended.
+   */
+  allowPendingClient?: boolean;
   permission?: Permission;
   rateLimit?: RateLimitRule;
 };
@@ -88,7 +93,7 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       let actor: Actor | null = null;
       if (auth !== "none") {
         const user = await getSessionUser();
-        actor = user && isActiveSessionUser(user) ? user.actor : null;
+        actor = user && (isActiveSessionUser(user) || (options.allowPendingClient && isPendingClientUser(user))) ? user.actor : null;
       }
       if (auth === "required" && !actor) throw Errors.unauthorized();
       if (options.internal && !(isOwner(actor) || (options.staff && isStaffMember(actor)))) throw Errors.forbidden();

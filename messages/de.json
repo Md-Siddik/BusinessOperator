@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Neues Passwort wählen", "description": "Legen Sie ein neues Passwort für Ihr Konto fest." }
     }
   },
-  "nav": { "home": "Start", "services": "Leistungen", "howWeWork": "So arbeiten wir", "about": "Über uns", "work": "Unsere Arbeit", "contact": "Kontakt", "clientLogin": "Kunden-Login", "language": "Sprache", "openMenu": "Menü öffnen", "closeMenu": "Menü schließen", "skipToContent": "Zum Inhalt springen", "mainNavigation": "Hauptnavigation" },
+  "nav": { "home": "Start", "services": "Leistungen", "howWeWork": "So arbeiten wir", "about": "Über uns", "work": "Unsere Arbeit", "contact": "Kontakt", "clientLogin": "Kunden-Login", "language": "Sprache", "openMenu": "Menü öffnen", "closeMenu": "Menü schließen", "skipToContent": "Zum Inhalt springen", "mainNavigation": "Hauptnavigation", "signup": "Registrieren" },
   "cta": { "letsWorkTogether": "Lassen Sie uns zusammenarbeiten", "exploreServices": "Leistungen entdecken", "exploreOurServices": "Unsere Leistungen entdecken", "talkToTeam": "Mit unserem Team sprechen", "needOngoingSupport": "Laufende Unterstützung gewünscht? Sprechen wir darüber.", "learnMore": "Mehr erfahren", "viewService": "Leistung ansehen" },
   "home": {
     "hero": { "eyebrow": "Partner für digitale & geschäftliche Abläufe", "titleStart": "Sie führen das Geschäft.", "titleEnd": "Wir übernehmen das Digitale.", "subtitle": "Von Websites und digitaler Präsenz über Geschäftssysteme, Recruiting und Automatisierung bis zum laufenden technischen Support: ExploreTechify arbeitet als externes Team für digitale Abläufe wachsender Unternehmen.", "note": "Ein langfristiger Partner für die digitale Seite Ihres Unternehmens." },
@@ -145,5 +145,24 @@
   "footer": { "tagline": "Ein langfristiger Partner für die digitale Seite Ihres Unternehmens.", "servicesTitle": "Leistungen", "companyTitle": "Unternehmen", "contactTitle": "Kontakt", "rights": "Alle Rechte vorbehalten.", "responseNote": "Antwort in der Regel innerhalb eines Werktags." },
   "errors": { "notFoundTitle": "Seite nicht gefunden", "notFoundText": "Die gesuchte Seite existiert nicht oder wurde verschoben.", "backHome": "Zur Startseite", "genericTitle": "Etwas ist schiefgelaufen", "genericText": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.", "retry": "Erneut versuchen" },
   "unsubscribe": { "title": "Sie wurden abgemeldet", "text": "Sie erhalten an diese Adresse keine Akquise-E-Mails mehr von uns.", "invalidTitle": "Ungültiger Link", "invalidText": "Dieser Abmeldelink ist ungültig. Bitte antworten Sie auf die E-Mail, dann tragen wir Sie manuell aus." },
-  "prospect": { "eyebrow": "Erstellt für", "title": "Wie wir {company} unterstützen könnten", "noticedTitle": "Was uns aufgefallen ist", "helpTitle": "Wie wir helfen können", "partnershipTitle": "Eine laufende Partnerschaft", "partnershipText": "Über die ersten Schritte hinaus können wir die digitale Seite Ihres Unternehmens dauerhaft betreiben und verbessern — Website, Sichtbarkeit, Systeme, Recruiting und technischer Support.", "noWebsite": "Wir konnten noch keine Website Ihres Unternehmens finden.", "hasWebsite": "Ihre Website ist unter {website} erreichbar.", "noHttps": "Ihre Website scheint kein HTTPS zu verwenden, was Vertrauen und Suchsichtbarkeit beeinträchtigt.", "noMeta": "Ihrer Website fehlt eine Suchbeschreibung, die die Darstellung in Suchergebnissen beeinflusst.", "notMobile": "Ihre Website ist möglicherweise nicht für Mobilgeräte optimiert.", "newlyRegistered": "Ihr Unternehmen wurde kürzlich gegründet — ein guter Zeitpunkt, das digitale Fundament richtig aufzusetzen.", "hiring": "Es sieht so aus, als würden Sie Ihr Team vergrößern.", "disclaimer": "Basierend auf öffentlich verfügbaren Informationen. Bitte sagen Sie uns, falls etwas nicht mehr aktuell ist." }
+  "prospect": { "eyebrow": "Erstellt für", "title": "Wie wir {company} unterstützen könnten", "noticedTitle": "Was uns aufgefallen ist", "helpTitle": "Wie wir helfen können", "partnershipTitle": "Eine laufende Partnerschaft", "partnershipText": "Über die ersten Schritte hinaus können wir die digitale Seite Ihres Unternehmens dauerhaft betreiben und verbessern — Website, Sichtbarkeit, Systeme, Recruiting und technischer Support.", "noWebsite": "Wir konnten noch keine Website Ihres Unternehmens finden.", "hasWebsite": "Ihre Website ist unter {website} erreichbar.", "noHttps": "Ihre Website scheint kein HTTPS zu verwenden, was Vertrauen und Suchsichtbarkeit beeinträchtigt.", "noMeta": "Ihrer Website fehlt eine Suchbeschreibung, die die Darstellung in Suchergebnissen beeinflusst.", "notMobile": "Ihre Website ist möglicherweise nicht für Mobilgeräte optimiert.", "newlyRegistered": "Ihr Unternehmen wurde kürzlich gegründet — ein guter Zeitpunkt, das digitale Fundament richtig aufzusetzen.", "hiring": "Es sieht so aus, als würden Sie Ihr Team vergrößern.", "disclaimer": "Basierend auf öffentlich verfügbaren Informationen. Bitte sagen Sie uns, falls etwas nicht mehr aktuell ist." },
+  "chatWidget": {
+    "open": "Nachricht senden",
+    "close": "Chat schließen",
+    "title": "Chat mit ExploreTechify",
+    "signupTitle": "Registrieren Sie sich, um uns zu schreiben",
+    "signupText": "Erstellen Sie ein kostenloses Kundenkonto, um mit unserem Team zu chatten. Der Verlauf bleibt in Ihrem Konto gespeichert, sodass Sie jederzeit weitermachen können.",
+    "signup": "Registrieren",
+    "login": "Anmelden",
+    "teamText": "Sie sind als Teammitglied angemeldet. Kundengespräche finden Sie in Ihrem Posteingang.",
+    "openInbox": "Posteingang öffnen",
+    "placeholder": "Nachricht schreiben …",
+    "send": "Senden",
+    "empty": "Sagen Sie uns, was Sie brauchen – wir antworten hier.",
+    "pending": "Ihr Konto wartet auf Freigabe. Sie können hier bereits mit uns chatten.",
+    "you": "Sie",
+    "team": "ExploreTechify",
+    "error": "Die Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "fullInbox": "Gesamten Posteingang öffnen"
+  }
 }

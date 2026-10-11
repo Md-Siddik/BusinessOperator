@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Vælg ny adgangskode", "description": "Angiv en ny adgangskode til din konto." }
     }
   },
-  "nav": { "home": "Forside", "services": "Ydelser", "howWeWork": "Sådan arbejder vi", "about": "Om os", "work": "Vores arbejde", "contact": "Kontakt", "clientLogin": "Kundelogin", "language": "Sprog", "openMenu": "Åbn menu", "closeMenu": "Luk menu", "skipToContent": "Gå til indhold", "mainNavigation": "Hovednavigation" },
+  "nav": { "home": "Forside", "services": "Ydelser", "howWeWork": "Sådan arbejder vi", "about": "Om os", "work": "Vores arbejde", "contact": "Kontakt", "clientLogin": "Kundelogin", "language": "Sprog", "openMenu": "Åbn menu", "closeMenu": "Luk menu", "skipToContent": "Gå til indhold", "mainNavigation": "Hovednavigation", "signup": "Opret konto" },
   "cta": { "letsWorkTogether": "Lad os samarbejde", "exploreServices": "Udforsk ydelser", "exploreOurServices": "Udforsk vores ydelser", "talkToTeam": "Tal med vores team", "needOngoingSupport": "Brug for løbende support? Lad os tale sammen.", "learnMore": "Læs mere", "viewService": "Se ydelsen" },
   "home": {
     "hero": { "eyebrow": "Partner for digital drift og forretningsdrift", "titleStart": "Du driver virksomheden.", "titleEnd": "Vi driver det digitale.", "subtitle": "Fra hjemmesider og digital tilstedeværelse til forretningssystemer, rekruttering, automatisering og løbende teknisk support — ExploreTechify fungerer som et eksternt team for digital drift for voksende virksomheder.", "note": "Én langsigtet partner for den digitale side af din virksomhed." },
@@ -145,5 +145,24 @@
   "footer": { "tagline": "Én langsigtet partner for den digitale side af din virksomhed.", "servicesTitle": "Ydelser", "companyTitle": "Virksomheden", "contactTitle": "Kontakt", "rights": "Alle rettigheder forbeholdes.", "responseNote": "Svarer normalt inden for én arbejdsdag." },
   "errors": { "notFoundTitle": "Siden blev ikke fundet", "notFoundText": "Siden, du leder efter, findes ikke eller er flyttet.", "backHome": "Til forsiden", "genericTitle": "Noget gik galt", "genericText": "Der opstod en uventet fejl. Prøv igen.", "retry": "Prøv igen" },
   "unsubscribe": { "title": "Du er afmeldt", "text": "Du modtager ikke længere opsøgende e-mails fra os på denne adresse.", "invalidTitle": "Ugyldigt link", "invalidText": "Dette afmeldingslink er ugyldigt. Svar på e-mailen, så fjerner vi dig manuelt." },
-  "prospect": { "eyebrow": "Udarbejdet til", "title": "Sådan kunne vi støtte {company}", "noticedTitle": "Det har vi bemærket", "helpTitle": "Sådan kan vi hjælpe", "partnershipTitle": "Et løbende partnerskab", "partnershipText": "Ud over de første skridt kan vi fortsætte med at drive og forbedre den digitale side af din virksomhed — hjemmeside, synlighed, systemer, rekruttering og teknisk support.", "noWebsite": "Vi har endnu ikke fundet en hjemmeside for din virksomhed.", "hasWebsite": "Din hjemmeside findes på {website}.", "noHttps": "Din hjemmeside ser ikke ud til at bruge HTTPS, hvilket påvirker tillid og synlighed i søgninger.", "noMeta": "Din hjemmeside mangler en søgebeskrivelse, hvilket påvirker, hvordan den vises i søgeresultater.", "notMobile": "Din hjemmeside er muligvis ikke optimeret til mobil.", "newlyRegistered": "Din virksomhed er for nylig registreret — et godt tidspunkt at få det digitale fundament på plads.", "hiring": "Det ser ud til, at I måske udvider teamet.", "disclaimer": "Baseret på offentligt tilgængelige oplysninger. Sig til, hvis noget ikke længere er korrekt." }
+  "prospect": { "eyebrow": "Udarbejdet til", "title": "Sådan kunne vi støtte {company}", "noticedTitle": "Det har vi bemærket", "helpTitle": "Sådan kan vi hjælpe", "partnershipTitle": "Et løbende partnerskab", "partnershipText": "Ud over de første skridt kan vi fortsætte med at drive og forbedre den digitale side af din virksomhed — hjemmeside, synlighed, systemer, rekruttering og teknisk support.", "noWebsite": "Vi har endnu ikke fundet en hjemmeside for din virksomhed.", "hasWebsite": "Din hjemmeside findes på {website}.", "noHttps": "Din hjemmeside ser ikke ud til at bruge HTTPS, hvilket påvirker tillid og synlighed i søgninger.", "noMeta": "Din hjemmeside mangler en søgebeskrivelse, hvilket påvirker, hvordan den vises i søgeresultater.", "notMobile": "Din hjemmeside er muligvis ikke optimeret til mobil.", "newlyRegistered": "Din virksomhed er for nylig registreret — et godt tidspunkt at få det digitale fundament på plads.", "hiring": "Det ser ud til, at I måske udvider teamet.", "disclaimer": "Baseret på offentligt tilgængelige oplysninger. Sig til, hvis noget ikke længere er korrekt." },
+  "chatWidget": {
+    "open": "Skriv til os",
+    "close": "Luk chat",
+    "title": "Chat med ExploreTechify",
+    "signupTitle": "Opret en konto for at skrive til os",
+    "signupText": "Opret en gratis kundekonto for at chatte med vores team. Samtalen gemmes på din konto, så du kan fortsætte når som helst.",
+    "signup": "Opret konto",
+    "login": "Log ind",
+    "teamText": "Du er logget ind som teammedlem. Kundesamtaler findes i din indbakke.",
+    "openInbox": "Åbn indbakke",
+    "placeholder": "Skriv en besked …",
+    "send": "Send",
+    "empty": "Fortæl os, hvad du har brug for – vi svarer her.",
+    "pending": "Din konto afventer godkendelse. Du kan allerede chatte med os her.",
+    "you": "Dig",
+    "team": "ExploreTechify",
+    "error": "Beskeden kunne ikke sendes. Prøv igen.",
+    "fullInbox": "Åbn hele indbakken"
+  }
 }
