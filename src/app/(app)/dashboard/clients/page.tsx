@@ -18,6 +18,8 @@ import { InquiryStatus } from "@/components/app/client-admin";
 
 export const metadata = { title: "Clients" };
 
+const ENGAGEMENT_LABELS: Record<string, string> = { monthly: "Monthly partnership", growth: "Growth partnership", project: "Task-based", notSure: "Not sure yet" };
+
 export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; q?: string; page?: string }> }) {
   const actor = await requireInternalPage();
   const sp = await searchParams;
@@ -54,6 +56,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                       <p className="mt-2 whitespace-pre-line text-sm text-ink-700">{r.message}</p>
                       <p className="mt-2 text-xs text-ink-500">
                         Need: {r.need ? humanize(r.need) : "—"}
+                        {r.engagement && ` · Engagement: ${ENGAGEMENT_LABELS[r.engagement] ?? r.engagement}`}
                         {r.budget && ` · Budget: ${r.budget}`}
                         {r.ongoingSupport && ` · Ongoing support: ${r.ongoingSupport}`}
                         {r.interestedServices.length > 0 && ` · Interested in: ${r.interestedServices.join(", ")}`}

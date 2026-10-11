@@ -147,6 +147,29 @@
         { "title": "Built to last", "text": "We document what we build so your systems stay understandable and yours." }
       ]
     },
+    "engagement": {
+      "eyebrow": "Ways to work together",
+      "title": "Three ways to work with us",
+      "subtitle": "Choose the engagement model that fits your business today.",
+      "cta": "Explore Details",
+      "models": {
+        "monthly": {
+          "title": "Monthly Partnership",
+          "text": "Ongoing digital and operational support for a predictable monthly fee.",
+          "points": ["Ongoing support", "Agreed monthly scope", "Long-term collaboration"]
+        },
+        "growth": {
+          "title": "Growth Partnership",
+          "text": "Explore a selective partnership where we contribute to business growth under a separately negotiated agreement.",
+          "points": ["Selective opportunities", "Shared growth objectives", "Individually negotiated terms"]
+        },
+        "project": {
+          "title": "Task-Based Engagement",
+          "text": "Hire us for a clearly defined task or project with an agreed scope, price, and delivery plan.",
+          "points": ["Clearly defined scope", "Agreed project price", "Milestone-based delivery where appropriate"]
+        }
+      }
+    },
     "finalCta": {
       "title": "Let's take the digital side off your plate.",
       "subtitle": "Tell us where you are today. We'll suggest a practical starting point — no obligation."
@@ -345,6 +368,62 @@
     "partnershipTitle": "One partner, many capabilities",
     "partnershipText": "Our core team handles the digital operations directly. For specialist work — such as advanced legal, accounting or large paid-media campaigns — we coordinate vetted partners so you still have one point of contact."
   },
+  "engagement": {
+    "eyebrow": "Engagement model",
+    "otherModels": "Other engagement models",
+    "models": {
+      "monthly": {
+        "title": "Monthly Partnership",
+        "subtitle": "Ongoing digital and operational support for a predictable monthly fee — one team that knows your business and keeps the digital side running.",
+        "sections": [
+          { "title": "What a monthly partnership means", "text": "Instead of starting a new project every time something needs doing, you work with ExploreTechify on an ongoing basis. We agree a monthly scope together and handle the agreed work each month as one accountable team." },
+          { "title": "Typical ongoing support", "items": ["Website updates, content changes and maintenance", "SEO and digital presence follow-up", "Business email, accounts and user administration", "CRM and business-system support", "Recruitment and HR administration support", "Automation improvements and technical support", "Regular reporting on the work done"] },
+          { "title": "Scope, responsibilities, priorities and communication", "text": "Before we start, we agree in writing what the monthly scope covers, who is responsible for what on each side, how priorities are set, and how and how often we communicate. Requests outside the agreed scope are discussed with you before any extra work begins." },
+          { "title": "Monthly fee and billing", "text": "The monthly fee is based on the agreed scope and set out in a written proposal before work begins. There is no standard price list — the fee, billing schedule and payment terms are agreed with you individually." },
+          { "title": "Adjusting as your business changes", "text": "Your needs will change over time. The scope can be reviewed together at agreed intervals and adjusted up or down, with any change to the scope or fee agreed in writing." }
+        ],
+        "ctaTitle": "Discuss your ongoing needs",
+        "ctaText": "Tell us what you need help with today. We'll suggest a practical monthly scope — no obligation.",
+        "cta": "Discuss a Monthly Partnership"
+      },
+      "growth": {
+        "title": "Growth Partnership",
+        "subtitle": "A selective partnership where we contribute to business growth under a separately negotiated agreement.",
+        "sections": [
+          { "title": "The purpose of a growth partnership", "text": "Some businesses have strong potential but need more than a supplier to realise it. In selected cases, ExploreTechify can take a more committed role and work alongside the owners towards shared growth objectives." },
+          { "title": "What we can contribute", "items": ["Technical development and digital systems", "Digital presence, marketing support and SEO", "Operational structure, processes and automation", "Business-building support such as recruitment and reporting"] },
+          { "title": "Opportunities are evaluated individually", "text": "A Growth Partnership is not a standard package and is not available to every client. Each opportunity is assessed on its own merits — the business, its plans, the people involved and whether there is a good fit. Starting a project with us does not in itself create a partnership." },
+          {
+            "title": "Possible structures",
+            "text": "If a partnership is agreed, its structure is negotiated separately. Each option has different legal, tax and commercial implications.",
+            "structures": [
+              { "title": "Profit-sharing", "text": "We receive an agreed share of the profit or revenue from a defined activity for an agreed period. This is a contractual arrangement — it does not give us ownership of the business." },
+              { "title": "Equity / shareholding", "text": "We become a shareholder by acquiring shares in the company. This involves ownership rights and obligations and requires valuation, company documentation and compliance with applicable company law." },
+              { "title": "Hybrid arrangement", "text": "A combination — for example a reduced fee together with profit-sharing or equity. Each element is defined and documented separately." }
+            ]
+          },
+          { "title": "Important to know", "items": ["No equity, investment or profit-sharing arrangement is guaranteed.", "ExploreTechify does not automatically invest in a client's business, and does not automatically receive shares by starting a project.", "Responsibilities, valuation, ownership, decision-making, risk and other terms require separate due diligence and written agreements where applicable.", "We recommend that both parties take independent legal and financial advice."] }
+        ],
+        "ctaTitle": "Think there could be a fit?",
+        "ctaText": "Tell us about your business and where you want to take it. We'll be honest about whether a growth partnership makes sense.",
+        "cta": "Discuss a Growth Partnership"
+      },
+      "project": {
+        "title": "Task-Based Engagement",
+        "subtitle": "Hire us for a clearly defined task or project with an agreed scope, price and delivery plan.",
+        "sections": [
+          { "title": "Requesting a task or project", "text": "Tell us what you need — for example a new website, a specific integration, an automation or a one-off setup. Share the context you have; a short description is enough to start." },
+          { "title": "Defining requirements and deliverables", "text": "We review your request, ask clarifying questions and, where needed, arrange a short call. Together we define the requirements, what will be delivered and what is outside the scope." },
+          { "title": "Quote, scope and timeline", "text": "You receive a written proposal with the agreed scope, price and an estimated timeline. Work starts only once you have accepted it." },
+          { "title": "Milestones and review", "text": "Where appropriate, larger projects are split into milestones. You review each milestone before we move on, so your feedback is built into the delivery." },
+          { "title": "Payment arrangements", "text": "Payment terms — for example an upfront portion, payment per milestone or payment on delivery — are agreed for each project before work begins. There is no single payment policy for all projects." }
+        ],
+        "ctaTitle": "Have a task or project in mind?",
+        "ctaText": "Send us a short description. We'll reply with questions or a suggested next step.",
+        "cta": "Submit a Project Inquiry"
+      }
+    }
+  },
   "about": {
     "eyebrow": "About ExploreTechify",
     "title": "An external digital operations team for growing businesses",
@@ -410,6 +489,13 @@
       "successText": "We'll get back to you within one business day.",
       "error": "Something went wrong. Please try again or email us directly.",
       "privacy": "We only use your details to respond to your enquiry.",
+      "engagement": "Preferred engagement model",
+      "engagements": {
+        "monthly": "Monthly Partnership",
+        "growth": "Growth Partnership",
+        "project": "Task-Based Engagement",
+        "notSure": "Not sure yet"
+      },
       "needs": {
         "website": "A new or improved website",
         "ongoing": "Ongoing digital operations",

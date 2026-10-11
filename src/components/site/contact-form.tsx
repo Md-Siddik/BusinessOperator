@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Send } from "lucide-react";
 import { SERVICE_ITEM_KEYS } from "@/config/services";
 import { INDUSTRIES } from "@/config/industries";
@@ -13,10 +14,22 @@ import { Alert } from "@/components/ui/feedback";
 const NEEDS = ["website", "ongoing", "systems", "growth", "recruitment", "automation", "notSure"] as const;
 const BUDGETS = ["small", "medium", "large", "monthly", "unknown"] as const;
 const COUNTRY_OPTIONS = ["NO", "SE", "DK", "FI", "DE", "FR", "GB", "NL", "BE", "AT", "CH", "IE", "PL", "ES", "IT", "PT", "IS", "EE", "LV", "LT", "CZ", "US"];
+/** Mirrors ENGAGEMENT_MODELS in features/content/service.ts (server-only module). */
+const ENGAGEMENTS = ["monthly", "growth", "project", "notSure"] as const;
+
+/** Preselects the engagement model from ?engagement=… (engagement detail pages link here). */
+function EngagementFromUrl({ onChange }: { onChange: (value: string) => void }) {
+  const value = useSearchParams().get("engagement");
+  useEffect(() => {
+    if (value && (ENGAGEMENTS as readonly string[]).includes(value)) onChange(value);
+  }, [value, onChange]);
+  return null;
+}
 
 export function ContactForm({ locale, messages }: { locale: string; messages: Messages }) {
   const { t } = createTranslator(messages);
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [engagement, setEngagement] = useState("");
   const [error, setError] = useState<string>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const regionNames = typeof Intl !== "undefined" && "DisplayNames" in Intl ? new Intl.DisplayNames([locale === "no" ? "nb" : locale], { type: "region" }) : null;
@@ -108,7 +121,22 @@ export function ContactForm({ locale, messages }: { locale: string; messages: Me
             </Select>
           )}
         </Field>
+        <Field label={t("contact.form.engagement")} error={fieldErrors.engagement} optional={opt} className="sm:col-span-2">
+          {(p) => (
+            <Select {...p} name="engagement" value={engagement} onChange={(e) => setEngagement(e.target.value)}>
+              <option value="">{t("contact.form.select")}</option>
+              {ENGAGEMENTS.map((m) => (
+                <option key={m} value={m}>
+                  {t(`contact.form.engagements.${m}`)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
       </div>
+      <Suspense fallback={null}>
+        <EngagementFromUrl onChange={setEngagement} />
+      </Suspense>
       <Field label={t("contact.form.message")} error={fieldErrors.message}>
         {(p) => <Textarea {...p} name="message" rows={5} required />}
       </Field>

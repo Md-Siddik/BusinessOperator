@@ -13,6 +13,8 @@ const contactRequestSchema = new Schema(
     industry: String,
     website: String,
     need: String,
+    /** Preferred engagement model: monthly | growth | project | notSure. */
+    engagement: String,
     message: { type: String, required: true, maxlength: 5000 },
     preferredContact: String,
     budget: String,

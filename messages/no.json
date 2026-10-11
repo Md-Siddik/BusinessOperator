@@ -26,6 +26,29 @@
     "moreThan": { "eyebrow": "Langsiktig partnerskap", "title": "Mer enn en nettside", "subtitle": "Når vi kjenner bedriften din, er neste forespørsel enkel.", "items": ["Trenger nettsiden en oppdatering? Vi fikser det.", "Trenger du et nytt forretningssystem? Vi bygger det.", "Trenger du rekrutteringsstøtte? Vi hjelper.", "Trenger du SEO-støtte? Vi tar oss av det.", "Trenger du automatisering? Vi bygger den.", "Trenger du teknisk hjelp? Vi er her."] },
     "industries": { "eyebrow": "Tilpasset din virksomhet", "title": "Riktig kombinasjon for din bransje", "subtitle": "Hver bedrift trenger en ulik miks. Velg en profil for å se et typisk utgangspunkt.", "profiles": { "ecommerce": { "title": "Netthandel", "text": "Selg på nett med nettbutikk, lager- og kundesystemer som fungerer sammen." }, "technology": { "title": "Teknologiselskap", "text": "Rekrutter teknisk kompetanse og drift interne systemer uten å forstyrre produktteamet." }, "localBusiness": { "title": "Lokal bedrift", "text": "Bli funnet lokalt, fremstå troverdig på nett og gjør henvendelser til kunder." }, "hiring": { "title": "Bedrift som ansetter", "text": "Strukturert støtte til rekruttering og onboarding mens teamet vokser." }, "professional": { "title": "Profesjonelle tjenester", "text": "En troverdig tilstedeværelse, profesjonell e-post og en enkel måte å følge opp kunder på." }, "operations": { "title": "Industri og logistikk", "text": "Ordreflyt, dashbord og rapportering som reduserer manuelt arbeid." } } },
     "principles": { "eyebrow": "Slik arbeider vi", "title": "Ærlig omfang. Ansvarlig leveranse.", "items": [{ "title": "Ett ansvarlig team", "text": "Én kontaktperson for det digitale, i stedet for en leverandør per verktøy." }, { "title": "Spesialister ved behov", "text": "Når en oppgave krever dyp spesialistkompetanse, koordinerer vi pålitelige partnere — og sier fra på forhånd." }, { "title": "Bygget for å vare", "text": "Vi dokumenterer det vi bygger, slik at systemene forblir forståelige og dine." }] },
+    "engagement": {
+      "eyebrow": "Måter å samarbeide på",
+      "title": "Tre måter å jobbe med oss på",
+      "subtitle": "Velg samarbeidsformen som passer virksomheten din i dag.",
+      "cta": "Se detaljer",
+      "models": {
+        "monthly": {
+          "title": "Månedlig partnerskap",
+          "text": "Løpende digital og operativ støtte til en forutsigbar månedlig pris.",
+          "points": ["Løpende støtte", "Avtalt månedlig omfang", "Langsiktig samarbeid"]
+        },
+        "growth": {
+          "title": "Vekstpartnerskap",
+          "text": "Utforsk et selektivt partnerskap der vi bidrar til vekst i virksomheten etter en separat forhandlet avtale.",
+          "points": ["Utvalgte muligheter", "Felles vekstmål", "Individuelt forhandlede vilkår"]
+        },
+        "project": {
+          "title": "Oppdragsbasert samarbeid",
+          "text": "Lei oss inn for en tydelig avgrenset oppgave eller et prosjekt med avtalt omfang, pris og leveranseplan.",
+          "points": ["Tydelig avgrenset omfang", "Avtalt prosjektpris", "Leveranse i milepæler der det passer"]
+        }
+      }
+    },
     "finalCta": { "title": "La oss ta det digitale av tallerkenen din.", "subtitle": "Fortell oss hvor du står i dag. Vi foreslår et praktisk utgangspunkt — helt uforpliktende." }
   },
   "services": {
@@ -43,12 +66,73 @@
   "serviceItems": { "businessWebsite": "Bedriftsnettside", "ecommerce": "Netthandel", "domainHosting": "Domene og hosting", "businessEmail": "Bedrifts-e-post", "googleBusinessProfile": "Google-bedriftsprofil", "socialMediaSetup": "Oppsett av sosiale medier", "analytics": "Analyse", "basicSeo": "Grunnleggende SEO", "websiteMaintenance": "Vedlikehold av nettside", "contentUpdates": "Innholdsoppdateringer", "seoSupport": "SEO-støtte", "socialMediaSupport": "Støtte i sosiale medier", "technicalMaintenance": "Teknisk vedlikehold", "digitalAssetManagement": "Forvaltning av digitale ressurser", "crm": "CRM", "inventoryManagement": "Lagerstyring", "orderManagement": "Ordrehåndtering", "businessDashboards": "Forretningsdashbord", "dataManagement": "Datahåndtering", "reporting": "Rapportering", "internalTools": "Interne verktøy", "workflowSystems": "Arbeidsflytsystemer", "seo": "SEO", "localSeo": "Lokal SEO", "contentSupport": "Innholdsstøtte", "caseStudies": "Kundecaser", "digitalMarketingSupport": "Støtte på digital markedsføring", "googleAdsSupport": "Google Ads-støtte", "conversionOptimization": "Konverteringsoptimalisering", "leadGenerationSystems": "Systemer for leadgenerering", "recruitmentSupport": "Rekrutteringsstøtte", "candidateSourcing": "Kandidatsøk", "technicalRecruitment": "Teknisk rekruttering", "hrAdministration": "HR-administrasjon", "employeeOnboarding": "Onboarding av ansatte", "recruitmentWorkflow": "Rekrutteringsflyt", "hrDataManagement": "Håndtering av HR-data", "businessAutomation": "Forretningsautomatisering", "workflowAutomation": "Automatisering av arbeidsflyt", "aiAssistedWorkflows": "KI-assisterte arbeidsflyter", "reportingAutomation": "Automatisert rapportering", "crmAutomation": "CRM-automatisering", "repetitiveTaskAutomation": "Automatisering av rutineoppgaver" },
   "process": { "understand": { "title": "Forstå", "text": "Forstå bedriften, målene og dagens digitale oppsett." }, "build": { "title": "Bygge", "text": "Etablere det digitale fundamentet." }, "operate": { "title": "Drifte", "text": "Kontinuerlig vedlikeholde og støtte den digitale siden." }, "improve": { "title": "Forbedre", "text": "Finne muligheter for automatisering og effektivitet." }, "scale": { "title": "Skalere", "text": "Utvide systemer og støtte etter hvert som bedriften vokser." } },
   "howWeWork": { "eyebrow": "Slik jobber vi", "title": "Fem steg til en digital side som bare fungerer", "subtitle": "Vi leverer ikke et prosjekt og forsvinner. Vi blir, drifter og forbedrer — som ditt eksterne team for digital drift.", "details": { "understand": "En strukturert samtale om bedriften, kundene, verktøyene og prioriteringene dine. Vi går gjennom dagens oppsett og blir enige om hva som er viktigst.", "build": "Vi setter opp eller rydder i det grunnleggende — nettside, kontoer, e-post, systemer — og dokumenterer alt i bedriftens navn.", "operate": "Løpende vedlikehold, oppdateringer og støtte. Du sender forespørsler via kundeportalen; vi håndterer dem.", "improve": "Vi ser jevnlig etter rutinearbeid, svake punkter og raske gevinster, og foreslår praktiske forbedringer.", "scale": "Når du vokser, utvider vi systemer, støtter rekruttering og legger til kompetanse — med spesialistpartnere der det gir mening." }, "partnershipTitle": "Én partner, mange kompetanser", "partnershipText": "Kjerneteamet vårt håndterer den digitale driften direkte. For spesialistarbeid — som avanserte juridiske eller regnskapsmessige spørsmål eller store annonsekampanjer — koordinerer vi kvalitetssikrede partnere, slik at du fortsatt har én kontaktperson." },
+  "engagement": {
+    "eyebrow": "Samarbeidsform",
+    "otherModels": "Andre samarbeidsformer",
+    "models": {
+      "monthly": {
+        "title": "Månedlig partnerskap",
+        "subtitle": "Løpende digital og operativ støtte til en forutsigbar månedlig pris — ett team som kjenner virksomheten din og holder den digitale siden i gang.",
+        "sections": [
+          { "title": "Hva et månedlig partnerskap betyr", "text": "I stedet for å starte et nytt prosjekt hver gang noe må gjøres, jobber du med ExploreTechify løpende. Vi blir sammen enige om et månedlig omfang og utfører det avtalte arbeidet hver måned som ett ansvarlig team." },
+          { "title": "Typisk løpende støtte", "items": ["Oppdateringer, innholdsendringer og vedlikehold av nettsiden", "Oppfølging av SEO og digital tilstedeværelse", "Bedrifts-e-post, kontoer og brukeradministrasjon", "Støtte for CRM og forretningssystemer", "Administrativ støtte til rekruttering og HR", "Forbedring av automatiseringer og teknisk støtte", "Jevnlig rapportering om utført arbeid"] },
+          { "title": "Omfang, ansvar, prioriteringer og kommunikasjon", "text": "Før vi starter, avtaler vi skriftlig hva det månedlige omfanget dekker, hvem som har ansvar for hva på hver side, hvordan prioriteringer settes og hvordan og hvor ofte vi kommuniserer. Forespørsler utenfor det avtalte omfanget diskuteres med deg før noe ekstra arbeid starter." },
+          { "title": "Månedlig pris og fakturering", "text": "Den månedlige prisen er basert på det avtalte omfanget og fastsettes i et skriftlig tilbud før arbeidet starter. Det finnes ingen standard prisliste — pris, faktureringsintervall og betalingsvilkår avtales individuelt med deg." },
+          { "title": "Tilpasning når virksomheten endrer seg", "text": "Behovene dine endrer seg over tid. Omfanget kan gjennomgås sammen med avtalte mellomrom og justeres opp eller ned, og enhver endring i omfang eller pris avtales skriftlig." }
+        ],
+        "ctaTitle": "Snakk med oss om de løpende behovene dine",
+        "ctaText": "Fortell oss hva du trenger hjelp med i dag. Vi foreslår et praktisk månedlig omfang — helt uforpliktende.",
+        "cta": "Diskuter et månedlig partnerskap"
+      },
+      "growth": {
+        "title": "Vekstpartnerskap",
+        "subtitle": "Et selektivt partnerskap der vi bidrar til vekst i virksomheten etter en separat forhandlet avtale.",
+        "sections": [
+          { "title": "Formålet med et vekstpartnerskap", "text": "Noen virksomheter har stort potensial, men trenger mer enn en leverandør for å realisere det. I utvalgte tilfeller kan ExploreTechify ta en mer forpliktende rolle og jobbe sammen med eierne mot felles vekstmål." },
+          { "title": "Hva vi kan bidra med", "items": ["Teknisk utvikling og digitale systemer", "Digital tilstedeværelse, markedsføringsstøtte og SEO", "Operativ struktur, prosesser og automatisering", "Støtte til å bygge virksomheten, for eksempel rekruttering og rapportering"] },
+          { "title": "Hver mulighet vurderes individuelt", "text": "Et vekstpartnerskap er ikke en standardpakke og er ikke tilgjengelig for alle kunder. Hver mulighet vurderes for seg — virksomheten, planene, menneskene som er involvert og om det er en god match. Å starte et prosjekt med oss skaper ikke i seg selv et partnerskap." },
+          {
+            "title": "Mulige strukturer",
+            "text": "Hvis et partnerskap avtales, forhandles strukturen separat. Hvert alternativ har ulike juridiske, skattemessige og kommersielle konsekvenser.",
+            "structures": [
+              { "title": "Overskuddsdeling", "text": "Vi mottar en avtalt andel av overskuddet eller inntektene fra en definert aktivitet i en avtalt periode. Dette er en kontraktsmessig ordning — den gir oss ikke eierskap i virksomheten." },
+              { "title": "Eierandel / aksjer", "text": "Vi blir aksjonær ved å erverve aksjer i selskapet. Det innebærer eierrettigheter og -plikter og krever verdsettelse, selskapsdokumentasjon og etterlevelse av gjeldende selskapsrett." },
+              { "title": "Hybridordning", "text": "En kombinasjon — for eksempel en redusert pris sammen med overskuddsdeling eller eierandel. Hvert element defineres og dokumenteres separat." }
+            ]
+          },
+          { "title": "Viktig å vite", "items": ["Ingen eierandel, investering eller overskuddsdeling er garantert.", "ExploreTechify investerer ikke automatisk i en kundes virksomhet, og får ikke automatisk aksjer ved at et prosjekt startes.", "Ansvar, verdsettelse, eierskap, beslutningsmyndighet, risiko og andre vilkår krever separat due diligence og skriftlige avtaler der det er aktuelt.", "Vi anbefaler at begge parter innhenter uavhengig juridisk og økonomisk rådgivning."] }
+        ],
+        "ctaTitle": "Tror du det kan passe?",
+        "ctaText": "Fortell oss om virksomheten din og hvor du vil ta den. Vi sier ærlig om et vekstpartnerskap gir mening.",
+        "cta": "Diskuter et vekstpartnerskap"
+      },
+      "project": {
+        "title": "Oppdragsbasert samarbeid",
+        "subtitle": "Lei oss inn for en tydelig avgrenset oppgave eller et prosjekt med avtalt omfang, pris og leveranseplan.",
+        "sections": [
+          { "title": "Be om en oppgave eller et prosjekt", "text": "Fortell oss hva du trenger — for eksempel en ny nettside, en bestemt integrasjon, en automatisering eller et engangsoppsett. Del den bakgrunnen du har; en kort beskrivelse holder for å komme i gang." },
+          { "title": "Definere krav og leveranser", "text": "Vi går gjennom forespørselen din, stiller oppklarende spørsmål og avtaler ved behov en kort samtale. Sammen definerer vi kravene, hva som skal leveres og hva som er utenfor omfanget." },
+          { "title": "Tilbud, omfang og tidsplan", "text": "Du mottar et skriftlig tilbud med avtalt omfang, pris og en estimert tidsplan. Arbeidet starter først når du har akseptert det." },
+          { "title": "Milepæler og gjennomgang", "text": "Der det passer, deles større prosjekter opp i milepæler. Du gjennomgår hver milepæl før vi går videre, slik at tilbakemeldingene dine er en del av leveransen." },
+          { "title": "Betalingsordninger", "text": "Betalingsvilkår — for eksempel en forskuddsdel, betaling per milepæl eller betaling ved levering — avtales for hvert prosjekt før arbeidet starter. Det finnes ingen felles betalingsregel for alle prosjekter." }
+        ],
+        "ctaTitle": "Har du en oppgave eller et prosjekt i tankene?",
+        "ctaText": "Send oss en kort beskrivelse. Vi svarer med spørsmål eller et forslag til neste steg.",
+        "cta": "Send en prosjektforespørsel"
+      }
+    }
+  },
   "about": { "eyebrow": "Om ExploreTechify", "title": "Et eksternt team for digital drift for voksende bedrifter", "subtitle": "Vi mener bedriftseiere bør bruke tiden på kunder, produkter og beslutninger — ikke på DNS-oppføringer, oppdateringer og regneark.", "missionTitle": "Vårt oppdrag", "missionText": "Å gi voksende europeiske bedrifter én pålitelig, langsiktig partner for det digitale — så de kan konsentrere seg om å drive bedriften.", "valuesTitle": "Hva vi står for", "values": [{ "title": "Klarhet", "text": "Enkelt språk, tydelig omfang og åpen rapportering." }, { "title": "Eierskap", "text": "Kontoer, data og systemer forblir dine — dokumentert og tilgjengelig." }, { "title": "Ærlighet", "text": "Vi sier hva vi er gode på, og henter inn spesialister for resten." }, { "title": "Kontinuitet", "text": "Vi bygger langsiktige relasjoner, ikke engangsprosjekter." }], "europeTitle": "Fokus på europeiske bedrifter", "europeText": "Vi jobber med oppstartsbedrifter, små og mellomstore bedrifter og lokale virksomheter i hele Europa — på flere språk og med forståelse for lokale markeder og personvernforventninger." },
   "work": { "eyebrow": "Vårt arbeid", "title": "Hvordan vi støtter bedrifter", "subtitle": "Utvalgte oppdrag og illustrerende eksempler på hvordan vi drifter den digitale siden for kundene våre.", "exampleBadge": "Eksempel", "exampleNotice": "Dette er et illustrerende eksempel på et typisk oppdrag, ikke en ekte kundecase.", "empty": "Kundecaser publiseres her snart.", "industry": "Bransje", "challenge": "Utfordring", "solution": "Løsning", "results": "Resultater", "services": "Tjenester", "technologies": "Teknologier", "testimonial": "Kundeuttalelse", "backToWork": "Tilbake til Vårt arbeid", "readCase": "Les casen" },
   "contact": {
     "eyebrow": "Kontakt", "title": "La oss samarbeide", "subtitle": "Fortell oss om bedriften din og hva du trenger. Vi svarer med et praktisk forslag til hvor dere kan starte.", "asideTitle": "Hva skjer videre",
     "asideSteps": ["Vi går gjennom meldingen og dagens tilstedeværelse på nett.", "Vi svarer innen én virkedag med spørsmål eller et forslag.", "Hvis det passer, avtaler vi en kort samtale for å forstå bedriften din."],
-    "form": { "name": "Navn", "company": "Bedrift", "email": "E-post", "phone": "Telefon", "country": "Land", "industry": "Bransje", "website": "Nettside", "need": "Hva trenger du?", "message": "Melding", "preferredContact": "Foretrukket kontaktmåte", "budget": "Budsjett", "ongoingSupport": "Interessert i løpende støtte?", "interestedServices": "Aktuelle tjenester", "optional": "valgfritt", "select": "Velg…", "submit": "Send melding", "sending": "Sender…", "successTitle": "Takk — meldingen er mottatt", "successText": "Vi tar kontakt innen én virkedag.", "error": "Noe gikk galt. Prøv igjen eller send oss en e-post direkte.", "privacy": "Vi bruker kun opplysningene dine til å svare på henvendelsen.", "needs": { "website": "En ny eller bedre nettside", "ongoing": "Løpende digital drift", "systems": "Forretningssystemer", "growth": "Vekst og synlighet", "recruitment": "Rekruttering / HR-støtte", "automation": "Automatisering", "notSure": "Usikker — la oss snakke" }, "contactMethods": { "email": "E-post", "phone": "Telefon", "video": "Videosamtale" }, "budgets": { "small": "Under 20 000 kr", "medium": "20 000 – 100 000 kr", "large": "Over 100 000 kr", "monthly": "Månedlig avtale", "unknown": "Usikker ennå" }, "yes": "Ja", "no": "Nei", "maybe": "Kanskje senere" }
+    "form": { "engagement": "Ønsket samarbeidsform", "engagements": {
+      "monthly": "Månedlig partnerskap",
+      "growth": "Vekstpartnerskap",
+      "project": "Oppdragsbasert samarbeid",
+      "notSure": "Ikke sikker ennå"
+    }, "name": "Navn", "company": "Bedrift", "email": "E-post", "phone": "Telefon", "country": "Land", "industry": "Bransje", "website": "Nettside", "need": "Hva trenger du?", "message": "Melding", "preferredContact": "Foretrukket kontaktmåte", "budget": "Budsjett", "ongoingSupport": "Interessert i løpende støtte?", "interestedServices": "Aktuelle tjenester", "optional": "valgfritt", "select": "Velg…", "submit": "Send melding", "sending": "Sender…", "successTitle": "Takk — meldingen er mottatt", "successText": "Vi tar kontakt innen én virkedag.", "error": "Noe gikk galt. Prøv igjen eller send oss en e-post direkte.", "privacy": "Vi bruker kun opplysningene dine til å svare på henvendelsen.", "needs": { "website": "En ny eller bedre nettside", "ongoing": "Løpende digital drift", "systems": "Forretningssystemer", "growth": "Vekst og synlighet", "recruitment": "Rekruttering / HR-støtte", "automation": "Automatisering", "notSure": "Usikker — la oss snakke" }, "contactMethods": { "email": "E-post", "phone": "Telefon", "video": "Videosamtale" }, "budgets": { "small": "Under 20 000 kr", "medium": "20 000 – 100 000 kr", "large": "Over 100 000 kr", "monthly": "Månedlig avtale", "unknown": "Usikker ennå" }, "yes": "Ja", "no": "Nei", "maybe": "Kanskje senere" }
   },
   "auth": {
     "email": "E-post", "password": "Passord", "name": "Ditt navn", "company": "Bedrift", "phone": "Telefon", "country": "Land", "website": "Nettside", "industry": "Bransje", "preferredLanguage": "Foretrukket språk",

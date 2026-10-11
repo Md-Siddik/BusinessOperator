@@ -26,6 +26,29 @@
     "moreThan": { "eyebrow": "Langfristige Partnerschaft", "title": "Mehr als eine Website", "subtitle": "Wenn wir Ihr Geschäft kennen, ist die nächste Anfrage ganz einfach.", "items": ["Website-Update nötig? Wir erledigen es.", "Neues Geschäftssystem nötig? Wir bauen es.", "Unterstützung beim Recruiting? Wir helfen.", "SEO-Unterstützung? Wir kümmern uns darum.", "Automatisierung? Wir setzen sie um.", "Technische Hilfe? Wir sind da."] },
     "industries": { "eyebrow": "Auf Ihr Geschäft zugeschnitten", "title": "Die passende Kombination für Ihre Branche", "subtitle": "Jedes Unternehmen braucht eine andere Mischung. Wählen Sie ein Profil für einen typischen Startpunkt.", "profiles": { "ecommerce": { "title": "E-Commerce", "text": "Online verkaufen — mit Shop, Lager- und Kundensystemen, die zusammenarbeiten." }, "technology": { "title": "Technologieunternehmen", "text": "Technische Talente gewinnen und interne Systeme betreiben, ohne das Produktteam abzulenken." }, "localBusiness": { "title": "Lokales Unternehmen", "text": "Lokal gefunden werden, online überzeugen und Anfragen in Kunden verwandeln." }, "hiring": { "title": "Unternehmen mit Personalbedarf", "text": "Strukturierte Unterstützung bei Recruiting und Onboarding, während Ihr Team wächst." }, "professional": { "title": "Professionelle Dienstleistungen", "text": "Eine glaubwürdige Präsenz, professionelle E-Mail und ein einfaches Kundenmanagement." }, "operations": { "title": "Produktion & Logistik", "text": "Bestellabläufe, Dashboards und Reporting, die manuelle Arbeit reduzieren." } } },
     "principles": { "eyebrow": "Wie wir arbeiten", "title": "Ehrlicher Umfang. Verlässliche Umsetzung.", "items": [{ "title": "Ein verantwortliches Team", "text": "Ein Ansprechpartner für das Digitale statt eines Dienstleisters pro Tool." }, { "title": "Spezialisten bei Bedarf", "text": "Wo eine Aufgabe tiefes Spezialwissen erfordert, koordinieren wir vertrauenswürdige Partner — und sagen Ihnen das vorab." }, { "title": "Auf Dauer gebaut", "text": "Wir dokumentieren, was wir bauen, damit Ihre Systeme verständlich bleiben und Ihnen gehören." }] },
+    "engagement": {
+      "eyebrow": "Formen der Zusammenarbeit",
+      "title": "Drei Wege, mit uns zu arbeiten",
+      "subtitle": "Wählen Sie das Modell der Zusammenarbeit, das heute zu Ihrem Unternehmen passt.",
+      "cta": "Details ansehen",
+      "models": {
+        "monthly": {
+          "title": "Monatliche Partnerschaft",
+          "text": "Laufende digitale und operative Unterstützung zu einer planbaren monatlichen Gebühr.",
+          "points": ["Laufende Unterstützung", "Vereinbarter monatlicher Umfang", "Langfristige Zusammenarbeit"]
+        },
+        "growth": {
+          "title": "Wachstumspartnerschaft",
+          "text": "Entdecken Sie eine ausgewählte Partnerschaft, in der wir zum Unternehmenswachstum beitragen – auf Basis einer gesondert verhandelten Vereinbarung.",
+          "points": ["Ausgewählte Möglichkeiten", "Gemeinsame Wachstumsziele", "Individuell verhandelte Konditionen"]
+        },
+        "project": {
+          "title": "Aufgabenbasierte Zusammenarbeit",
+          "text": "Beauftragen Sie uns mit einer klar definierten Aufgabe oder einem Projekt – mit vereinbartem Umfang, Preis und Lieferplan.",
+          "points": ["Klar definierter Umfang", "Vereinbarter Projektpreis", "Lieferung in Meilensteinen, wo sinnvoll"]
+        }
+      }
+    },
     "finalCta": { "title": "Wir nehmen Ihnen das Digitale ab.", "subtitle": "Erzählen Sie uns, wo Sie heute stehen. Wir schlagen einen praktischen Startpunkt vor — unverbindlich." }
   },
   "services": {
@@ -43,12 +66,73 @@
   "serviceItems": { "businessWebsite": "Unternehmenswebsite", "ecommerce": "E-Commerce", "domainHosting": "Domain & Hosting", "businessEmail": "Geschäftliche E-Mail", "googleBusinessProfile": "Google-Unternehmensprofil", "socialMediaSetup": "Social-Media-Einrichtung", "analytics": "Analytics", "basicSeo": "Grundlegendes SEO", "websiteMaintenance": "Website-Wartung", "contentUpdates": "Inhaltsaktualisierungen", "seoSupport": "SEO-Unterstützung", "socialMediaSupport": "Social-Media-Unterstützung", "technicalMaintenance": "Technische Wartung", "digitalAssetManagement": "Verwaltung digitaler Assets", "crm": "CRM", "inventoryManagement": "Lagerverwaltung", "orderManagement": "Auftragsverwaltung", "businessDashboards": "Business-Dashboards", "dataManagement": "Datenmanagement", "reporting": "Reporting", "internalTools": "Interne Tools", "workflowSystems": "Workflow-Systeme", "seo": "SEO", "localSeo": "Local SEO", "contentSupport": "Unterstützung bei Inhalten", "caseStudies": "Fallstudien", "digitalMarketingSupport": "Unterstützung im digitalen Marketing", "googleAdsSupport": "Google-Ads-Unterstützung", "conversionOptimization": "Conversion-Optimierung", "leadGenerationSystems": "Systeme zur Lead-Generierung", "recruitmentSupport": "Recruiting-Unterstützung", "candidateSourcing": "Kandidatensuche", "technicalRecruitment": "Technisches Recruiting", "hrAdministration": "HR-Administration", "employeeOnboarding": "Onboarding von Mitarbeitenden", "recruitmentWorkflow": "Recruiting-Workflow", "hrDataManagement": "HR-Datenmanagement", "businessAutomation": "Geschäftsautomatisierung", "workflowAutomation": "Workflow-Automatisierung", "aiAssistedWorkflows": "KI-gestützte Abläufe", "reportingAutomation": "Reporting-Automatisierung", "crmAutomation": "CRM-Automatisierung", "repetitiveTaskAutomation": "Automatisierung wiederkehrender Aufgaben" },
   "process": { "understand": { "title": "Verstehen", "text": "Ihr Geschäft, Ihre Ziele und Ihr aktuelles digitales Setup verstehen." }, "build": { "title": "Aufbauen", "text": "Das digitale Fundament schaffen." }, "operate": { "title": "Betreiben", "text": "Die digitale Seite kontinuierlich pflegen und unterstützen." }, "improve": { "title": "Verbessern", "text": "Chancen für Automatisierung und Effizienz erkennen." }, "scale": { "title": "Skalieren", "text": "Systeme und Unterstützung mit dem Unternehmen ausbauen." } },
   "howWeWork": { "eyebrow": "So arbeiten wir", "title": "Fünf Schritte zu einer digitalen Seite, die einfach läuft", "subtitle": "Wir übergeben kein Projekt und verschwinden. Wir bleiben, betreiben und verbessern — als Ihr externes Team für digitale Abläufe.", "details": { "understand": "Ein strukturiertes Gespräch über Ihr Geschäft, Ihre Kunden, Tools und Prioritäten. Wir prüfen Ihr aktuelles Setup und legen fest, was am wichtigsten ist.", "build": "Wir richten das Wesentliche ein oder bringen es in Ordnung — Website, Konten, E-Mail, Systeme — und dokumentieren alles im Namen Ihres Unternehmens.", "operate": "Laufende Wartung, Updates und Support. Sie senden Anfragen über Ihr Kundenportal; wir kümmern uns darum.", "improve": "Wir suchen regelmäßig nach Routinearbeit, Schwachstellen und schnellen Verbesserungen und schlagen praktische Schritte vor.", "scale": "Wenn Sie wachsen, erweitern wir Systeme, unterstützen beim Recruiting und ergänzen Fähigkeiten — mit spezialisierten Partnern, wo es sinnvoll ist." }, "partnershipTitle": "Ein Partner, viele Fähigkeiten", "partnershipText": "Unser Kernteam übernimmt die digitalen Abläufe direkt. Für Spezialaufgaben — etwa Rechts- oder Steuerfragen oder große Paid-Media-Kampagnen — koordinieren wir geprüfte Partner, sodass Sie weiterhin einen Ansprechpartner haben." },
+  "engagement": {
+    "eyebrow": "Modell der Zusammenarbeit",
+    "otherModels": "Weitere Modelle der Zusammenarbeit",
+    "models": {
+      "monthly": {
+        "title": "Monatliche Partnerschaft",
+        "subtitle": "Laufende digitale und operative Unterstützung zu einer planbaren monatlichen Gebühr – ein Team, das Ihr Unternehmen kennt und die digitale Seite am Laufen hält.",
+        "sections": [
+          { "title": "Was eine monatliche Partnerschaft bedeutet", "text": "Statt jedes Mal ein neues Projekt zu starten, wenn etwas zu tun ist, arbeiten Sie dauerhaft mit ExploreTechify zusammen. Wir vereinbaren gemeinsam einen monatlichen Umfang und erledigen die vereinbarten Aufgaben jeden Monat als ein verantwortliches Team." },
+          { "title": "Typische laufende Unterstützung", "items": ["Website-Aktualisierungen, Inhaltsänderungen und Wartung", "SEO und Pflege der digitalen Präsenz", "Geschäfts-E-Mail, Konten und Benutzerverwaltung", "Unterstützung für CRM und Geschäftssysteme", "Unterstützung bei Recruiting- und HR-Verwaltung", "Verbesserung von Automatisierungen und technischer Support", "Regelmäßige Berichte über die erledigte Arbeit"] },
+          { "title": "Umfang, Verantwortlichkeiten, Prioritäten und Kommunikation", "text": "Vor dem Start vereinbaren wir schriftlich, was der monatliche Umfang abdeckt, wer auf beiden Seiten wofür verantwortlich ist, wie Prioritäten gesetzt werden und wie und wie oft wir kommunizieren. Anfragen außerhalb des vereinbarten Umfangs besprechen wir mit Ihnen, bevor zusätzliche Arbeit beginnt." },
+          { "title": "Monatliche Gebühr und Abrechnung", "text": "Die monatliche Gebühr richtet sich nach dem vereinbarten Umfang und wird vor Arbeitsbeginn in einem schriftlichen Angebot festgehalten. Es gibt keine Standardpreisliste – Gebühr, Abrechnungsrhythmus und Zahlungsbedingungen werden individuell mit Ihnen vereinbart." },
+          { "title": "Anpassung an Veränderungen in Ihrem Unternehmen", "text": "Ihre Anforderungen ändern sich mit der Zeit. Der Umfang kann in vereinbarten Abständen gemeinsam überprüft und nach oben oder unten angepasst werden; jede Änderung von Umfang oder Gebühr wird schriftlich vereinbart." }
+        ],
+        "ctaTitle": "Besprechen Sie Ihren laufenden Bedarf",
+        "ctaText": "Erzählen Sie uns, wobei Sie heute Unterstützung brauchen. Wir schlagen einen praktischen monatlichen Umfang vor – unverbindlich.",
+        "cta": "Monatliche Partnerschaft besprechen"
+      },
+      "growth": {
+        "title": "Wachstumspartnerschaft",
+        "subtitle": "Eine ausgewählte Partnerschaft, in der wir zum Unternehmenswachstum beitragen – auf Basis einer gesondert verhandelten Vereinbarung.",
+        "sections": [
+          { "title": "Der Zweck einer Wachstumspartnerschaft", "text": "Manche Unternehmen haben großes Potenzial, brauchen aber mehr als einen Dienstleister, um es zu nutzen. In ausgewählten Fällen kann ExploreTechify eine verbindlichere Rolle übernehmen und gemeinsam mit den Inhabern auf gemeinsame Wachstumsziele hinarbeiten." },
+          { "title": "Was wir einbringen können", "items": ["Technische Entwicklung und digitale Systeme", "Digitale Präsenz, Marketing-Unterstützung und SEO", "Operative Struktur, Prozesse und Automatisierung", "Unterstützung beim Unternehmensaufbau, etwa bei Recruiting und Reporting"] },
+          { "title": "Jede Möglichkeit wird einzeln geprüft", "text": "Eine Wachstumspartnerschaft ist kein Standardpaket und steht nicht jedem Kunden offen. Jede Möglichkeit wird für sich geprüft – das Unternehmen, seine Pläne, die beteiligten Personen und ob es passt. Der Start eines Projekts mit uns begründet für sich allein keine Partnerschaft." },
+          {
+            "title": "Mögliche Strukturen",
+            "text": "Wird eine Partnerschaft vereinbart, wird ihre Struktur gesondert verhandelt. Jede Option hat unterschiedliche rechtliche, steuerliche und wirtschaftliche Folgen.",
+            "structures": [
+              { "title": "Gewinnbeteiligung", "text": "Wir erhalten für einen vereinbarten Zeitraum einen vereinbarten Anteil am Gewinn oder Umsatz aus einer festgelegten Tätigkeit. Dies ist eine vertragliche Vereinbarung – sie verschafft uns kein Eigentum am Unternehmen." },
+              { "title": "Eigenkapital / Gesellschaftsanteile", "text": "Wir werden Gesellschafter, indem wir Anteile am Unternehmen erwerben. Das bringt Eigentumsrechte und -pflichten mit sich und erfordert eine Bewertung, gesellschaftsrechtliche Dokumentation und die Einhaltung des geltenden Gesellschaftsrechts." },
+              { "title": "Hybride Vereinbarung", "text": "Eine Kombination – zum Beispiel eine reduzierte Gebühr zusammen mit Gewinnbeteiligung oder Eigenkapital. Jedes Element wird gesondert festgelegt und dokumentiert." }
+            ]
+          },
+          { "title": "Wichtig zu wissen", "items": ["Eine Beteiligung, Investition oder Gewinnbeteiligung ist nicht garantiert.", "ExploreTechify investiert nicht automatisch in das Unternehmen eines Kunden und erhält durch den Start eines Projekts nicht automatisch Anteile.", "Verantwortlichkeiten, Bewertung, Eigentum, Entscheidungsbefugnisse, Risiko und weitere Bedingungen erfordern eine gesonderte Prüfung (Due Diligence) und, wo zutreffend, schriftliche Vereinbarungen.", "Wir empfehlen beiden Seiten, unabhängigen rechtlichen und finanziellen Rat einzuholen."] }
+        ],
+        "ctaTitle": "Könnte es passen?",
+        "ctaText": "Erzählen Sie uns von Ihrem Unternehmen und wohin Sie es entwickeln möchten. Wir sagen Ihnen ehrlich, ob eine Wachstumspartnerschaft sinnvoll ist.",
+        "cta": "Wachstumspartnerschaft besprechen"
+      },
+      "project": {
+        "title": "Aufgabenbasierte Zusammenarbeit",
+        "subtitle": "Beauftragen Sie uns mit einer klar definierten Aufgabe oder einem Projekt – mit vereinbartem Umfang, Preis und Lieferplan.",
+        "sections": [
+          { "title": "Eine Aufgabe oder ein Projekt anfragen", "text": "Sagen Sie uns, was Sie brauchen – zum Beispiel eine neue Website, eine bestimmte Integration, eine Automatisierung oder eine einmalige Einrichtung. Teilen Sie den Kontext, den Sie haben; eine kurze Beschreibung genügt für den Anfang." },
+          { "title": "Anforderungen und Ergebnisse festlegen", "text": "Wir prüfen Ihre Anfrage, stellen Rückfragen und vereinbaren bei Bedarf ein kurzes Gespräch. Gemeinsam legen wir die Anforderungen fest, was geliefert wird und was nicht zum Umfang gehört." },
+          { "title": "Angebot, Umfang und Zeitplan", "text": "Sie erhalten ein schriftliches Angebot mit dem vereinbarten Umfang, dem Preis und einem geschätzten Zeitplan. Die Arbeit beginnt erst, wenn Sie es angenommen haben." },
+          { "title": "Meilensteine und Abnahme", "text": "Wo sinnvoll, werden größere Projekte in Meilensteine aufgeteilt. Sie prüfen jeden Meilenstein, bevor wir weitermachen, sodass Ihr Feedback fester Teil der Umsetzung ist." },
+          { "title": "Zahlungsvereinbarungen", "text": "Zahlungsbedingungen – zum Beispiel eine Anzahlung, Zahlung pro Meilenstein oder Zahlung bei Lieferung – werden für jedes Projekt vor Arbeitsbeginn vereinbart. Es gibt keine einheitliche Zahlungsregel für alle Projekte." }
+        ],
+        "ctaTitle": "Sie haben eine Aufgabe oder ein Projekt im Kopf?",
+        "ctaText": "Senden Sie uns eine kurze Beschreibung. Wir antworten mit Rückfragen oder einem Vorschlag für den nächsten Schritt.",
+        "cta": "Projektanfrage senden"
+      }
+    }
+  },
   "about": { "eyebrow": "Über ExploreTechify", "title": "Ein externes Team für digitale Abläufe wachsender Unternehmen", "subtitle": "Wir glauben, dass Unternehmer ihre Zeit für Kunden, Produkte und Entscheidungen nutzen sollten — nicht für DNS-Einträge, Plugin-Updates und Tabellen.", "missionTitle": "Unsere Mission", "missionText": "Wachsenden europäischen Unternehmen einen verlässlichen, langfristigen Partner für das Digitale zu geben — damit sie sich auf ihr Geschäft konzentrieren können.", "valuesTitle": "Wofür wir stehen", "values": [{ "title": "Klarheit", "text": "Verständliche Sprache, klarer Umfang und transparente Berichte." }, { "title": "Eigentum", "text": "Ihre Konten, Daten und Systeme bleiben Ihre — dokumentiert und zugänglich." }, { "title": "Ehrlichkeit", "text": "Wir sagen, was wir gut können, und holen Spezialisten für den Rest." }, { "title": "Kontinuität", "text": "Wir bauen langfristige Beziehungen auf, keine Einmalprojekte." }], "europeTitle": "Fokus auf europäische Unternehmen", "europeText": "Wir arbeiten mit Start-ups, KMU und lokalen Unternehmen in ganz Europa — mehrsprachig und mit Verständnis für lokale Märkte und Datenschutzerwartungen." },
   "work": { "eyebrow": "Unsere Arbeit", "title": "Wie wir Unternehmen unterstützen", "subtitle": "Ausgewählte Projekte und anschauliche Beispiele, wie wir die digitale Seite für unsere Kunden betreiben.", "exampleBadge": "Beispiel", "exampleNotice": "Dies ist ein veranschaulichendes Beispiel einer typischen Zusammenarbeit, keine echte Kundenfallstudie.", "empty": "Fallstudien werden hier in Kürze veröffentlicht.", "industry": "Branche", "challenge": "Herausforderung", "solution": "Lösung", "results": "Ergebnisse", "services": "Leistungen", "technologies": "Technologien", "testimonial": "Kundenstimme", "backToWork": "Zurück zu Unsere Arbeit", "readCase": "Fallstudie lesen" },
   "contact": {
     "eyebrow": "Kontakt", "title": "Lassen Sie uns zusammenarbeiten", "subtitle": "Erzählen Sie uns von Ihrem Unternehmen und Ihrem Bedarf. Wir antworten mit einem praktischen Vorschlag für den Einstieg.", "asideTitle": "Wie es weitergeht",
     "asideSteps": ["Wir prüfen Ihre Nachricht und Ihre aktuelle Online-Präsenz.", "Wir antworten innerhalb eines Werktags mit Fragen oder einem Vorschlag.", "Wenn es passt, vereinbaren wir ein kurzes Gespräch, um Ihr Geschäft zu verstehen."],
-    "form": { "name": "Name", "company": "Unternehmen", "email": "E-Mail", "phone": "Telefon", "country": "Land", "industry": "Branche", "website": "Website", "need": "Was brauchen Sie?", "message": "Nachricht", "preferredContact": "Bevorzugter Kontaktweg", "budget": "Budget", "ongoingSupport": "Interesse an laufender Unterstützung?", "interestedServices": "Interessante Leistungen", "optional": "optional", "select": "Auswählen…", "submit": "Nachricht senden", "sending": "Wird gesendet…", "successTitle": "Vielen Dank — Nachricht erhalten", "successText": "Wir melden uns innerhalb eines Werktags bei Ihnen.", "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt.", "privacy": "Wir verwenden Ihre Angaben nur zur Beantwortung Ihrer Anfrage.", "needs": { "website": "Eine neue oder bessere Website", "ongoing": "Laufende digitale Abläufe", "systems": "Geschäftssysteme", "growth": "Wachstum & Sichtbarkeit", "recruitment": "Recruiting / HR-Unterstützung", "automation": "Automatisierung", "notSure": "Noch unklar — lassen Sie uns sprechen" }, "contactMethods": { "email": "E-Mail", "phone": "Telefon", "video": "Videoanruf" }, "budgets": { "small": "Unter 2.000 €", "medium": "2.000 – 10.000 €", "large": "Über 10.000 €", "monthly": "Monatliche Pauschale", "unknown": "Noch unklar" }, "yes": "Ja", "no": "Nein", "maybe": "Vielleicht später" }
+    "form": { "engagement": "Bevorzugtes Modell der Zusammenarbeit", "engagements": {
+      "monthly": "Monatliche Partnerschaft",
+      "growth": "Wachstumspartnerschaft",
+      "project": "Aufgabenbasierte Zusammenarbeit",
+      "notSure": "Noch unsicher"
+    }, "name": "Name", "company": "Unternehmen", "email": "E-Mail", "phone": "Telefon", "country": "Land", "industry": "Branche", "website": "Website", "need": "Was brauchen Sie?", "message": "Nachricht", "preferredContact": "Bevorzugter Kontaktweg", "budget": "Budget", "ongoingSupport": "Interesse an laufender Unterstützung?", "interestedServices": "Interessante Leistungen", "optional": "optional", "select": "Auswählen…", "submit": "Nachricht senden", "sending": "Wird gesendet…", "successTitle": "Vielen Dank — Nachricht erhalten", "successText": "Wir melden uns innerhalb eines Werktags bei Ihnen.", "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie uns direkt.", "privacy": "Wir verwenden Ihre Angaben nur zur Beantwortung Ihrer Anfrage.", "needs": { "website": "Eine neue oder bessere Website", "ongoing": "Laufende digitale Abläufe", "systems": "Geschäftssysteme", "growth": "Wachstum & Sichtbarkeit", "recruitment": "Recruiting / HR-Unterstützung", "automation": "Automatisierung", "notSure": "Noch unklar — lassen Sie uns sprechen" }, "contactMethods": { "email": "E-Mail", "phone": "Telefon", "video": "Videoanruf" }, "budgets": { "small": "Unter 2.000 €", "medium": "2.000 – 10.000 €", "large": "Über 10.000 €", "monthly": "Monatliche Pauschale", "unknown": "Noch unklar" }, "yes": "Ja", "no": "Nein", "maybe": "Vielleicht später" }
   },
   "auth": {
     "email": "E-Mail", "password": "Passwort", "name": "Ihr Name", "company": "Unternehmen", "phone": "Telefon", "country": "Land", "website": "Website", "industry": "Branche", "preferredLanguage": "Bevorzugte Sprache",
