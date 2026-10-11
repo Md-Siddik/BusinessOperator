@@ -20,12 +20,16 @@ import {
   Globe2,
   Inbox,
   KanbanSquare,
+  Landmark,
   LayoutDashboard,
   LifeBuoy,
   Mail,
+  Radar,
   Menu,
   MessageSquare,
   ScrollText,
+  BadgeCheck,
+  Activity,
   Send,
   Settings,
   ShieldCheck,
@@ -67,6 +71,11 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   settings: Settings,
   profile: UserCircle,
   documents: Briefcase,
+  radar: Radar,
+  hiring: Briefcase,
+  procurement: Landmark,
+  verify: BadgeCheck,
+  health: Activity,
 };
 
 export type NavItem = {

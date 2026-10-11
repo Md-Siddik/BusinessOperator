@@ -31,6 +31,7 @@ export async function fastTick(log: (m: string) => void = (m) => console.info(`[
   const { runLiveFeeds } = await import("./live");
   const feeds = await runLiveFeeds(log);
   await import("@/features/research/engine"); // registers the "research" job handler
+  await import("@/features/opportunities/sync"); // registers owner-only opportunity sync / check handlers
   const { processDueJobs } = await import("@/features/jobs/queue");
   const jobs = await processDueJobs({ concurrency: Number(process.env.RESEARCH_CONCURRENCY || 2), budgetMs: Math.max(10_000, FAST_MS - 5_000) });
   if (jobs.processed || jobs.failed) log(`jobs: ${jobs.processed} done, ${jobs.failed} failed`);
@@ -54,6 +55,15 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
   if (queued) log(`research backfill: ${queued} companies queued`);
   const { dispatchDueFollowUpReminders } = await import("@/features/crm/service");
   await dispatchDueFollowUpReminders();
+  if (process.env.OPPORTUNITY_SCHEDULER !== "off") {
+    // Owner-only Verified Opportunity Intelligence feeds. Isolated: a failure here never blocks registry work.
+    try {
+      const { opportunityTick } = await import("@/features/opportunities/sync");
+      await opportunityTick((m) => log(`opportunities: ${m}`));
+    } catch (err) {
+      log(`opportunities: tick failed — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
   const { startCompaniesHouseStream } = await import("./companies-house-stream");
   startCompaniesHouseStream();
   return { syncs, queued };

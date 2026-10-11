@@ -30,3 +30,5 @@ export * from "./ProviderUsage";
 export * from "./InboxItem";
 export * from "./ServicePackage";
 export * from "./Quotation";
+export * from "./Opportunity";
+export * from "./OpportunityFeed";

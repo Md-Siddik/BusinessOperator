@@ -1,8 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { can, isInternal, type Actor, type Permission } from "@/lib/permissions";
+import { notFound, redirect } from "next/navigation";
+import { can, isInternal, isOwner, type Actor, type Permission } from "@/lib/permissions";
 import { isActiveSessionUser, loadSessionUser } from "./actor";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, signSession, verifySession, type SessionPayload } from "./token";
 
@@ -44,6 +44,18 @@ export async function requireInternalPage(permission?: Permission): Promise<Acto
   if (!isInternal(user.actor)) redirect("/portal");
   if (!isActiveSessionUser(user)) redirect("/login");
   if (permission && !can(user.actor, permission)) redirect("/dashboard?denied=1");
+  return user.actor;
+}
+
+/**
+ * For owner-only pages: any other role (ADMIN, STAFF, CLIENT) gets a plain 404,
+ * so the page's existence and contents are never disclosed.
+ */
+export async function requireOwnerPage(): Promise<Actor> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/dashboard");
+  if (!isActiveSessionUser(user)) redirect("/login");
+  if (!isOwner(user.actor)) notFound();
   return user.actor;
 }
 

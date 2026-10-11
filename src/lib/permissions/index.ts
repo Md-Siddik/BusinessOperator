@@ -68,6 +68,15 @@ export function isInternal(actor: Pick<Actor, "role"> | null | undefined): boole
   return !!actor && INTERNAL_ROLES.includes(actor.role);
 }
 
+/**
+ * Owner-only areas (e.g. Verified Opportunity Intelligence) are gated on the
+ * account's actual role — deliberately NOT a grantable permission, so it can
+ * never be delegated to ADMIN/STAFF through the permission editor.
+ */
+export function isOwner(actor: Pick<Actor, "role"> | null | undefined): boolean {
+  return actor?.role === "OWNER";
+}
+
 export function isClient(actor: Pick<Actor, "role"> | null | undefined): boolean {
   return actor?.role === "CLIENT";
 }

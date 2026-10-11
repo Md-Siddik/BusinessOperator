@@ -8,12 +8,13 @@ import { NotificationBell, UserMenu } from "@/components/app/topbar-widgets";
 import { requireInternalPage } from "@/lib/auth/session";
 import { isDemoModeEnabled } from "@/lib/data-mode";
 import { navHint } from "@/lib/integration-state";
-import { can } from "@/lib/permissions";
+import { can, isOwner } from "@/lib/permissions";
 import { listCountryCards } from "@/features/companies/registrations";
 import { getEnabledCountries } from "@/features/countries/service";
 import { unreadConversationCount } from "@/features/chat/service";
 import { unreadNotificationCount } from "@/features/notifications/service";
 import { resolveCountry } from "@/features/site/country-context";
+import { opportunityNavCounts } from "@/features/opportunities/service";
 import { Contact, InboxItem } from "@/models";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +75,22 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         { href: `/dashboard/crm/pipeline${q}`, label: "Pipeline", icon: "pipeline", match: "/dashboard/crm/pipeline" },
         { href: `/dashboard/crm/follow-ups${q}`, label: "Follow-ups", icon: "followups", match: "/dashboard/crm/follow-ups" },
         { href: "/dashboard/quotations", label: "Quotations", icon: "templates" },
+      ],
+    });
+  }
+  if (isOwner(actor)) {
+    // Owner-only module: rendered only for the OWNER role (pages and APIs enforce the same rule server-side).
+    const opp = await opportunityNavCounts(actor).catch(() => ({ review: 0, saved: 0 }));
+    groups.push({
+      title: "Opportunity Intelligence",
+      items: [
+        { href: "/dashboard/opportunities", label: "Opportunity overview", icon: "radar", exact: true },
+        { href: "/dashboard/opportunities/hiring", label: "Hiring intelligence", icon: "hiring" },
+        { href: "/dashboard/opportunities/procurement", label: "Service & projects", icon: "procurement" },
+        { href: "/dashboard/opportunities/review", label: "Verification queue", icon: "verify", meta: opp.review ? String(opp.review) : undefined, metaTitle: "Opportunities awaiting manual review" },
+        { href: "/dashboard/opportunities/saved", label: "Saved opportunities", icon: "saved", meta: opp.saved ? String(opp.saved) : undefined, metaTitle: "Saved opportunities" },
+        { href: "/dashboard/opportunities/sources", label: "Opportunity sources", icon: "sources" },
+        { href: "/dashboard/opportunities/health", label: "Sync health", icon: "health" },
       ],
     });
   }

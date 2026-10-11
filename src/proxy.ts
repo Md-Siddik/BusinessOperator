@@ -24,6 +24,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     if (pathname.startsWith("/dashboard") && session.role === "CLIENT") return NextResponse.redirect(new URL("/portal", request.url));
+    // Owner-only module: other roles get a plain 404 before any rendering (pages and APIs re-check server-side).
+    if ((pathname === "/dashboard/opportunities" || pathname.startsWith("/dashboard/opportunities/")) && session.role !== "OWNER") {
+      return new NextResponse("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
+    }
     if (pathname.startsWith("/portal") && session.role !== "CLIENT") return NextResponse.redirect(new URL("/dashboard", request.url));
     return NextResponse.next();
   }
