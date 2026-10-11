@@ -20,6 +20,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     { items: [{ href: "/portal", label: "Overview", icon: "overview" }] },
     {
       title: "Workspace",
+      collapsible: true,
       items: [
         { href: "/portal/messages", label: "Messages", icon: "messages", badge: "messages" },
         { href: "/portal/requests", label: "Requests", icon: "queue" },
@@ -31,6 +32,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     },
     {
       title: "Account",
+      collapsible: true,
       items: [
         { href: "/portal/notifications", label: "Notifications", icon: "notifications", badge: "notifications" },
         { href: "/portal/profile", label: "Company & profile", icon: "profile" },
