@@ -10,6 +10,7 @@ import { Drawer } from "@/components/ui/overlay";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { LanguageSwitcher } from "./language-switcher";
+import { AuthButton } from "./auth-button";
 
 export type HeaderLabels = {
   home: string;
@@ -62,12 +63,8 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
           <div className="hidden sm:block">
             <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} compact />
           </div>
-          <Link href={lp("/login")} className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink-700 hover:text-ink-900 md:inline-flex">
-            {labels.clientLogin}
-          </Link>
-          <ButtonLink href={lp("/signup")} size="sm" variant="outline" className="hidden md:inline-flex">
-            {labels.signup}
-          </ButtonLink>
+          {/* One auth button: "Login" for signed-in / returning visitors (opens their own area), "Sign up" for new visitors. */}
+          <AuthButton loginHref={lp("/login")} signupHref={lp("/signup")} loginLabel={labels.clientLogin} signupLabel={labels.signup} className="hidden md:inline-flex" />
           <ButtonLink href={lp("/contact")} size="sm" className="hidden sm:inline-flex">
             {labels.cta}
           </ButtonLink>
@@ -93,15 +90,10 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
               {n.label}
             </Link>
           ))}
-          <Link href={lp("/login")} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-base font-medium text-ink-800 hover:bg-ink-50">
-            {labels.clientLogin}
-          </Link>
-          <Link href={lp("/signup")} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-base font-medium text-ink-800 hover:bg-ink-50">
-            {labels.signup}
-          </Link>
         </nav>
         <div className="space-y-3 border-t border-ink-100 p-4">
           <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} />
+          <AuthButton loginHref={lp("/login")} signupHref={lp("/signup")} loginLabel={labels.clientLogin} signupLabel={labels.signup} className="h-11 w-full" onNavigate={() => setOpen(false)} />
           <ButtonLink href={lp("/contact")} className="w-full" onClick={() => setOpen(false)}>
             {labels.cta} <ArrowRight className="h-4 w-4" />
           </ButtonLink>

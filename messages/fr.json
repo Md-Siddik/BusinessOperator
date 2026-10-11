@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Choisir un nouveau mot de passe", "description": "Définissez un nouveau mot de passe pour votre compte." }
     }
   },
-  "nav": { "home": "Accueil", "services": "Services", "howWeWork": "Notre méthode", "about": "À propos", "work": "Nos réalisations", "contact": "Contact", "clientLogin": "Espace client", "language": "Langue", "openMenu": "Ouvrir le menu", "closeMenu": "Fermer le menu", "skipToContent": "Aller au contenu", "mainNavigation": "Navigation principale", "signup": "S'inscrire" },
+  "nav": { "home": "Accueil", "services": "Services", "howWeWork": "Notre méthode", "about": "À propos", "work": "Nos réalisations", "contact": "Contact", "clientLogin": "Connexion", "language": "Langue", "openMenu": "Ouvrir le menu", "closeMenu": "Fermer le menu", "skipToContent": "Aller au contenu", "mainNavigation": "Navigation principale", "signup": "S'inscrire" },
   "cta": { "letsWorkTogether": "Travaillons ensemble", "exploreServices": "Découvrir les services", "exploreOurServices": "Découvrir nos services", "talkToTeam": "Parler à notre équipe", "needOngoingSupport": "Besoin d'un accompagnement continu ? Parlons-en.", "learnMore": "En savoir plus", "viewService": "Voir le service" },
   "home": {
     "hero": { "eyebrow": "Partenaire des opérations digitales et métier", "titleStart": "Vous gérez l'entreprise.", "titleEnd": "Nous gérons le digital.", "subtitle": "Des sites web et de la présence digitale aux systèmes de gestion, au recrutement, à l'automatisation et au support technique continu, ExploreTechify agit comme une équipe externe d'opérations digitales pour les entreprises en croissance.", "note": "Un partenaire durable pour le volet digital de votre entreprise." },
@@ -163,6 +163,9 @@
     "you": "Vous",
     "team": "ExploreTechify",
     "error": "Le message n'a pas pu être envoyé. Veuillez réessayer.",
-    "fullInbox": "Ouvrir toute la boîte de réception"
+    "fullInbox": "Ouvrir toute la boîte de réception",
+    "teamTitle": "Messages clients",
+    "noConversations": "Aucune conversation client pour le moment. Les nouveaux messages apparaissent ici instantanément.",
+    "back": "Retour aux conversations"
   }
 }

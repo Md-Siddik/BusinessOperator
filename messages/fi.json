@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Valitse uusi salasana", "description": "Aseta tilillesi uusi salasana." }
     }
   },
-  "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Asiakaskirjautuminen", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio", "signup": "Rekisteröidy" },
+  "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Kirjaudu", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio", "signup": "Rekisteröidy" },
   "cta": { "letsWorkTogether": "Tehdään yhteistyötä", "exploreServices": "Tutustu palveluihin", "exploreOurServices": "Tutustu palveluihimme", "talkToTeam": "Keskustele tiimimme kanssa", "needOngoingSupport": "Tarvitsetko jatkuvaa tukea? Jutellaan.", "learnMore": "Lue lisää", "viewService": "Katso palvelu" },
   "home": {
     "hero": { "eyebrow": "Digitaalisen ja liiketoiminnan toiminnan kumppani", "titleStart": "Sinä pyörität liiketoimintaa.", "titleEnd": "Me hoidamme digitaalisen puolen.", "subtitle": "Verkkosivuista ja digitaalisesta näkyvyydestä liiketoimintajärjestelmiin, rekrytointiin, automaatioon ja jatkuvaan tekniseen tukeen — ExploreTechify toimii kasvavien yritysten ulkoisena digitaalisen toiminnan tiiminä.", "note": "Yksi pitkäaikainen kumppani yrityksesi digitaaliselle puolelle." },
@@ -163,6 +163,9 @@
     "you": "Sinä",
     "team": "ExploreTechify",
     "error": "Viestiä ei voitu lähettää. Yritä uudelleen.",
-    "fullInbox": "Avaa kaikki viestit"
+    "fullInbox": "Avaa kaikki viestit",
+    "teamTitle": "Asiakasviestit",
+    "noConversations": "Ei vielä asiakaskeskusteluja. Uudet viestit näkyvät täällä heti.",
+    "back": "Takaisin keskusteluihin"
   }
 }

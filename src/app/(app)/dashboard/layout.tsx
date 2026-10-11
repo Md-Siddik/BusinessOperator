@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { AppShell, type NavGroup } from "@/components/app/app-shell";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { CountrySwitcher } from "@/components/app/country-switcher";
 import { GlobalSearch } from "@/components/app/global-search";
 import { LiveCountsProvider } from "@/components/app/live-counts";
@@ -167,6 +168,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             </div>
           )}
           {children}
+          {/* Live chat: answer client conversations from the message icon. */}
+          <ChatWidget />
         </>
       </AppShell>
     </LiveCountsProvider>

@@ -6,6 +6,7 @@ import { CheckCircle2 } from "lucide-react";
 import { INDUSTRIES } from "@/config/industries";
 import { LANGUAGES, localizedPath } from "@/config/languages";
 import { apiFetch, ApiError } from "@/lib/api/client";
+import { rememberAccount } from "./auth-button";
 import { createTranslator, type Messages } from "@/lib/i18n/translator";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/form";
@@ -43,6 +44,7 @@ export function LoginForm({ locale, messages, next }: { locale: string; messages
     const fd = new FormData(e.currentTarget);
     run(async () => {
       const res = await apiFetch<{ redirect: string }>("/api/auth/login", { body: { email: fd.get("email"), password: fd.get("password"), next } });
+      rememberAccount();
       window.location.assign(res.redirect);
     }, t("auth.login.invalid"));
   }
@@ -83,6 +85,7 @@ export function SignupForm({ locale, messages }: { locale: string; messages: Mes
     const body = Object.fromEntries(new FormData(e.currentTarget).entries());
     run(async () => {
       await apiFetch("/api/auth/signup", { body });
+      rememberAccount();
       setDone(true);
     }, t("contact.form.error"));
   }

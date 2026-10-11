@@ -15,7 +15,7 @@
       "resetPassword": { "title": "Neues Passwort wählen", "description": "Legen Sie ein neues Passwort für Ihr Konto fest." }
     }
   },
-  "nav": { "home": "Start", "services": "Leistungen", "howWeWork": "So arbeiten wir", "about": "Über uns", "work": "Unsere Arbeit", "contact": "Kontakt", "clientLogin": "Kunden-Login", "language": "Sprache", "openMenu": "Menü öffnen", "closeMenu": "Menü schließen", "skipToContent": "Zum Inhalt springen", "mainNavigation": "Hauptnavigation", "signup": "Registrieren" },
+  "nav": { "home": "Start", "services": "Leistungen", "howWeWork": "So arbeiten wir", "about": "Über uns", "work": "Unsere Arbeit", "contact": "Kontakt", "clientLogin": "Anmelden", "language": "Sprache", "openMenu": "Menü öffnen", "closeMenu": "Menü schließen", "skipToContent": "Zum Inhalt springen", "mainNavigation": "Hauptnavigation", "signup": "Registrieren" },
   "cta": { "letsWorkTogether": "Lassen Sie uns zusammenarbeiten", "exploreServices": "Leistungen entdecken", "exploreOurServices": "Unsere Leistungen entdecken", "talkToTeam": "Mit unserem Team sprechen", "needOngoingSupport": "Laufende Unterstützung gewünscht? Sprechen wir darüber.", "learnMore": "Mehr erfahren", "viewService": "Leistung ansehen" },
   "home": {
     "hero": { "eyebrow": "Partner für digitale & geschäftliche Abläufe", "titleStart": "Sie führen das Geschäft.", "titleEnd": "Wir übernehmen das Digitale.", "subtitle": "Von Websites und digitaler Präsenz über Geschäftssysteme, Recruiting und Automatisierung bis zum laufenden technischen Support: ExploreTechify arbeitet als externes Team für digitale Abläufe wachsender Unternehmen.", "note": "Ein langfristiger Partner für die digitale Seite Ihres Unternehmens." },
@@ -163,6 +163,9 @@
     "you": "Sie",
     "team": "ExploreTechify",
     "error": "Die Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.",
-    "fullInbox": "Gesamten Posteingang öffnen"
+    "fullInbox": "Gesamten Posteingang öffnen",
+    "teamTitle": "Kundennachrichten",
+    "noConversations": "Noch keine Kundengespräche. Neue Nachrichten erscheinen hier sofort.",
+    "back": "Zurück zu den Gesprächen"
   }
 }

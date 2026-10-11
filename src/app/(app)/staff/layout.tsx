@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell, type NavGroup } from "@/components/app/app-shell";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { LiveCountsProvider } from "@/components/app/live-counts";
 import { NotificationBell, UserMenu } from "@/components/app/topbar-widgets";
 import { requireStaffPage } from "@/lib/auth/session";
@@ -56,7 +57,11 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   return (
     <LiveCountsProvider initial={{ messages, notifications }}>
       <AppShell groups={groups} brandLabel="Staff workspace" homeHref="/staff" topbar={topbar}>
-        {children}
+        <>
+          {children}
+          {/* Live chat: answer client conversations from the message icon. */}
+          <ChatWidget />
+        </>
       </AppShell>
     </LiveCountsProvider>
   );

@@ -17,6 +17,9 @@ export type ChatWidgetLabels = {
   team: string;
   error: string;
   fullInbox: string;
+  teamTitle: string;
+  noConversations: string;
+  back: string;
 };
 
 export const DEFAULT_CHAT_LABELS: ChatWidgetLabels = {
@@ -37,4 +40,7 @@ export const DEFAULT_CHAT_LABELS: ChatWidgetLabels = {
   team: "ExploreTechify",
   error: "Message could not be sent. Please try again.",
   fullInbox: "Open full inbox",
+  teamTitle: "Client messages",
+  noConversations: "No client conversations yet. New messages appear here instantly.",
+  back: "Back to conversations",
 };

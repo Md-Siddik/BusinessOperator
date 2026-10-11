@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getSessionUser, homeFor } from "@/lib/auth/session";
+import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext } from "@/features/site/context";
 import { LoginForm } from "@/components/site/auth-forms";
@@ -11,7 +14,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return buildMetadata({ locale, path: "/login", title: t("meta.pages.login.title"), description: t("meta.pages.login.description"), enabledLanguages, noIndex: true });
 }
 
+
+/** Already signed in? Go straight to your own area (owner dashboard, staff workspace or client portal). */
+async function redirectIfSignedIn() {
+  const user = await getSessionUser();
+  if (!user) return;
+  if (isActiveSessionUser(user)) redirect(homeFor(user.role));
+  if (isPendingClientUser(user)) redirect("/portal/pending");
+}
+
 export default async function LoginPage({ params, searchParams }: Props) {
+  await redirectIfSignedIn();
   const { locale } = await params;
   const { next } = await searchParams;
   const { t, messages } = await getPublicContext(locale);

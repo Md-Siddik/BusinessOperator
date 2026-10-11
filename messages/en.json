@@ -55,7 +55,7 @@
     "about": "About",
     "work": "Our Work",
     "contact": "Contact",
-    "clientLogin": "Client Login",
+    "clientLogin": "Login",
     "language": "Language",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -629,6 +629,9 @@
     "you": "You",
     "team": "ExploreTechify",
     "error": "Message could not be sent. Please try again.",
-    "fullInbox": "Open full inbox"
+    "fullInbox": "Open full inbox",
+    "teamTitle": "Client messages",
+    "noConversations": "No client conversations yet. New messages appear here instantly.",
+    "back": "Back to conversations"
   }
 }
