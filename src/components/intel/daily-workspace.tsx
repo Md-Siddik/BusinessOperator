@@ -61,28 +61,32 @@ function QuickStat({ label, value, href, active }: { label: string; value: numbe
 function Timeline({ data, selectedDay, hrefFor }: { data: RegistrationOverview["timeline"]; selectedDay?: string; hrefFor: (day: string) => string }) {
   const max = Math.max(1, ...data.map((d) => d.count ?? 0));
   return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-4">
-      <div className="mb-3 flex items-baseline justify-between">
+    // On lg+ the panel fills the row the summary sizes (h-0 + min-h-full adds no height of its own);
+    // the day list scrolls inside it, opening at the most recent days (column-reverse anchors the end).
+    <div className="rounded-2xl border border-ink-200 bg-white p-4 lg:flex lg:h-0 lg:min-h-full lg:flex-col">
+      <div className="mb-3 flex shrink-0 items-baseline justify-between">
         <h2 className="text-sm font-semibold text-ink-900">Daily registrations</h2>
         <span className="text-xs text-ink-500">Last 14 days · click a day</span>
       </div>
-      <ol className="space-y-0.5">
-        {data.map((d) => {
-          const active = d.date === selectedDay;
-          return (
-            <li key={d.date}>
-              <Link href={hrefFor(d.date)} className={cn("grid grid-cols-[5.5rem_1fr_3rem] items-center gap-2 rounded-md px-1.5 py-1 text-xs hover:bg-ink-50", active && "bg-brand-50 ring-1 ring-brand-200")} aria-current={active || undefined}>
-                <span className={cn("tabular-nums", active ? "font-semibold text-brand-800" : "text-ink-600")}>{formatDay(d.date, { weekday: "short", day: "numeric", month: "short" })}</span>
-                <span className="h-2.5 rounded-full bg-ink-100" aria-hidden>
-                  {d.count !== null && <span className="block h-full rounded-full bg-brand-500" style={{ width: `${Math.max(d.count ? 3 : 0, (d.count / max) * 100)}%` }} />}
-                </span>
-                <span className="text-right font-medium tabular-nums text-ink-900">{d.count === null ? <span className="font-normal text-ink-400">—</span> : formatNumber(d.count)}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="mt-2 text-[11px] text-ink-400">“—” = day not synced yet.</p>
+      <div className="scroll-thin lg:flex lg:min-h-0 lg:flex-1 lg:flex-col-reverse lg:overflow-y-auto lg:p-px">
+        <ol className="space-y-0.5 lg:mb-auto">
+          {data.map((d) => {
+            const active = d.date === selectedDay;
+            return (
+              <li key={d.date}>
+                <Link href={hrefFor(d.date)} className={cn("grid grid-cols-[5.5rem_1fr_3rem] items-center gap-2 rounded-md px-1.5 py-1 text-xs hover:bg-ink-50", active && "bg-brand-50 ring-1 ring-brand-200")} aria-current={active || undefined}>
+                  <span className={cn("tabular-nums", active ? "font-semibold text-brand-800" : "text-ink-600")}>{formatDay(d.date, { weekday: "short", day: "numeric", month: "short" })}</span>
+                  <span className="h-2.5 rounded-full bg-ink-100" aria-hidden>
+                    {d.count !== null && <span className="block h-full rounded-full bg-brand-500" style={{ width: `${Math.max(d.count ? 3 : 0, (d.count / max) * 100)}%` }} />}
+                  </span>
+                  <span className="text-right font-medium tabular-nums text-ink-900">{d.count === null ? <span className="font-normal text-ink-400">—</span> : formatNumber(d.count)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      <p className="mt-2 shrink-0 text-[11px] text-ink-400">“—” = day not synced yet.</p>
     </div>
   );
 }
@@ -260,7 +264,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="min-w-0 space-y-3">
+        <div className="min-w-0 space-y-3 xl:flex-1">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">Company Intelligence{mode === "daily" ? " · New registrations" : ""}</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-900 sm:text-[1.7rem]">
@@ -343,7 +347,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
       ) : mode === "daily" ? (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           {/* KPI hero: TODAY first */}
-          <section className="rounded-2xl border border-ink-200 bg-gradient-to-br from-white to-brand-50/40 p-5" aria-label="Registration summary">
+          <section className="rounded-2xl border border-ink-200 bg-gradient-to-br from-white to-brand-50/40 p-5 lg:min-h-64" aria-label="Registration summary">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-500">
