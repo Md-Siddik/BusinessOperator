@@ -1,87 +1,57 @@
 import Link from "next/link";
-import { ArrowRight, Check, ClipboardCheck, Handshake, RefreshCw, type LucideIcon } from "lucide-react";
+import { ArrowRight, Check, ClipboardCheck, Handshake, Info, RefreshCw, type LucideIcon } from "lucide-react";
 import { localizedPath } from "@/config/languages";
 import { ENGAGEMENT_MODELS } from "@/config/engagement";
 import type { Translator } from "@/lib/i18n/translator";
-import { cn } from "@/lib/utils";
 import { SectionHeading } from "./sections";
 
 export const ENGAGEMENT_ICONS: Record<string, LucideIcon> = { monthly: RefreshCw, growth: Handshake, project: ClipboardCheck };
 
-/** Deep navy for the featured card, with a restrained blue wash in the top-right corner (kept clear of the text). */
-const FEATURED_BG = "#142448";
-const FEATURED_GLOW = "radial-gradient(circle 280px at 100% 0%, rgb(49 85 245 / 0.3), rgb(49 85 245 / 0))";
+type Model = (typeof ENGAGEMENT_MODELS)[number];
+type CardProps = { model: Model; locale: string; t: Translator["t"]; list: Translator["list"] };
 
-type EngagementCardProps = {
-  icon: LucideIcon;
-  title: string;
-  text: string;
-  points: string[];
-  href: string;
-  cta: string;
-  variant?: "default" | "featured";
-  className?: string;
-};
-
-/**
- * One engagement model. Uses `grid-rows-subgrid` so the icon, title, description, divider, feature list and CTA
- * rows line up across sibling cards in the same row, keeping every CTA on a shared baseline.
- */
-function EngagementCard({ icon: Icon, title, text, points, href, cta, variant = "default", className }: EngagementCardProps) {
-  const featured = variant === "featured";
+function PointList({ points, dark }: { points: string[]; dark?: boolean }) {
   return (
-    <article
-      className={cn(
-        "row-span-6 grid grid-rows-subgrid gap-0 rounded-[20px] border p-6 transition-[transform,box-shadow,border-color] duration-200 ease-out motion-safe:hover:-translate-y-1 sm:p-7 xl:p-8",
-        featured
-          ? "border-white/10 text-white shadow-card hover:border-white/20 hover:shadow-lifted"
-          : "border-ink-200 bg-white shadow-card hover:border-ink-300 hover:shadow-lifted",
-        className,
-      )}
-      style={featured ? { backgroundColor: FEATURED_BG, backgroundImage: FEATURED_GLOW } : undefined}
-    >
-      <span
-        className={cn(
-          "flex h-13 w-13 items-center justify-center rounded-[14px] ring-1",
-          featured ? "bg-white/10 text-brand-200 ring-white/15" : "bg-brand-50 text-brand-600 ring-brand-100",
-        )}
-        aria-hidden
-      >
-        <Icon className="h-6 w-6" strokeWidth={1.75} />
-      </span>
-
-      <h3 className={cn("mt-6 text-xl font-semibold tracking-tight lg:text-[1.3125rem]", featured ? "text-white" : "text-ink-900")}>{title}</h3>
-
-      <p className={cn("mt-2.5 text-pretty text-[0.9375rem] leading-[1.6] sm:text-base", featured ? "text-white/80" : "text-ink-600")}>{text}</p>
-
-      <div className={cn("my-6 h-px", featured ? "bg-white/15" : "bg-ink-200")} aria-hidden />
-
-      <ul className="space-y-3 self-start">
-        {points.map((p) => (
-          <li key={p} className={cn("flex gap-3 text-[0.9375rem] leading-[1.6] sm:text-base", featured ? "text-white/90" : "text-ink-700")}>
-            {/* Fixed-height box equal to one line of text keeps the check on the first line when the text wraps. */}
-            <span className="flex h-6 shrink-0 items-center" aria-hidden>
-              <span className={cn("flex h-[18px] w-[18px] items-center justify-center rounded-full", featured ? "bg-white/15 text-white" : "bg-brand-50 text-brand-600")}>
-                <Check className="h-3 w-3" strokeWidth={2.75} />
-              </span>
+    <ul className="space-y-2.5">
+      {points.map((p) => (
+        <li key={p} className={dark ? "flex gap-3 text-[0.9375rem] leading-6 text-ink-100" : "flex gap-3 text-[0.9375rem] leading-6 text-ink-700"}>
+          <span className="flex h-6 shrink-0 items-center" aria-hidden>
+            <span className={dark ? "flex h-[18px] w-[18px] items-center justify-center rounded-full bg-signal-400/15 text-signal-300" : "flex h-[18px] w-[18px] items-center justify-center rounded-full bg-brand-50 text-brand-600"}>
+              <Check className="h-3 w-3" strokeWidth={2.75} />
             </span>
-            <span className="min-w-0">{p}</span>
-          </li>
-        ))}
-      </ul>
+          </span>
+          <span className="min-w-0">{p}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
+/** Monthly and task-based: two ways of working, side by side — deliberately not price tiers. */
+function ModelCard({ model, locale, t, list }: CardProps) {
+  const k = `home.engagement.models.${model.key}`;
+  const Icon = ENGAGEMENT_ICONS[model.key]!;
+  const title = t(`${k}.title`);
+  return (
+    <article className="group flex flex-col rounded-3xl border border-ink-200 bg-white p-7 shadow-card transition-[transform,box-shadow,border-color] duration-200 motion-safe:hover:-translate-y-1 hover:border-brand-200 hover:shadow-lifted sm:p-8">
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-brand-100" aria-hidden>
+          <Icon className="h-6 w-6" strokeWidth={1.75} />
+        </span>
+        <span className="rounded-full border border-ink-200 bg-ink-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-ink-600">{t(`home.engagement.kinds.${model.key}`)}</span>
+      </div>
+      <h3 className="mt-6 text-xl font-semibold tracking-tight text-ink-900 lg:text-[1.375rem]">{title}</h3>
+      <p className="mt-2.5 text-pretty text-[0.9375rem] leading-relaxed text-ink-600 sm:text-base">{t(`${k}.text`)}</p>
+      <div className="my-6 h-px bg-ink-200" aria-hidden />
+      <div className="flex-1">
+        <PointList points={list<string>(`${k}.points`)} />
+      </div>
       <Link
-        href={href}
-        className={cn(
-          "group/cta mt-8 flex min-h-12 items-center justify-between gap-3 self-end rounded-xl px-5 text-[0.9375rem] font-semibold transition-colors duration-200",
-          featured
-            ? "bg-white hover:bg-brand-50"
-            : "border border-ink-200 bg-white text-ink-900 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700",
-        )}
-        style={featured ? { color: FEATURED_BG } : undefined}
+        href={localizedPath(locale, `/engagement/${model.slug}`)}
+        className="group/cta mt-8 flex min-h-12 items-center justify-between gap-3 rounded-xl border border-ink-200 bg-white px-5 text-[0.9375rem] font-semibold text-ink-900 transition-colors duration-200 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
       >
         <span>
-          {cta} <span className="sr-only">: {title}</span>
+          {t("home.engagement.cta")} <span className="sr-only">: {title}</span>
         </span>
         <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-200 ease-out motion-safe:group-hover/cta:translate-x-0.5" aria-hidden />
       </Link>
@@ -89,30 +59,86 @@ function EngagementCard({ icon: Icon, title, text, points, href, cta, variant = 
   );
 }
 
-/** Homepage overview of the three engagement models; each card links to its detail page. */
-export function EngagementModels({ locale, t, list }: { locale: string; t: Translator["t"]; list: Translator["list"] }) {
+/** Two separate paths becoming one rising line: a long-term relationship, not a bigger plan. */
+function GrowthTogetherArt() {
   return (
-    <section className="border-y border-ink-100 bg-[#f8fafc] py-20 sm:py-28">
+    <svg viewBox="0 0 320 170" className="h-auto w-full" aria-hidden>
+      <defs>
+        <linearGradient id="et-gp-rise" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="#6189f8" />
+          <stop offset="1" stopColor="#7fe3f2" />
+        </linearGradient>
+      </defs>
+      <g fill="none" strokeLinecap="round">
+        <path d="M8 40 C 70 40, 100 98, 150 104" stroke="rgb(255 255 255 / 0.28)" strokeWidth="2" strokeDasharray="2 7" />
+        <path d="M8 150 C 70 150, 100 112, 150 104" stroke="rgb(255 255 255 / 0.28)" strokeWidth="2" strokeDasharray="2 7" />
+        <path d="M150 104 C 205 98, 250 62, 312 16" stroke="url(#et-gp-rise)" strokeWidth="3.5" />
+      </g>
+      <circle cx="8" cy="40" r="5" fill="#94b1fd" />
+      <circle cx="8" cy="150" r="5" fill="#94b1fd" />
+      <circle cx="150" cy="104" r="7" fill="#0e1630" stroke="#7fe3f2" strokeWidth="2.5" />
+      <circle cx="312" cy="16" r="5.5" fill="#7fe3f2" />
+    </svg>
+  );
+}
+
+/** Growth Partnership: a different kind of relationship, so it gets a different composition. */
+function GrowthPartnershipCard({ model, locale, t, list }: CardProps) {
+  const k = `home.engagement.models.${model.key}`;
+  const title = t(`${k}.title`);
+  return (
+    <article className="relative isolate overflow-hidden rounded-3xl border border-brand-400/25 bg-night-900 p-7 text-white shadow-lifted sm:p-10">
+      <div className="bg-grid-dark pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top_right,black,transparent_70%)]" aria-hidden />
+      <div className="pointer-events-none absolute -right-32 -top-40 -z-10 h-96 w-96 rounded-full bg-brand-600/30 blur-3xl" aria-hidden />
+      <div className="grid gap-10 lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-14">
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-signal-300 ring-1 ring-white/15" aria-hidden>
+              <Handshake className="h-6 w-6" strokeWidth={1.75} />
+            </span>
+            <span className="rounded-full border border-signal-400/35 bg-signal-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-signal-300">{t(`home.engagement.kinds.${model.key}`)}</span>
+          </div>
+          <p className="mt-6 text-sm font-medium text-brand-200">{t(`${k}.lead`)}</p>
+          <h3 className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h3>
+          <p className="mt-3 max-w-xl text-pretty leading-relaxed text-ink-300">{t(`${k}.text`)}</p>
+          <p className="mt-5 flex max-w-xl gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-relaxed text-ink-300">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-signal-400" aria-hidden />
+            {t(`${k}.note`)}
+          </p>
+          <Link
+            href={localizedPath(locale, `/engagement/${model.slug}`)}
+            className="group/cta mt-8 inline-flex min-h-12 items-center gap-3 rounded-xl bg-white px-5 text-[0.9375rem] font-semibold text-night-950 transition-colors duration-200 hover:bg-brand-50"
+          >
+            <span>
+              {t("home.engagement.cta")} <span className="sr-only">: {title}</span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 transition-transform duration-200 ease-out motion-safe:group-hover/cta:translate-x-0.5" aria-hidden />
+          </Link>
+        </div>
+        <div className="space-y-8">
+          <div className="mx-auto max-w-sm lg:max-w-none">
+            <GrowthTogetherArt />
+          </div>
+          <PointList points={list<string>(`${k}.points`)} dark />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/** Homepage: the three ways to work together; each links to its detail page. */
+export function EngagementModels({ locale, t, list }: { locale: string; t: Translator["t"]; list: Translator["list"] }) {
+  const byKey = (key: Model["key"]) => ENGAGEMENT_MODELS.find((m) => m.key === key)!;
+  return (
+    <section className="py-20 sm:py-28">
       <div className="container-page">
         <SectionHeading eyebrow={t("home.engagement.eyebrow")} title={t("home.engagement.title")} subtitle={t("home.engagement.subtitle")} align="center" />
-        {/* 1 col → 2 cols (third card centred at the same width, via a 4-track grid) → 3 equal cols. */}
-        <div className="mt-12 grid gap-5 md:grid-cols-4 md:gap-6 lg:grid-cols-3">
-          {ENGAGEMENT_MODELS.map((m, i) => {
-            const k = `home.engagement.models.${m.key}`;
-            return (
-              <EngagementCard
-                key={m.key}
-                icon={ENGAGEMENT_ICONS[m.key]!}
-                title={t(`${k}.title`)}
-                text={t(`${k}.text`)}
-                points={list<string>(`${k}.points`)}
-                href={localizedPath(locale, `/engagement/${m.slug}`)}
-                cta={t("home.engagement.cta")}
-                variant={m.key === "growth" ? "featured" : "default"}
-                className={cn("md:col-span-2 lg:col-span-1", i === 2 && "md:col-start-2 lg:col-start-auto")}
-              />
-            );
-          })}
+        <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-2 md:gap-6">
+          <ModelCard model={byKey("monthly")} locale={locale} t={t} list={list} />
+          <ModelCard model={byKey("project")} locale={locale} t={t} list={list} />
+        </div>
+        <div className="mx-auto mt-5 max-w-6xl md:mt-6">
+          <GrowthPartnershipCard model={byKey("growth")} locale={locale} t={t} list={list} />
         </div>
       </div>
     </section>

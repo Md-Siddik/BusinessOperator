@@ -1,9 +1,9 @@
 {
   "_meta": { "locale": "da", "reviewStatus": "machine-assisted — pending native review" },
   "meta": {
-    "siteDescription": "ExploreTechify er et eksternt team for digital drift og forretningsdrift for voksende europæiske virksomheder — hjemmesider, digital tilstedeværelse, forretningssystemer, rekrutteringsstøtte, automatisering og løbende teknisk support.",
+    "siteDescription": "ExploreTechify bygger virksomhedshjemmesider, der er designet til at tiltrække de rette besøgende, skabe tillid og generere henvendelser — understøttet af SEO, indhold, forretningssystemer, rekrutteringsstøtte, automatisering og løbende teknisk support for voksende europæiske virksomheder.",
     "pages": {
-      "home": { "title": "ExploreTechify — Du driver virksomheden. Vi driver det digitale.", "description": "Et eksternt team for digital drift for voksende virksomheder: hjemmesider, digital tilstedeværelse, forretningssystemer, rekrutteringsstøtte, automatisering og teknisk support." },
+      "home": { "title": "ExploreTechify — Hjemmesider, der gør besøgende til kunder", "description": "Konverteringsfokuserede virksomhedshjemmesider designet til at tiltrække de rette besøgende, skabe tillid og generere henvendelser — understøttet af SEO, digital tilstedeværelse, automatisering og løbende teknisk support." },
       "services": { "title": "Ydelser", "description": "Seks sammenhængende ydelsesområder — fra det digitale fundament til løbende drift, forretningssystemer, vækst, medarbejdere og automatisering." },
       "howWeWork": { "title": "Sådan arbejder vi", "description": "Forstå, bygge, drive, forbedre, skalere — en langsigtet model for den digitale side af din virksomhed." },
       "about": { "title": "Om os", "description": "ExploreTechify er partner for digital drift og forretningsdrift for europæiske virksomheder, der vil have ét ansvarligt team for det digitale." },
@@ -16,40 +16,47 @@
     }
   },
   "nav": { "home": "Forside", "services": "Ydelser", "howWeWork": "Sådan arbejder vi", "about": "Om os", "work": "Vores arbejde", "contact": "Kontakt", "clientLogin": "Log ind", "language": "Sprog", "openMenu": "Åbn menu", "closeMenu": "Luk menu", "skipToContent": "Gå til indhold", "mainNavigation": "Hovednavigation", "signup": "Opret konto" },
-  "cta": { "letsWorkTogether": "Lad os samarbejde", "exploreServices": "Udforsk ydelser", "exploreOurServices": "Udforsk vores ydelser", "talkToTeam": "Tal med vores team", "needOngoingSupport": "Brug for løbende support? Lad os tale sammen.", "learnMore": "Læs mere", "viewService": "Se ydelsen" },
+  "cta": { "letsWorkTogether": "Lad os samarbejde", "letsGrowTogether": "Lad os vokse sammen", "exploreServices": "Udforsk ydelser", "exploreOurServices": "Udforsk vores ydelser", "talkToTeam": "Tal med vores team", "needOngoingSupport": "Brug for løbende support? Lad os tale sammen.", "learnMore": "Læs mere", "viewService": "Se ydelsen" },
   "home": {
-    "hero": { "eyebrow": "Partner for digital drift og forretningsdrift", "titleStart": "Du driver virksomheden.", "titleEnd": "Vi driver det digitale.", "subtitle": "Fra hjemmesider og digital tilstedeværelse til forretningssystemer, rekruttering, automatisering og løbende teknisk support — ExploreTechify fungerer som et eksternt team for digital drift for voksende virksomheder.", "note": "Én langsigtet partner for den digitale side af din virksomhed." },
-    "board": { "title": "Din digitale side, klaret", "status": "Denne uge", "items": { "website": "Indhold på hjemmesiden opdateret", "seo": "Lokal SEO-rapport delt", "email": "Postkasse til ny medarbejder oprettet", "crm": "CRM-pipeline ryddet op", "hiring": "3 kandidater på shortlisten", "automation": "Betalingspåmindelser automatiseret" }, "done": "Færdig", "inProgress": "I gang" },
-    "split": { "eyebrow": "En klar arbejdsdeling", "title": "Du fokuserer på at drive virksomheden. Vi hjælper med det digitale.", "subtitle": "Voksende virksomheder har ikke brug for en ny leverandør til hvert værktøj. De har brug for ét team, der ejer den digitale side — og koordinerer specialister, når det giver mening.", "youTitle": "Dig", "youItems": ["Den fysiske virksomhed", "Kunder", "Produkter", "Ydelser", "Salg", "Levering", "Fysisk drift", "Forretningsbeslutninger"], "usTitle": "ExploreTechify", "usItems": ["Hjemmeside", "Online tilstedeværelse", "SEO", "Støtte til sociale medier", "CRM", "Forretningssystemer", "Rekrutteringsstøtte", "HR-støtte", "Automatisering", "Teknisk support", "Data og rapportering", "Digital drift"] },
-    "pillars": { "eyebrow": "Hvad vi laver", "title": "Seks sammenhængende områder. Én partner.", "subtitle": "Ikke tredive usammenhængende ydelser — men én driftsmodel for den digitale side af din virksomhed." },
-    "process": { "eyebrow": "Sådan arbejder vi", "title": "En langsigtet model, ikke et engangsprojekt", "subtitle": "Vi starter med din virksomhed, bygger det, der mangler, og fortsætter med at drive og forbedre det." },
-    "moreThan": { "eyebrow": "Langsigtet partnerskab", "title": "Mere end en hjemmeside", "subtitle": "Når vi kender din virksomhed, er den næste opgave enkel.", "items": ["Skal hjemmesiden opdateres? Det klarer vi.", "Brug for et nyt forretningssystem? Vi bygger det.", "Brug for rekrutteringsstøtte? Vi hjælper.", "Brug for SEO-støtte? Vi tager os af det.", "Brug for automatisering? Vi bygger den.", "Brug for teknisk hjælp? Vi er her."] },
+    "hero": { "eyebrow": "Hjemmesider bygget til vækst", "titleStart": "Hjemmesider, der gør", "titleEnd": "besøgende til kunder.", "subtitle": "Vi bygger virksomhedshjemmesider, der er designet til at tiltrække de rette besøgende, skabe tillid, generere henvendelser og hjælpe med at gøre opmærksomhed til reelle forretningsmuligheder.", "note": "Vi kan også blive ved efter lanceringen og fortsætte med at forbedre hjemmesiden sammen med dig." },
+    "board": { "title": "Fra hjemmeside til kunde", "status": "Det er din hjemmeside bygget til", "items": { "website": "Bygget omkring din virksomhed og dine kunder", "visitors": "Hjælper de rette mennesker med at finde dig", "leads": "Gør interesse til henvendelser", "customers": "Understøtter vejen til et salg", "growth": "Bliver løbende forbedret, mens du vokser", "engagement": "Giver besøgende grund til at stole på dig" }, "stages": { "website": "Hjemmeside", "visitors": "Besøgende", "leads": "Henvendelser", "customers": "Kunder", "growth": "Vækst", "engagement": "Engagement" } },
+    "split": { "eyebrow": "Hvorfor det betyder noget", "title": "En hjemmeside skal ikke bare være en onlinebrochure.", "subtitle": "Mange virksomheder har en hjemmeside, der findes, men gør meget lidt for forretningen. En hjemmeside skal have et formål: hjælpe dig med at blive set, skabe tillid, generere henvendelser og understøtte salget.", "youTitle": "En hjemmeside, der bare findes", "youItems": ["Ser fin ud, men giver få henvendelser", "Svær at finde i søgninger", "Intet tydeligt næste skridt for besøgende", "Sjældent forbedret efter lanceringen"], "usTitle": "En hjemmeside bygget omkring dine forretningsmål", "usItems": ["Din virksomhed og dit tilbud", "Dine målgrupper", "Kunderejsen", "Tillid og troværdighed", "Tydelige opfordringer til handling", "Leadgenerering", "Konvertering", "Synlighed i søgninger", "Fremtidig vækst"] },
+    "pillars": { "eyebrow": "Ud over hjemmesiden", "title": "Din hjemmeside er udgangspunktet. Vi kan hjælpe med at bygge systemerne omkring den.", "subtitle": "Seks sammenhængende serviceområder med samme mål: at tiltrække de rette kunder og drive forretningen bag dem.", "roles": { "digitalFoundation": "Fundamentet", "growthVisibility": "Synlighed", "digitalOperations": "Løbende teknik", "businessSystems": "Drift", "automationAi": "Automatisering", "peopleRecruitment": "Mennesker" } },
+    "journey": { "eyebrow": "Fra hjemmeside til kunde", "title": "Byg. Tiltræk. Engager. Konverter. Voks.", "subtitle": "En strategisk tilgang, ikke en garanteret formel — hvert trin tilpasses din virksomhed og dine kunder.", "steps": [{ "title": "Byg", "text": "En professionel hjemmeside bygget omkring din virksomhed og dine kunder." }, { "title": "Tiltræk", "text": "Synlighed i søgninger, indhold, sociale medier og andre relevante kanaler, der bringer de rette besøgende." }, { "title": "Engager", "text": "Klar information, tillidssignaler og en oplevelse, der giver besøgende tryghed." }, { "title": "Konverter", "text": "Tydelige opfordringer til handling, henvendelsesveje og kontaktmuligheder, der gør næste skridt nemt." }, { "title": "Voks", "text": "Løbende forbedringer ud fra virksomhedens behov og hjemmesidens resultater." }] },
+    "moreThan": { "eyebrow": "Langsigtet partner", "title": "Din hjemmeside bør ikke være slutningen på projektet. Den bør være begyndelsen på din digitale vækst.", "subtitle": "Hjemmesiden er fundamentet — ikke nødvendigvis slutningen på samarbejdet. Afhængigt af dine behov kan vi blive ved med at hjælpe.", "items": ["Brug for opdateringer? Vi står for vedligeholdelsen.", "Brug for mere synlighed? Vi hjælper med SEO og indhold.", "Brug for hjælp til sociale medier? Vi hjælper.", "Brug for tekniske forbedringer? Vi laver dem.", "Brug for automatisering eller et CRM? Vi bygger det.", "Brug for rekrutteringsstøtte? Vi hjælper."], "cycle": ["Lancér", "Forbedr", "Optimér", "Voks"] },
     "industries": { "eyebrow": "Tilpasset din virksomhed", "title": "Den rette kombination til din branche", "subtitle": "Hver virksomhed har brug for sin egen sammensætning. Vælg en profil for at se et typisk udgangspunkt.", "profiles": { "ecommerce": { "title": "E-handel", "text": "Sælg online med en webshop, lager- og kundesystemer, der arbejder sammen." }, "technology": { "title": "Teknologivirksomhed", "text": "Rekruttér tekniske profiler og driv interne systemer uden at forstyrre produktteamet." }, "localBusiness": { "title": "Lokal virksomhed", "text": "Bliv fundet lokalt, fremstå troværdig online og gør henvendelser til kunder." }, "hiring": { "title": "Virksomhed der ansætter", "text": "Struktureret støtte til rekruttering og onboarding, mens teamet vokser." }, "professional": { "title": "Liberale erhverv", "text": "En troværdig tilstedeværelse, professionel e-mail og en enkel måde at håndtere kunder på." }, "operations": { "title": "Produktion og logistik", "text": "Ordreflow, dashboards og rapportering, der mindsker manuelt arbejde." } } },
     "principles": { "eyebrow": "Sådan arbejder vi", "title": "Ærligt omfang. Ansvarlig levering.", "items": [{ "title": "Ét ansvarligt team", "text": "Én kontaktperson for det digitale i stedet for en leverandør pr. værktøj." }, { "title": "Specialister efter behov", "text": "Når en opgave kræver dyb specialviden, koordinerer vi betroede partnere — og siger det på forhånd." }, { "title": "Bygget til at holde", "text": "Vi dokumenterer det, vi bygger, så dine systemer forbliver forståelige og dine." }] },
     "engagement": {
       "eyebrow": "Måder at samarbejde på",
-      "title": "Tre måder at arbejde med os på",
-      "subtitle": "Vælg den samarbejdsform, der passer til din virksomhed i dag.",
-      "cta": "Se detaljer",
+      "title": "Vælg, hvordan vi arbejder sammen",
+      "subtitle": "Alle virksomheder er forskellige. Uanset om du har brug for løbende support, et fokuseret projekt eller et dybere strategisk partnerskab, kan vi indrette samarbejdet efter, hvad der giver mening for din virksomhed.",
+      "cta": "Se denne model",
       "models": {
         "monthly": {
           "title": "Månedligt partnerskab",
-          "text": "Løbende digital og operationel support til en forudsigelig månedlig pris.",
+          "text": "Dedikeret, løbende digital og teknisk support til et forudsigeligt månedligt beløb — som en forlængelse af dit eget team.",
           "points": ["Løbende support", "Aftalt månedligt omfang", "Langsigtet samarbejde"]
         },
         "growth": {
           "title": "Vækstpartnerskab",
           "text": "Udforsk et selektivt partnerskab, hvor vi bidrager til virksomhedens vækst efter en separat forhandlet aftale.",
-          "points": ["Udvalgte muligheder", "Fælles vækstmål", "Individuelt forhandlede vilkår"]
+          "points": ["Udvalgte muligheder", "Fælles vækstmål", "Individuelt forhandlede vilkår"],
+          "note": "Afhængigt af aftalen kan det være et partnerskab, en ejerandel eller en overskudsdeling — altid drøftet og aftalt individuelt.",
+          "lead": "For virksomheder, der søger et dybere, langsigtet samarbejde."
         },
         "project": {
           "title": "Opgavebaseret samarbejde",
           "text": "Hyr os til en klart afgrænset opgave eller et projekt med aftalt omfang, pris og leveranceplan.",
           "points": ["Klart afgrænset omfang", "Aftalt projektpris", "Levering i milepæle, hvor det giver mening"]
         }
+      },
+      "kinds": {
+        "monthly": "Løbende",
+        "growth": "Strategisk",
+        "project": "Projekt"
       }
     },
-    "finalCta": { "title": "Lad os tage det digitale fra dig.", "subtitle": "Fortæl os, hvor du står i dag. Vi foreslår et praktisk udgangspunkt — helt uforpligtende." }
+    "finalCta": { "title": "Klar til at gøre din hjemmeside til en vækstmotor?", "subtitle": "Fortæl os om din virksomhed, dine mål eller det problem, du gerne vil løse. Vi undersøger, hvad der kunne fungere for dig." }
   },
   "services": {
     "overview": { "eyebrow": "Ydelser", "title": "Alt, hvad den digitale side af din virksomhed har brug for", "subtitle": "Et hurtigt overblik over, hvordan vi kan støtte din virksomhed — organiseret i seks områder, der hænger sammen.", "includes": "Omfatter", "industryTitle": "Typiske kombinationer efter branche", "industrySubtitle": "Et udgangspunkt — hvert samarbejde formes efter din virksomhed." },

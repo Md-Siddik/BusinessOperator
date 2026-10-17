@@ -8,6 +8,7 @@ import { formatDay } from "@/lib/dates/country-time";
 import { formatRelative } from "@/lib/utils/format";
 import { Spinner } from "@/components/ui/spinner";
 import { ContactValue, CopyButton } from "./contact-value";
+import { CompanyEmailActions, type CompanyEmailContext } from "@/components/email-sender/company-email-actions";
 import { CompletenessStars, ContactChecklist, FreshnessBadge } from "./quality";
 import { QualifyButtons } from "./qualify-buttons";
 import type { CompanyRow, SourceCapabilities } from "./types";
@@ -53,6 +54,7 @@ export function CompanyDrawer({
   canQualify,
   onIndexChange,
   onPatch,
+  emailContext,
 }: {
   rows: CompanyRow[];
   index: number | null;
@@ -60,6 +62,7 @@ export function CompanyDrawer({
   canQualify: boolean;
   onIndexChange: (i: number | null) => void;
   onPatch: (id: string, p: Partial<CompanyRow>) => void;
+  emailContext?: CompanyEmailContext;
 }) {
   const row = index !== null ? rows[index] : undefined;
   const [detail, setDetail] = useState<{ id: string; data: Detail } | null>(null);
@@ -85,7 +88,8 @@ export function CompanyDrawer({
     panelRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("input, textarea, select")) return;
+      // Keys inside a form field or an open dialog (e.g. the email composer) belong to it.
+      if (target.closest("input, textarea, select, dialog")) return;
       if (e.key === "Escape") onIndexChange(null);
       if (e.key === "ArrowRight" && index !== null && index < rows.length - 1) onIndexChange(index + 1);
       if (e.key === "ArrowLeft" && index !== null && index > 0) onIndexChange(index - 1);
@@ -166,7 +170,7 @@ export function CompanyDrawer({
 
           <Section title="Contact">
             <div className="grid gap-3 sm:grid-cols-2">
-              <ContactValue kind="email" showLabel value={row.email} sourceKind={row.sources.email?.kind} source={row.sources.email?.source} secondary={verifiedEmail ? "Email domain accepts mail (MX)" : undefined} missing={missing("email")} disabledActions={row.isDemo} />
+              <ContactValue kind="email" showLabel value={row.email} sourceKind={row.sources.email?.kind} source={row.sources.email?.source} secondary={verifiedEmail ? "Email domain accepts mail (MX)" : undefined} missing={missing("email")} disabledActions={row.isDemo} emailActions={emailContext && row.email ? <CompanyEmailActions row={row} ctx={emailContext} onSent={(p) => onPatch(row.id, p)} /> : undefined} />
               <ContactValue kind="phone" showLabel value={row.phone} sourceKind={row.sources.phone?.kind} source={row.sources.phone?.source} missing={missing("phone")} disabledActions={row.isDemo} />
               <ContactValue kind="mobile" showLabel value={row.mobile} sourceKind={row.sources.mobile?.kind} source={row.sources.mobile?.source} missing={missing("mobile")} disabledActions={row.isDemo} />
               <ContactValue kind="website" showLabel value={row.website} sourceKind={row.sources.website?.kind} source={row.sources.website?.source} missing={missing("website")} disabledActions={row.isDemo} />

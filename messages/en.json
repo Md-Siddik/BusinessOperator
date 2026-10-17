@@ -4,11 +4,11 @@
     "reviewStatus": "source"
   },
   "meta": {
-    "siteDescription": "ExploreTechify is an external digital and business operations team for growing European businesses — websites, digital presence, business systems, recruitment support, automation and ongoing technical support.",
+    "siteDescription": "ExploreTechify builds business websites designed to attract the right visitors, build trust and generate enquiries — supported by SEO, content, business systems, recruitment support, automation and ongoing technical support for growing European businesses.",
     "pages": {
       "home": {
-        "title": "ExploreTechify — You run the business. We run the digital side.",
-        "description": "An external digital operations team for growing businesses: websites, digital presence, business systems, recruitment support, automation and ongoing technical support."
+        "title": "ExploreTechify — Websites That Turn Visitors Into Customers",
+        "description": "Conversion-focused business websites designed to attract the right visitors, build trust and generate enquiries — supported by SEO, digital presence, automation and ongoing technical support."
       },
       "services": {
         "title": "Services",
@@ -65,6 +65,7 @@
   },
   "cta": {
     "letsWorkTogether": "Let's Work Together",
+    "letsGrowTogether": "Let's Grow Together",
     "exploreServices": "Explore Services",
     "exploreOurServices": "Explore Our Services",
     "talkToTeam": "Talk to Our Team",
@@ -74,57 +75,89 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Digital & Business Operations Partner",
-      "titleStart": "You run the business.",
-      "titleEnd": "We run the digital side.",
-      "subtitle": "From websites and digital presence to business systems, recruitment, automation and ongoing technical support, ExploreTechify works as an external digital operations team for growing businesses.",
-      "note": "One long-term partner for the digital side of your business."
+      "eyebrow": "Business websites built for growth",
+      "titleStart": "Websites That Turn Visitors",
+      "titleEnd": "Into Customers.",
+      "subtitle": "We build business websites designed to attract the right visitors, build trust, generate enquiries and help turn attention into real business opportunities.",
+      "note": "We can also stay involved after launch and keep improving your website with you."
     },
     "board": {
-      "title": "Your digital side, handled",
-      "status": "This week",
+      "title": "From website to customer",
+      "status": "What your website is built to do",
       "items": {
-        "website": "Website content updated",
-        "seo": "Local SEO report shared",
-        "email": "New employee mailbox set up",
-        "crm": "CRM pipeline cleaned up",
-        "hiring": "3 candidates shortlisted",
-        "automation": "Invoice reminders automated"
+        "website": "Built around your business and customers",
+        "visitors": "Helps the right people find you",
+        "leads": "Turns interest into enquiries",
+        "customers": "Supports the path to a sale",
+        "growth": "Keeps improving as you grow",
+        "engagement": "Gives visitors reasons to trust you"
       },
-      "done": "Done",
-      "inProgress": "In progress"
+      "stages": {
+        "website": "Website",
+        "visitors": "Visitors",
+        "leads": "Enquiries",
+        "customers": "Customers",
+        "growth": "Growth",
+        "engagement": "Engagement"
+      }
     },
     "split": {
-      "eyebrow": "A clear division of work",
-      "title": "You focus on running your business. We help run the digital side.",
-      "subtitle": "Most growing companies don't need another vendor for every tool. They need one team that owns the digital side — and coordinates specialists when it makes sense.",
-      "youTitle": "You",
-      "youItems": ["Physical business", "Customers", "Products", "Services", "Sales", "Delivery", "Physical operations", "Business decisions"],
-      "usTitle": "ExploreTechify",
-      "usItems": ["Website", "Online presence", "SEO", "Social media support", "CRM", "Business systems", "Recruitment support", "HR support", "Automation", "Technical support", "Data & reporting", "Digital operations"]
+      "eyebrow": "Why it matters",
+      "title": "A website shouldn't just be an online brochure.",
+      "subtitle": "Many business websites exist but do little for the business. A website should have a purpose: help you get noticed, earn trust, generate enquiries and support sales.",
+      "youTitle": "A website that only exists",
+      "youItems": ["Looks fine, but brings few enquiries", "Hard to find in search", "No clear next step for visitors", "Rarely improved after launch"],
+      "usTitle": "A website built around your business goals",
+      "usItems": [
+        "Your business and offer",
+        "Your target customers",
+        "The customer journey",
+        "Trust and credibility",
+        "Clear calls to action",
+        "Lead generation",
+        "Conversion",
+        "Search visibility",
+        "Future growth"
+      ]
     },
     "pillars": {
-      "eyebrow": "What we do",
-      "title": "Six connected areas. One partner.",
-      "subtitle": "Not thirty unrelated services — one operating model for the digital side of your business."
+      "eyebrow": "Beyond the website",
+      "title": "Your website is the starting point. We can help build the systems around it.",
+      "subtitle": "Six connected service areas, all supporting the same goal: attracting the right customers and running the business behind them.",
+      "roles": {
+        "digitalFoundation": "The foundation",
+        "growthVisibility": "Visibility",
+        "digitalOperations": "Ongoing technology",
+        "businessSystems": "Operations",
+        "automationAi": "Automation",
+        "peopleRecruitment": "People"
+      }
     },
-    "process": {
-      "eyebrow": "How we work",
-      "title": "A long-term model, not a one-off project",
-      "subtitle": "We start with your business, build what's missing, then keep operating and improving it."
+    "journey": {
+      "eyebrow": "From website to customer",
+      "title": "Build. Attract. Engage. Convert. Grow.",
+      "subtitle": "A strategic approach, not a guaranteed formula — each step is adapted to your business and your customers.",
+      "steps": [
+        { "title": "Build", "text": "A professional website built around your business and your customers." },
+        { "title": "Attract", "text": "Search visibility, content, social presence and other suitable channels to bring relevant visitors." },
+        { "title": "Engage", "text": "Clear information, trust signals and an experience that gives visitors confidence." },
+        { "title": "Convert", "text": "Clear calls to action, enquiry paths and contact options that make the next step easy." },
+        { "title": "Grow", "text": "Ongoing improvements based on your business needs and how the website performs." }
+      ]
     },
     "moreThan": {
-      "eyebrow": "Long-term partnership",
-      "title": "More Than a Website",
-      "subtitle": "Once we know your business, the next request is simple.",
+      "eyebrow": "Long-term partner",
+      "title": "Your website shouldn't be the end of the project. It should be the beginning of your digital growth.",
+      "subtitle": "The website is the foundation, not necessarily the end of the relationship. Depending on what you need, we can keep helping.",
       "items": [
-        "Need a website update? We handle it.",
-        "Need a new business system? We build it.",
-        "Need recruitment support? We help.",
-        "Need SEO support? We manage it.",
-        "Need automation? We build it.",
-        "Need technical help? We are there."
-      ]
+        "Need website updates? We handle maintenance.",
+        "Need more visibility? We support SEO and content.",
+        "Need social media support? We help.",
+        "Need technical improvements? We make them.",
+        "Need automation or a CRM? We build it.",
+        "Need recruitment support? We help."
+      ],
+      "cycle": ["Launch", "Improve", "Optimise", "Grow"]
     },
     "industries": {
       "eyebrow": "Built around your business",
@@ -150,30 +183,37 @@
     },
     "engagement": {
       "eyebrow": "Ways to work together",
-      "title": "Three ways to work with us",
-      "subtitle": "Choose the engagement model that fits your business today.",
-      "cta": "Explore Details",
+      "title": "Choose How We Work Together",
+      "subtitle": "Every business is different. Whether you need ongoing support, a focused project or a deeper strategic partnership, we can structure the relationship around what makes sense for your business.",
+      "cta": "Explore This Model",
       "models": {
         "monthly": {
           "title": "Monthly Partnership",
-          "text": "Ongoing digital and operational support for a predictable monthly fee.",
+          "text": "Dedicated, ongoing digital and technical support for a predictable monthly fee — working like an extension of your own team.",
           "points": ["Ongoing support", "Agreed monthly scope", "Long-term collaboration"]
         },
         "growth": {
           "title": "Growth Partnership",
           "text": "Explore a selective partnership where we contribute to business growth under a separately negotiated agreement.",
-          "points": ["Selective opportunities", "Shared growth objectives", "Individually negotiated terms"]
+          "points": ["Selective opportunities", "Shared growth objectives", "Individually negotiated terms"],
+          "note": "Depending on what is agreed, this can take the form of a partnership, a shareholding or a profit-sharing arrangement — always discussed and agreed individually.",
+          "lead": "For businesses looking for a deeper long-term relationship."
         },
         "project": {
           "title": "Task-Based Engagement",
           "text": "Hire us for a clearly defined task or project with an agreed scope, price, and delivery plan.",
           "points": ["Clearly defined scope", "Agreed project price", "Milestone-based delivery where appropriate"]
         }
+      },
+      "kinds": {
+        "monthly": "Ongoing",
+        "growth": "Strategic",
+        "project": "Project"
       }
     },
     "finalCta": {
-      "title": "Let's take the digital side off your plate.",
-      "subtitle": "Tell us where you are today. We'll suggest a practical starting point — no obligation."
+      "title": "Ready to turn your website into a growth engine?",
+      "subtitle": "Tell us about your business, your goals or the problem you're trying to solve. We'll explore what could work for you."
     }
   },
   "services": {

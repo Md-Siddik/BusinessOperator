@@ -106,7 +106,8 @@ export type ClientServiceStatus = (typeof CLIENT_SERVICE_STATUSES)[number];
 export const DOCUMENT_CATEGORIES = ["PROPOSAL", "CONTRACT", "BRAND_ASSET", "REQUIREMENTS", "REPORT", "OTHER"] as const;
 export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
 
-export const EMAIL_KINDS = ["OUTREACH", "TRANSACTIONAL"] as const;
+/** DIRECT = single-recipient emails the Owner sends from the Email Sender. */
+export const EMAIL_KINDS = ["OUTREACH", "TRANSACTIONAL", "DIRECT"] as const;
 export type EmailKind = (typeof EMAIL_KINDS)[number];
 
 export const EMAIL_STATUSES = [
@@ -114,6 +115,9 @@ export const EMAIL_STATUSES = [
   "PENDING_APPROVAL",
   "APPROVED",
   "REJECTED",
+  /** Handed to the provider, outcome not recorded yet (also the duplicate-send lock). */
+  "SENDING",
+  /** SENT = accepted by the provider (not proof of delivery). */
   "SENT",
   "DELIVERED",
   "FAILED",

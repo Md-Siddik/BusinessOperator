@@ -8,7 +8,7 @@ import { LANGUAGE_CODES } from "@/config/languages";
  */
 export const generalSettingsSchema = z.object({
   companyName: z.string().trim().min(1).max(100).default("ExploreTechify"),
-  tagline: z.string().trim().max(200).default("You run the business. We run the digital side."),
+  tagline: z.string().trim().max(200).default("Websites That Turn Visitors Into Customers."),
   logoText: z.string().trim().max(40).default("ExploreTechify"),
   contactEmail: z.string().trim().max(200).default("hello@exploretechify.com"),
   contactPhone: z.string().trim().max(50).default(""),

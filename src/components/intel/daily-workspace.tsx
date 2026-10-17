@@ -3,7 +3,9 @@ import { AlertTriangle, BookOpen, Building2, KeyRound, PlugZap } from "lucide-re
 import { INDUSTRIES, INDUSTRY_LABELS } from "@/config/industries";
 import { DATE_PRESET_LABELS, formatDay } from "@/lib/dates/country-time";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/utils/format";
-import { can, type Actor } from "@/lib/permissions";
+import { can, isOwner, type Actor } from "@/lib/permissions";
+import { getDefaultTemplate, getSenderStatus } from "@/features/email-sender/service";
+import type { CompanyEmailContext } from "@/components/email-sender/company-email-actions";
 import { Pagination } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback";
 import { ALL, COMPANY_SORTS, COMPANY_SORT_LABELS, listCompanies, type CompanyView } from "@/features/companies/service";
@@ -24,6 +26,13 @@ type SP = Record<string, string | string[] | undefined>;
 const str = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 export type WorkspaceMode = "daily" | "research" | "saved";
+
+/** Quick Send / Custom email: Owner only. Same template and sender status as the Email Sender page. */
+function ownerEmailContext(actor: Actor): CompanyEmailContext | undefined {
+  if (!isOwner(actor)) return undefined;
+  const s = getSenderStatus(actor);
+  return { template: getDefaultTemplate(actor), configured: s.configured, problems: s.problems, from: s.from, fromName: s.fromName };
+}
 
 const pct = (part: number, total: number) => (total ? `${Math.round((part / total) * 100)}%` : "—");
 
@@ -52,28 +61,32 @@ function QuickStat({ label, value, href, active }: { label: string; value: numbe
 function Timeline({ data, selectedDay, hrefFor }: { data: RegistrationOverview["timeline"]; selectedDay?: string; hrefFor: (day: string) => string }) {
   const max = Math.max(1, ...data.map((d) => d.count ?? 0));
   return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-4">
-      <div className="mb-3 flex items-baseline justify-between">
+    // On lg+ the panel fills the row the summary sizes (h-0 + min-h-full adds no height of its own);
+    // the day list scrolls inside it, opening at the most recent days (column-reverse anchors the end).
+    <div className="rounded-2xl border border-ink-200 bg-white p-4 lg:flex lg:h-0 lg:min-h-full lg:flex-col">
+      <div className="mb-3 flex shrink-0 items-baseline justify-between">
         <h2 className="text-sm font-semibold text-ink-900">Daily registrations</h2>
         <span className="text-xs text-ink-500">Last 14 days · click a day</span>
       </div>
-      <ol className="space-y-0.5">
-        {data.map((d) => {
-          const active = d.date === selectedDay;
-          return (
-            <li key={d.date}>
-              <Link href={hrefFor(d.date)} className={cn("grid grid-cols-[5.5rem_1fr_3rem] items-center gap-2 rounded-md px-1.5 py-1 text-xs hover:bg-ink-50", active && "bg-brand-50 ring-1 ring-brand-200")} aria-current={active || undefined}>
-                <span className={cn("tabular-nums", active ? "font-semibold text-brand-800" : "text-ink-600")}>{formatDay(d.date, { weekday: "short", day: "numeric", month: "short" })}</span>
-                <span className="h-2.5 rounded-full bg-ink-100" aria-hidden>
-                  {d.count !== null && <span className="block h-full rounded-full bg-brand-500" style={{ width: `${Math.max(d.count ? 3 : 0, (d.count / max) * 100)}%` }} />}
-                </span>
-                <span className="text-right font-medium tabular-nums text-ink-900">{d.count === null ? <span className="font-normal text-ink-400">—</span> : formatNumber(d.count)}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="mt-2 text-[11px] text-ink-400">“—” = day not synced yet.</p>
+      <div className="scroll-thin lg:flex lg:min-h-0 lg:flex-1 lg:flex-col-reverse lg:overflow-y-auto lg:p-px">
+        <ol className="space-y-0.5 lg:mb-auto">
+          {data.map((d) => {
+            const active = d.date === selectedDay;
+            return (
+              <li key={d.date}>
+                <Link href={hrefFor(d.date)} className={cn("grid grid-cols-[5.5rem_1fr_3rem] items-center gap-2 rounded-md px-1.5 py-1 text-xs hover:bg-ink-50", active && "bg-brand-50 ring-1 ring-brand-200")} aria-current={active || undefined}>
+                  <span className={cn("tabular-nums", active ? "font-semibold text-brand-800" : "text-ink-600")}>{formatDay(d.date, { weekday: "short", day: "numeric", month: "short" })}</span>
+                  <span className="h-2.5 rounded-full bg-ink-100" aria-hidden>
+                    {d.count !== null && <span className="block h-full rounded-full bg-brand-500" style={{ width: `${Math.max(d.count ? 3 : 0, (d.count / max) * 100)}%` }} />}
+                  </span>
+                  <span className="text-right font-medium tabular-nums text-ink-900">{d.count === null ? <span className="font-normal text-ink-400">—</span> : formatNumber(d.count)}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      <p className="mt-2 shrink-0 text-[11px] text-ink-400">“—” = day not synced yet.</p>
     </div>
   );
 }
@@ -243,6 +256,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
   const canSync = can(actor, "registry.sync") && !!view && view.dailyFeed;
   const canExport = can(actor, "companies.export");
   const canQualify = can(actor, "leads.manage");
+  const emailContext = ownerEmailContext(actor);
   const lastFetchedAt = view?.lastSuccessAt ?? null;
   const bigLabel = isToday ? "Today" : DATE_PRESET_LABELS[dr.preset] === "Custom range" ? (dr.singleDay ? formatDay(dr.singleDay, { weekday: "long", day: "numeric", month: "long" }) : dr.label) : DATE_PRESET_LABELS[dr.preset];
 
@@ -250,7 +264,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="min-w-0 space-y-3">
+        <div className="min-w-0 space-y-3 xl:flex-1">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">Company Intelligence{mode === "daily" ? " · New registrations" : ""}</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-900 sm:text-[1.7rem]">
@@ -333,7 +347,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
       ) : mode === "daily" ? (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           {/* KPI hero: TODAY first */}
-          <section className="rounded-2xl border border-ink-200 bg-gradient-to-br from-white to-brand-50/40 p-5" aria-label="Registration summary">
+          <section className="rounded-2xl border border-ink-200 bg-gradient-to-br from-white to-brand-50/40 p-5 lg:min-h-64" aria-label="Registration summary">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-500">
@@ -387,7 +401,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
           <CompanyFilters industries={INDUSTRIES.map((i) => ({ value: i, label: INDUSTRY_LABELS[i] }))} sorts={COMPANY_SORTS.map((s) => ({ value: s, label: COMPANY_SORT_LABELS[s] }))} />
           {rows.length ? (
             <>
-              <RegistrationsTable rows={rows} capabilities={capabilities} canQualify={canQualify} showCountry={code === ALL} />
+              <RegistrationsTable rows={rows} capabilities={capabilities} canQualify={canQualify} showCountry={code === ALL} emailContext={emailContext} />
               <Pagination
                 page={list.page}
                 pageCount={list.pageCount}

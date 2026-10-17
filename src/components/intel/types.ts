@@ -30,6 +30,7 @@ export type CompanyRow = {
   marketingProtected: boolean;
   score: number;
   stage: string;
+  lastContactedAt?: string;
   relevance?: Relevance;
   saved: boolean;
   isDemo: boolean;

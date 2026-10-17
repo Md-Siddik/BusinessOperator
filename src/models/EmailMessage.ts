@@ -42,6 +42,13 @@ const emailMessageSchema = new Schema(
     error: String,
     createdBy: { type: ObjectId, ref: "User" },
     isDemo: { type: Boolean, default: false },
+    // Email Sender (kind DIRECT)
+    /** TEMPLATE = fixed ExploreTechify template, CUSTOM = composed by the Owner. */
+    mode: { type: String, enum: ["TEMPLATE", "CUSTOM"] },
+    /** Client-generated key per compose session: a repeated submission never sends twice. */
+    idempotencyKey: { type: String },
+    /** Retention: DIRECT history records are removed automatically after this date. */
+    expiresAt: { type: Date },
   },
   { timestamps: true },
 );
@@ -51,6 +58,9 @@ emailMessageSchema.index({ campaignId: 1, status: 1 });
 emailMessageSchema.index({ companyId: 1, createdAt: -1 });
 emailMessageSchema.index({ countryCode: 1, kind: 1, status: 1 });
 emailMessageSchema.index({ to: 1 });
+emailMessageSchema.index({ idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } });
+emailMessageSchema.index({ kind: 1, to: 1, createdAt: -1 });
+emailMessageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, partialFilterExpression: { expiresAt: { $type: "date" } } });
 
 export type EmailMessageDoc = InferSchemaType<typeof emailMessageSchema> & { _id: Id; createdAt: Date; updatedAt: Date };
 export const EmailMessage = defineModel("EmailMessage", emailMessageSchema);

@@ -29,6 +29,17 @@
   --color-ink-900: #121722;
   --color-ink-950: #0a0e17;
 
+  /* Deep navy foundation for the dark public sections (hero, partnership, CTA, footer). */
+  --color-night-800: #16203d;
+  --color-night-900: #0e1630;
+  --color-night-950: #080d1f;
+
+  /* One restrained supporting accent, used sparingly on dark backgrounds. */
+  --color-signal-200: #b6f0f8;
+  --color-signal-300: #7fe3f2;
+  --color-signal-400: #3fd0e6;
+  --color-signal-500: #14b4cf;
+
   --shadow-soft: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px -4px rgb(16 24 40 / 0.08);
   --shadow-lifted: 0 2px 4px rgb(16 24 40 / 0.04), 0 16px 40px -12px rgb(16 24 40 / 0.18);
@@ -36,6 +47,20 @@
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.21, 1, 0.36, 1) both;
   --animate-fade-in: fade-in 0.5s ease-out both;
   --animate-float: float 7s ease-in-out infinite;
+  /* A single soft pulse travelling along a growth path (vertical / horizontal). */
+  --animate-flow-y: flow-y 4.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  --animate-flow-x: flow-x 5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+
+  @keyframes flow-y {
+    0% { top: 0%; opacity: 0; }
+    12% { opacity: 1; }
+    88% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+  @keyframes flow-x {
+    0% { left: -25%; }
+    100% { left: 100%; }
+  }
 
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(14px); }
@@ -113,6 +138,12 @@ body {
 /* Subtle dotted backdrop used on hero sections */
 @utility bg-grid {
   background-image: radial-gradient(circle at 1px 1px, rgb(18 23 34 / 0.07) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/* The same dotted backdrop for dark (night) sections */
+@utility bg-grid-dark {
+  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.06) 1px, transparent 0);
   background-size: 22px 22px;
 }
 

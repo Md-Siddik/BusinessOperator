@@ -89,6 +89,7 @@ export function ContactValue({
   source,
   missing = "Not available from registry",
   disabledActions,
+  emailActions,
   showLabel,
   className,
 }: {
@@ -100,6 +101,8 @@ export function ContactValue({
   missing?: string;
   /** Demo rows: show values but never link out. */
   disabledActions?: boolean;
+  /** Owner-only sending actions; replace the plain mailto link for emails. */
+  emailActions?: React.ReactNode;
   showLabel?: boolean;
   className?: string;
 }) {
@@ -129,7 +132,8 @@ export function ContactValue({
       {secondary && <p className="ml-5 text-xs text-ink-500">{secondary}</p>}
       <div className="ml-5 mt-1 flex flex-wrap items-center gap-1">
         {kind !== "person" && <CopyButton value={copyValue} label={label.toLowerCase()} />}
-        {!disabledActions && kind === "email" && (
+        {!disabledActions && kind === "email" && emailActions}
+        {!disabledActions && kind === "email" && !emailActions && (
           <ActionLink href={`mailto:${value}`} label={`Email ${value}`}>
             <Mail className="h-3 w-3" aria-hidden /> Email
           </ActionLink>
