@@ -196,7 +196,7 @@ export async function SettingsTabPage({ base, params }: { base: WorkspaceBase; p
             <p className="mt-1 text-sm text-ink-600">Prospect emails, campaigns and follow-ups. Always Draft → Review → Approve → Send, with suppression checks and an unsubscribe footer.</p>
           </div>
         </div>
-        <p className="text-xs text-ink-500">Configure with environment variables: EMAIL_PROVIDER (console | resend | sendgrid), EMAIL_API_KEY, EMAIL_FROM. Outreach sender identity is set under Outreach. Templates live under Outreach → Templates.</p>
+        <p className="text-xs text-ink-500">Configure with environment variables: EMAIL_PROVIDER (console | resend | sendgrid | zoho-smtp), EMAIL_API_KEY, EMAIL_FROM; for Zoho Mail the ZOHO_SMTP_* settings and EMAIL_FROM_ADDRESS (see docs/email-sender.md). Outreach sender identity is set under Outreach. Templates live under Outreach → Templates.</p>
       </div>
     );
   } else if (tab === "crm") {
