@@ -45,6 +45,7 @@ export function toCompanyRow(c: CompanyDoc): CompanyRow {
     marketingProtected: !!c.marketingProtected,
     score: c.lead?.score ?? 0,
     stage: c.lead?.stage ?? "NEW",
+    lastContactedAt: iso(c.lead?.lastContactedAt),
     relevance: (c.lead?.relevance as Relevance | undefined) ?? undefined,
     saved: !!c.lead?.saved,
     isDemo: !!c.isDemo,

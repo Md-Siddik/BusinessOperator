@@ -257,7 +257,7 @@ export function sortFor(sort: CompanySort): Record<string, 1 | -1> {
 
 /** Fields shown in the daily table and drawer. Never includes sourceData. */
 export const LIST_FIELDS =
-  "companyName registrationNumber countryCode countryName registrationDay registrationDateType eventType firstSeenAt contactFoundAt legalForm status industry industryCode industryDescription industryCodeSystem businessActivity address city region postalCode email phone mobile website contactFormUrl contactPerson contactSources contactFlags directContact completeness fullyContactable marketingProtected research.status research.nextRetryAt research.attempts eligibility serviceFit.score serviceFit.suggestions lead.stage lead.score lead.relevance lead.saved lead.assignedTo lead.nextFollowUpAt signals.hiring digitalOpportunity isDemo source sourceName sourceType dataFreshness sourceFetchedAt sourcePublishedAt sourceUrl";
+  "companyName registrationNumber countryCode countryName registrationDay registrationDateType eventType firstSeenAt contactFoundAt legalForm status industry industryCode industryDescription industryCodeSystem businessActivity address city region postalCode email phone mobile website contactFormUrl contactPerson contactSources contactFlags directContact completeness fullyContactable marketingProtected research.status research.nextRetryAt research.attempts eligibility serviceFit.score serviceFit.suggestions lead.stage lead.score lead.relevance lead.saved lead.assignedTo lead.nextFollowUpAt lead.lastContactedAt signals.hiring digitalOpportunity isDemo source sourceName sourceType dataFreshness sourceFetchedAt sourcePublishedAt sourceUrl";
 
 export async function listCompanies(actor: Actor, input: unknown) {
   assertCanReadCompanies(actor);

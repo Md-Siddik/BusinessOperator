@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { EmailMessage, SuppressionEntry, type EmailMessageDoc } from "@/models";
+import { Company, CrmActivity, EmailMessage, SuppressionEntry, type CompanyDoc, type EmailMessageDoc } from "@/models";
 import type { SessionUser } from "@/lib/auth/actor";
 import type { Actor } from "@/lib/permissions";
 import { expectRejects, makeTenants } from "./helpers";
@@ -21,6 +21,7 @@ vi.mock("@/lib/auth/session", () => ({
 
 const { setEmailProvider, EmailProviderError, ZohoSmtpEmailProvider, zohoSmtpConfig, classifySmtpError } = await import("@/lib/email/provider");
 const service = await import("@/features/email-sender/service");
+const { resetRateLimits } = await import("@/lib/rate-limit");
 const { DEFAULT_TEMPLATE, defaultTemplateContent, renderEmail } = await import("@/features/email-sender/template");
 const { POST: sendRoute } = await import("@/app/api/email-sender/send/route");
 const { POST: previewRoute } = await import("@/app/api/email-sender/preview/route");
@@ -440,5 +441,104 @@ describe("Zoho SMTP provider (mocked transport — no real SMTP connection)", ()
       await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: "zoho-timeout@example.test", idempotencyKey: key() }), 429);
       expect(fake.calls).toHaveLength(1);
     });
+  });
+});
+
+describe("Company Intelligence: Quick Send and Custom email", () => {
+  let seq = 0;
+  async function company(extra: Record<string, unknown> = {}) {
+    const c = await Company.create({ companyName: `Quick Send Test ${++seq} AS`, countryCode: "NO", source: "manual-test", sourceId: `qs-${Date.now()}-${seq}`, email: `info${seq}@company.test`, ...extra });
+    return { id: String(c._id), email: `info${seq}@company.test` };
+  }
+
+  it("Quick Send sends the one default template to the company and marks it contacted", async () => {
+    const c = await company();
+    as(t.owner);
+    const r = await sendRoute(req("/api/email-sender/send", json({ mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() })), ctx);
+    expect(r.status).toBe(200);
+    const body = (await r.json()) as { status: string; company: { stage: string; lastContactedAt: string } };
+    expect(body).toMatchObject({ status: "SENT", company: { stage: "CONTACTED" } });
+    // Exactly the Email Sender's template — same renderer, same subject and body.
+    expect(sent).toHaveLength(1);
+    expect(sent[0]!.to).toBe(c.email);
+    expect(sent[0]!.subject).toBe(DEFAULT_TEMPLATE.subject);
+    // Every paragraph of the default template body is in the sent email.
+    for (const para of DEFAULT_TEMPLATE.body.split(/\n{2,}/).filter((x) => !/^(##|-)/.test(x))) expect(sent[0]!.text).toContain(para.replace(/\*\*/g, ""));
+    const doc = await Company.findById(c.id).lean<CompanyDoc>();
+    expect(doc?.lead?.stage).toBe("CONTACTED");
+    expect(doc?.lead?.lastContactedAt).toBeInstanceOf(Date);
+    const rec = await EmailMessage.findOne({ to: c.email }).lean<EmailMessageDoc>();
+    expect(rec).toMatchObject({ kind: "DIRECT", mode: "TEMPLATE", status: "SENT", countryCode: "NO" });
+    expect(String(rec?.companyId)).toBe(c.id);
+    expect(rec?.body).toMatch(/^\[template /);
+    expect(await CrmActivity.countDocuments({ companyId: c.id, type: "EMAIL" })).toBe(1);
+  });
+
+  it("Custom email sends the Owner's subject and message through the same path", async () => {
+    const c = await company();
+    const r = await service.sendEmail(t.owner.actor, { mode: "CUSTOM", to: c.email, companyId: c.id, subject: "Hello from ExploreTechify", body: "A short personal note about your new company.", includeCta: true, idempotencyKey: key() });
+    expect(r.company?.stage).toBe("CONTACTED");
+    expect(sent[0]).toMatchObject({ to: c.email, subject: "Hello from ExploreTechify" });
+    expect(sent[0]!.text).toContain("A short personal note about your new company.");
+    const rec = await EmailMessage.findOne({ to: c.email }).lean<EmailMessageDoc>();
+    expect(rec).toMatchObject({ mode: "CUSTOM", subject: "Hello from ExploreTechify" });
+    expect(rec?.body).not.toContain("personal note");
+  });
+
+  it("does not move a lead backwards: a later stage is kept, only the last-contacted date changes", async () => {
+    const c = await company({ lead: { stage: "MEETING" } });
+    const r = await service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() });
+    expect(r.company?.stage).toBe("MEETING");
+    expect((await Company.findById(c.id).lean<CompanyDoc>())?.lead?.stage).toBe("MEETING");
+  });
+
+  it("Admin, Staff, Client and anonymous users cannot send for a company, and nothing is tracked", async () => {
+    resetRateLimits();
+    const c = await company();
+    as(null);
+    expect((await sendRoute(req("/api/email-sender/send", json({ mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() })), ctx)).status).toBe(401);
+    for (const u of [t.admin, t.staff, t.clientA]) {
+      as(u);
+      expect((await sendRoute(req("/api/email-sender/send", json({ mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() })), ctx)).status).toBe(403);
+      expect((await sendRoute(req("/api/email-sender/send", json({ mode: "CUSTOM", to: c.email, companyId: c.id, subject: "Hi there", body: "Custom message body", idempotencyKey: key() })), ctx)).status).toBe(403);
+      await expectRejects(service.sendEmail(u.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() }), 403);
+    }
+    expect(sent).toHaveLength(0);
+    expect((await Company.findById(c.id).lean<CompanyDoc>())?.lead?.stage ?? "NEW").toBe("NEW");
+    expect(await CrmActivity.countDocuments({ companyId: c.id })).toBe(0);
+  });
+
+  it("rejects missing or invalid recipients and unknown companies", async () => {
+    const c = await company();
+    for (const to of ["", "not-an-email", "a@b", "info@company .test"]) await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to, companyId: c.id, idempotencyKey: key() }), 400);
+    await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", companyId: c.id, idempotencyKey: key() }), 400);
+    await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: "not-an-id", idempotencyKey: key() }), 400);
+    await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: "0123456789abcdef01234567", idempotencyKey: key() }), 404);
+    expect(sent).toHaveLength(0);
+  });
+
+  it("never emails demo, marketing-protected or Do-not-contact companies", async () => {
+    for (const extra of [{ isDemo: true }, { marketingProtected: true }, { lead: { stage: "DO_NOT_CONTACT" } }]) {
+      const c = await company(extra);
+      await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() }), 400);
+    }
+    expect(sent).toHaveLength(0);
+  });
+
+  it("a double click (same request key) sends once; the cooldown blocks a second deliberate send", async () => {
+    const c = await company();
+    const k = key();
+    const [a, b] = await Promise.allSettled([
+      service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: k }),
+      service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: k }),
+    ]);
+    expect([a.status, b.status]).toContain("fulfilled");
+    const again = await service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: k });
+    expect(again.duplicate).toBe(true);
+    expect(sent).toHaveLength(1);
+    expect(await CrmActivity.countDocuments({ companyId: c.id, type: "EMAIL" })).toBe(1);
+    process.env.EMAIL_SENDER_COOLDOWN_MINUTES = "60";
+    await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() }), 429);
+    expect(sent).toHaveLength(1);
   });
 });

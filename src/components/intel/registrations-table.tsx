@@ -11,6 +11,7 @@ import { CompletenessStars } from "./quality";
 import { QualifyButtons } from "./qualify-buttons";
 import { CompanyDrawer } from "./company-drawer";
 import { ContactStatus } from "./contact-status";
+import { CompanyEmailActions, type CompanyEmailContext } from "@/components/email-sender/company-email-actions";
 
 const FRESHNESS_SHORT: Record<string, string> = { REAL_TIME: "Real-time", NEAR_REAL_TIME: "Near real-time", DAILY: "Daily", PERIODIC: "Periodic", UNKNOWN: "Freshness unknown" };
 import type { CompanyRow, SourceCapabilities } from "./types";
@@ -35,7 +36,7 @@ function missingLabel(field: keyof SourceCapabilities, caps: Record<string, Sour
   return "Not available from registry";
 }
 
-export function RegistrationsTable({ rows, capabilities, canQualify, showCountry }: { rows: CompanyRow[]; capabilities: Record<string, SourceCapabilities>; canQualify: boolean; showCountry?: boolean }) {
+export function RegistrationsTable({ rows, capabilities, canQualify, showCountry, emailContext }: { rows: CompanyRow[]; capabilities: Record<string, SourceCapabilities>; canQualify: boolean; showCountry?: boolean; emailContext?: CompanyEmailContext }) {
   const [hidden, setHidden] = useState<Set<OptionalColumn>>(new Set());
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<Record<string, Partial<CompanyRow>>>({});
@@ -66,6 +67,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
   const show = (id: OptionalColumn) => !hidden.has(id);
   const data = rows.map((r) => ({ ...r, ...overrides[r.id] }));
   const patch = useCallback((id: string, p: Partial<CompanyRow>) => setOverrides((o) => ({ ...o, [id]: { ...o[id], ...p } })), []);
+  const emailActions = (r: CompanyRow) => (emailContext && r.email ? <CompanyEmailActions row={r} ctx={emailContext} onSent={(p) => patch(r.id, p)} /> : undefined);
 
   return (
     <>
@@ -171,7 +173,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
                   </td>
                 )}
                 <td className="border-b border-ink-100 px-3 py-3 group-hover:bg-ink-50/80">
-                  <ContactValue kind="email" value={r.email} sourceKind={r.sources.email?.kind} source={r.sources.email?.source} missing={missingLabel("email", capabilities, r)} disabledActions={r.isDemo} />
+                  <ContactValue kind="email" value={r.email} sourceKind={r.sources.email?.kind} source={r.sources.email?.source} missing={missingLabel("email", capabilities, r)} disabledActions={r.isDemo} emailActions={emailActions(r)} />
                 </td>
                 <td className="border-b border-ink-100 px-3 py-3 group-hover:bg-ink-50/80">
                   {r.phone || !r.mobile ? (
@@ -258,7 +260,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
               <ContactStatus row={r} compact />
             </div>
             <div className="mt-3 grid gap-3">
-              <ContactValue kind="email" showLabel value={r.email} sourceKind={r.sources.email?.kind} missing={missingLabel("email", capabilities, r)} disabledActions={r.isDemo} />
+              <ContactValue kind="email" showLabel value={r.email} sourceKind={r.sources.email?.kind} missing={missingLabel("email", capabilities, r)} disabledActions={r.isDemo} emailActions={emailActions(r)} />
               <ContactValue kind="phone" showLabel value={r.phone ?? r.mobile} sourceKind={(r.phone ? r.sources.phone : r.sources.mobile)?.kind} missing={missingLabel("phone", capabilities, r)} disabledActions={r.isDemo} />
               <ContactValue kind="website" showLabel value={r.website} sourceKind={r.sources.website?.kind} missing={missingLabel("website", capabilities, r)} disabledActions={r.isDemo} />
             </div>
@@ -284,6 +286,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
         canQualify={canQualify}
         onIndexChange={setOpenIndex}
         onPatch={patch}
+        emailContext={emailContext}
       />
     </>
   );

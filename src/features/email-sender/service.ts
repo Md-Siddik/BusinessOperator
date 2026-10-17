@@ -6,19 +6,21 @@ import { siteConfig } from "@/config/site";
 import { Errors } from "@/lib/errors";
 import { isOwner, type Actor } from "@/lib/permissions";
 import { enforceRateLimit } from "@/lib/rate-limit";
-import { emailSchema } from "@/lib/validation";
+import { emailSchema, parseObjectId } from "@/lib/validation";
 import { defaultFromAddress, emailProviderSetupProblems, EmailProviderError, getEmailProvider, providerSenderIdentity } from "@/lib/email/provider";
 import { unsubscribeApiUrl, unsubscribeUrl } from "@/lib/email/unsubscribe";
 import { checkSuppression } from "@/features/outreach/suppression";
-import { EmailMessage, type EmailMessageDoc } from "@/models";
+import { NOT_CONTACTED_STAGES } from "@/features/companies/service";
+import { Company, CrmActivity, EmailMessage, type CompanyDoc, type EmailMessageDoc } from "@/models";
 import { BUSINESS_EMAIL, DEFAULT_TEMPLATE, defaultTemplateContent, LIMITS, renderEmail, type EmailContent, type RenderedEmail } from "./template";
 
 /**
  * Email Sender — OWNER ONLY. Every exported function verifies the actor's server-side
  * role first, so no internal caller or HTTP request can send without being the Owner.
  *
- * One recipient per send. Guards, in order: role → validation → provider configured →
- * suppression list → hourly/daily limits → per-recipient cooldown → idempotent lock.
+ * One recipient per send. Guards, in order: role → validation → company eligibility (when
+ * sent from Company Intelligence) → provider configured → suppression list → hourly/daily
+ * limits → per-recipient cooldown → idempotent lock.
  * Status is honest: SENT means "accepted by the provider", never "delivered".
  */
 
@@ -58,10 +60,14 @@ const customSchema = z.object({
 
 export const previewSchema = z.discriminatedUnion("mode", [z.object({ mode: z.literal("TEMPLATE") }), z.object({ mode: z.literal("CUSTOM") }).merge(customSchema)]);
 
-export const sendSchema = z.discriminatedUnion("mode", [
-  z.object({ mode: z.literal("TEMPLATE"), to: emailSchema, idempotencyKey: z.string().regex(/^[A-Za-z0-9-]{16,64}$/, "Invalid request key") }),
-  z.object({ mode: z.literal("CUSTOM"), to: emailSchema, idempotencyKey: z.string().regex(/^[A-Za-z0-9-]{16,64}$/, "Invalid request key") }).merge(customSchema),
-]);
+const sendBase = {
+  to: emailSchema,
+  idempotencyKey: z.string().regex(/^[A-Za-z0-9-]{16,64}$/, "Invalid request key"),
+  /** Set by Company Intelligence (Quick Send / Custom email): links the send to the company's contact tracking. */
+  companyId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid company").optional(),
+};
+
+export const sendSchema = z.discriminatedUnion("mode", [z.object({ mode: z.literal("TEMPLATE"), ...sendBase }), z.object({ mode: z.literal("CUSTOM"), ...sendBase }).merge(customSchema)]);
 
 /** Header/subject injection guard: no line breaks in a subject. */
 function cleanSubject(subject: string) {
@@ -126,7 +132,44 @@ const REJECTION_HELP: Record<RejectionReason, string> = {
   message: "The mail server refused the message, so it was not sent. Try again later; if it keeps happening, check your Zoho Mail sending limits.",
 };
 
-export type SendResult ={ id: string; status: "SENT"; accepted: true; provider: string; providerMessageId?: string; duplicate?: boolean };
+export type SendResult = { id: string; status: "SENT"; accepted: true; provider: string; providerMessageId?: string; duplicate?: boolean; company?: { stage: string; lastContactedAt: string } };
+
+type SendCompany = Pick<CompanyDoc, "_id" | "countryCode" | "marketingProtected" | "isDemo" | "lead">;
+
+/** A company the Owner emails from Company Intelligence must exist, be real data and not be protected from marketing. */
+async function companyForSend(id: string) {
+  const company = await Company.findById(parseObjectId(id)).select("countryCode marketingProtected isDemo lead.stage").lean<SendCompany>();
+  if (!company) throw Errors.notFound("Company not found.");
+  if (company.isDemo) throw Errors.badRequest("This is a demo company — its contact details are not real, so no email was sent.", { code: "DEMO_COMPANY" });
+  if (company.marketingProtected) throw Errors.badRequest("The registry marks this company as protected from marketing. The email was not sent.", { code: "MARKETING_PROTECTED" });
+  if (company.lead?.stage === "DO_NOT_CONTACT") throw Errors.badRequest("This company is marked Do not contact. The email was not sent.", { code: "DO_NOT_CONTACT" });
+  return company;
+}
+
+/**
+ * The existing contact tracking (same as a logged contact attempt): last contacted date, an
+ * early-stage lead moves to Contacted, and an EMAIL activity on the company timeline.
+ * Runs after the provider accepted the email, so a tracking failure never invites a re-send.
+ */
+async function recordCompanyContact(actor: Actor, company: SendCompany, mode: "TEMPLATE" | "CUSTOM", subject: string, messageId: string) {
+  const now = new Date();
+  const stage = company.lead?.stage ?? "NEW";
+  const early = NOT_CONTACTED_STAGES.includes(stage);
+  try {
+    await Company.updateOne({ _id: company._id }, { $set: { "lead.lastContactedAt": now, ...(early && { "lead.stage": "CONTACTED", "lead.stageChangedAt": now }) } });
+    await CrmActivity.create({
+      companyId: company._id,
+      countryCode: company.countryCode,
+      type: "EMAIL",
+      body: `Email sent (${mode === "TEMPLATE" ? "default template" : "custom email"}): ${subject}`,
+      meta: { emailMessageId: messageId, mode },
+      actorId: actor.id,
+    });
+  } catch (e) {
+    console.warn(`[email-sender] sent, but contact tracking failed for company ${String(company._id)}`, e);
+  }
+  return { stage: early ? "CONTACTED" : stage, lastContactedAt: now.toISOString() };
+}
 
 export async function sendEmail(actor: Actor | null, input: unknown): Promise<SendResult> {
   assertOwner(actor);
@@ -142,6 +185,8 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
     if (previous.status === "SENDING") throw Errors.conflict("This email is already being sent. Check the history in a moment.");
     throw Errors.conflict("This send attempt already finished without being accepted. Review the error, then send again.");
   }
+
+  const company = data.companyId ? await companyForSend(data.companyId) : null;
 
   const status = getSenderStatus(actor);
   if (!status.configured) throw Errors.badRequest(`Email delivery is not set up: ${status.problems.join(" ")}`, { code: "NOT_CONFIGURED" });
@@ -176,6 +221,7 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
     record = await EmailMessage.create({
       kind: "DIRECT",
       mode: data.mode,
+      ...(company && { companyId: company._id, countryCode: company.countryCode }),
       to,
       from: settings.from,
       subject: rendered.subject,
@@ -205,9 +251,10 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
       headers: { "List-Unsubscribe": `<${unsubscribeApiUrl(to)}>, <mailto:${settings.replyTo}?subject=Unsubscribe>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
     });
     await EmailMessage.updateOne({ _id: record._id }, { $set: { status: "SENT", sentAt: new Date(), provider: provider.id, providerMessageId: result.id, simulated: !provider.isLive } });
-    await audit(actor, "email_sender.sent", { entityType: "EmailMessage", entityId: String(record._id), metadata: { mode: data.mode, recipientDomain: to.split("@")[1], provider: provider.id } });
+    await audit(actor, "email_sender.sent", { entityType: "EmailMessage", entityId: String(record._id), metadata: { mode: data.mode, recipientDomain: to.split("@")[1], provider: provider.id, ...(company && { companyId: String(company._id) }) } });
     console.info(`[email-sender] accepted by ${provider.id} (record ${String(record._id)})`);
-    return { id: String(record._id), status: "SENT", accepted: true, provider: provider.id, providerMessageId: result.id };
+    const tracked = company ? await recordCompanyContact(actor, company, data.mode, rendered.subject, String(record._id)) : undefined;
+    return { id: String(record._id), status: "SENT", accepted: true, provider: provider.id, providerMessageId: result.id, ...(tracked && { company: tracked }) };
   } catch (err) {
     const unknown = !(err instanceof EmailProviderError) || err.outcome === "unknown";
     const reason = err instanceof EmailProviderError ? err.reason : undefined;

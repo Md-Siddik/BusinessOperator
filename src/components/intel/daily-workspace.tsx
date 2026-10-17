@@ -3,7 +3,9 @@ import { AlertTriangle, BookOpen, Building2, KeyRound, PlugZap } from "lucide-re
 import { INDUSTRIES, INDUSTRY_LABELS } from "@/config/industries";
 import { DATE_PRESET_LABELS, formatDay } from "@/lib/dates/country-time";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/utils/format";
-import { can, type Actor } from "@/lib/permissions";
+import { can, isOwner, type Actor } from "@/lib/permissions";
+import { getDefaultTemplate, getSenderStatus } from "@/features/email-sender/service";
+import type { CompanyEmailContext } from "@/components/email-sender/company-email-actions";
 import { Pagination } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback";
 import { ALL, COMPANY_SORTS, COMPANY_SORT_LABELS, listCompanies, type CompanyView } from "@/features/companies/service";
@@ -24,6 +26,13 @@ type SP = Record<string, string | string[] | undefined>;
 const str = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 export type WorkspaceMode = "daily" | "research" | "saved";
+
+/** Quick Send / Custom email: Owner only. Same template and sender status as the Email Sender page. */
+function ownerEmailContext(actor: Actor): CompanyEmailContext | undefined {
+  if (!isOwner(actor)) return undefined;
+  const s = getSenderStatus(actor);
+  return { template: getDefaultTemplate(actor), configured: s.configured, problems: s.problems, from: s.from, fromName: s.fromName };
+}
 
 const pct = (part: number, total: number) => (total ? `${Math.round((part / total) * 100)}%` : "—");
 
@@ -243,6 +252,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
   const canSync = can(actor, "registry.sync") && !!view && view.dailyFeed;
   const canExport = can(actor, "companies.export");
   const canQualify = can(actor, "leads.manage");
+  const emailContext = ownerEmailContext(actor);
   const lastFetchedAt = view?.lastSuccessAt ?? null;
   const bigLabel = isToday ? "Today" : DATE_PRESET_LABELS[dr.preset] === "Custom range" ? (dr.singleDay ? formatDay(dr.singleDay, { weekday: "long", day: "numeric", month: "long" }) : dr.label) : DATE_PRESET_LABELS[dr.preset];
 
@@ -387,7 +397,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
           <CompanyFilters industries={INDUSTRIES.map((i) => ({ value: i, label: INDUSTRY_LABELS[i] }))} sorts={COMPANY_SORTS.map((s) => ({ value: s, label: COMPANY_SORT_LABELS[s] }))} />
           {rows.length ? (
             <>
-              <RegistrationsTable rows={rows} capabilities={capabilities} canQualify={canQualify} showCountry={code === ALL} />
+              <RegistrationsTable rows={rows} capabilities={capabilities} canQualify={canQualify} showCountry={code === ALL} emailContext={emailContext} />
               <Pagination
                 page={list.page}
                 pageCount={list.pageCount}
