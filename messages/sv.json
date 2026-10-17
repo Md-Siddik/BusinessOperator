@@ -1,9 +1,9 @@
 {
   "_meta": { "locale": "sv", "reviewStatus": "machine-assisted — pending native review" },
   "meta": {
-    "siteDescription": "ExploreTechify är ett externt team för digital drift och affärsdrift för växande europeiska företag — webbplatser, digital närvaro, affärssystem, rekryteringsstöd, automatisering och löpande teknisk support.",
+    "siteDescription": "ExploreTechify bygger företagswebbplatser som är utformade för att locka rätt besökare, skapa förtroende och generera förfrågningar — med stöd av SEO, innehåll, affärssystem, rekryteringsstöd, automatisering och löpande teknisk support för växande europeiska företag.",
     "pages": {
-      "home": { "title": "ExploreTechify — Du driver företaget. Vi driver det digitala.", "description": "Ett externt team för digital drift för växande företag: webbplatser, digital närvaro, affärssystem, rekryteringsstöd, automatisering och teknisk support." },
+      "home": { "title": "ExploreTechify — Webbplatser som gör besökare till kunder", "description": "Konverteringsfokuserade företagswebbplatser utformade för att locka rätt besökare, skapa förtroende och generera förfrågningar — med stöd av SEO, digital närvaro, automatisering och löpande teknisk support." },
       "services": { "title": "Tjänster", "description": "Sex sammanhängande tjänsteområden — från den digitala grunden till löpande drift, affärssystem, tillväxt, personal och automatisering." },
       "howWeWork": { "title": "Så arbetar vi", "description": "Förstå, bygga, driva, förbättra, skala — en långsiktig modell för den digitala sidan av ditt företag." },
       "about": { "title": "Om oss", "description": "ExploreTechify är en partner för digital drift och affärsdrift för europeiska företag som vill ha ett ansvarigt team för det digitala." },
@@ -16,40 +16,47 @@
     }
   },
   "nav": { "home": "Hem", "services": "Tjänster", "howWeWork": "Så arbetar vi", "about": "Om oss", "work": "Vårt arbete", "contact": "Kontakt", "clientLogin": "Logga in", "language": "Språk", "openMenu": "Öppna meny", "closeMenu": "Stäng meny", "skipToContent": "Hoppa till innehåll", "mainNavigation": "Huvudnavigering", "signup": "Registrera dig" },
-  "cta": { "letsWorkTogether": "Låt oss samarbeta", "exploreServices": "Utforska tjänster", "exploreOurServices": "Utforska våra tjänster", "talkToTeam": "Prata med vårt team", "needOngoingSupport": "Behöver du löpande stöd? Låt oss prata.", "learnMore": "Läs mer", "viewService": "Se tjänsten" },
+  "cta": { "letsWorkTogether": "Låt oss samarbeta", "letsGrowTogether": "Låt oss växa tillsammans", "exploreServices": "Utforska tjänster", "exploreOurServices": "Utforska våra tjänster", "talkToTeam": "Prata med vårt team", "needOngoingSupport": "Behöver du löpande stöd? Låt oss prata.", "learnMore": "Läs mer", "viewService": "Se tjänsten" },
   "home": {
-    "hero": { "eyebrow": "Partner för digital drift och affärsdrift", "titleStart": "Du driver företaget.", "titleEnd": "Vi driver det digitala.", "subtitle": "Från webbplatser och digital närvaro till affärssystem, rekrytering, automatisering och löpande teknisk support — ExploreTechify fungerar som ett externt team för digital drift för växande företag.", "note": "En långsiktig partner för den digitala sidan av ditt företag." },
-    "board": { "title": "Den digitala sidan, omhändertagen", "status": "Den här veckan", "items": { "website": "Webbplatsens innehåll uppdaterat", "seo": "Rapport för lokal SEO delad", "email": "Brevlåda för ny medarbetare skapad", "crm": "CRM-pipeline uppstädad", "hiring": "3 kandidater på kortlistan", "automation": "Betalningspåminnelser automatiserade" }, "done": "Klart", "inProgress": "Pågår" },
-    "split": { "eyebrow": "En tydlig arbetsfördelning", "title": "Du fokuserar på att driva företaget. Vi hjälper till med det digitala.", "subtitle": "Växande företag behöver inte en ny leverantör för varje verktyg. De behöver ett team som äger den digitala sidan — och samordnar specialister när det är rimligt.", "youTitle": "Du", "youItems": ["Den fysiska verksamheten", "Kunder", "Produkter", "Tjänster", "Försäljning", "Leverans", "Fysisk drift", "Affärsbeslut"], "usTitle": "ExploreTechify", "usItems": ["Webbplats", "Närvaro online", "SEO", "Stöd i sociala medier", "CRM", "Affärssystem", "Rekryteringsstöd", "HR-stöd", "Automatisering", "Teknisk support", "Data och rapportering", "Digital drift"] },
-    "pillars": { "eyebrow": "Vad vi gör", "title": "Sex sammanhängande områden. En partner.", "subtitle": "Inte trettio orelaterade tjänster — utan en driftmodell för den digitala sidan av ditt företag." },
-    "process": { "eyebrow": "Så arbetar vi", "title": "En långsiktig modell, inte ett engångsprojekt", "subtitle": "Vi börjar med ditt företag, bygger det som saknas och fortsätter sedan att driva och förbättra det." },
-    "moreThan": { "eyebrow": "Långsiktigt partnerskap", "title": "Mer än en webbplats", "subtitle": "När vi känner ditt företag är nästa förfrågan enkel.", "items": ["Behöver webbplatsen uppdateras? Vi fixar det.", "Behöver du ett nytt affärssystem? Vi bygger det.", "Behöver du rekryteringsstöd? Vi hjälper till.", "Behöver du SEO-stöd? Vi sköter det.", "Behöver du automatisering? Vi bygger den.", "Behöver du teknisk hjälp? Vi finns här."] },
+    "hero": { "eyebrow": "Webbplatser byggda för tillväxt", "titleStart": "Webbplatser som gör", "titleEnd": "besökare till kunder.", "subtitle": "Vi bygger företagswebbplatser som är utformade för att locka rätt besökare, skapa förtroende, generera förfrågningar och hjälpa till att göra uppmärksamhet till verkliga affärsmöjligheter.", "note": "Vi kan också finnas kvar efter lanseringen och fortsätta förbättra webbplatsen tillsammans med dig." },
+    "board": { "title": "Från webbplats till kund", "status": "Det här är din webbplats byggd för", "items": { "website": "Byggd kring ditt företag och dina kunder", "visitors": "Hjälper rätt personer att hitta dig", "leads": "Gör intresse till förfrågningar", "customers": "Stödjer vägen till ett köp", "growth": "Förbättras vidare i takt med att du växer", "engagement": "Ger besökare skäl att lita på dig" }, "stages": { "website": "Webbplats", "visitors": "Besökare", "leads": "Förfrågningar", "customers": "Kunder", "growth": "Tillväxt", "engagement": "Engagemang" } },
+    "split": { "eyebrow": "Varför det spelar roll", "title": "En webbplats ska inte bara vara en digital broschyr.", "subtitle": "Många företag har en webbplats som finns men gör lite för verksamheten. En webbplats ska ha ett syfte: hjälpa dig att synas, bygga förtroende, generera förfrågningar och stödja försäljningen.", "youTitle": "En webbplats som bara finns", "youItems": ["Ser bra ut men ger få förfrågningar", "Svår att hitta i sökningar", "Inget tydligt nästa steg för besökare", "Förbättras sällan efter lanseringen"], "usTitle": "En webbplats byggd kring dina affärsmål", "usItems": ["Ditt företag och erbjudande", "Dina målkunder", "Kundresan", "Förtroende och trovärdighet", "Tydliga uppmaningar till handling", "Leadgenerering", "Konvertering", "Synlighet i sökningar", "Framtida tillväxt"] },
+    "pillars": { "eyebrow": "Bortom webbplatsen", "title": "Din webbplats är startpunkten. Vi kan hjälpa till att bygga systemen runt den.", "subtitle": "Sex sammanhängande tjänsteområden med samma mål: att locka rätt kunder och driva verksamheten bakom dem.", "roles": { "digitalFoundation": "Grunden", "growthVisibility": "Synlighet", "digitalOperations": "Löpande teknik", "businessSystems": "Drift", "automationAi": "Automatisering", "peopleRecruitment": "Människor" } },
+    "journey": { "eyebrow": "Från webbplats till kund", "title": "Bygg. Locka. Engagera. Konvertera. Väx.", "subtitle": "Ett strategiskt arbetssätt, inte en garanterad formel — varje steg anpassas efter ditt företag och dina kunder.", "steps": [{ "title": "Bygg", "text": "En professionell webbplats byggd kring ditt företag och dina kunder." }, { "title": "Locka", "text": "Synlighet i sökningar, innehåll, sociala medier och andra lämpliga kanaler som ger relevanta besökare." }, { "title": "Engagera", "text": "Tydlig information, förtroendesignaler och en upplevelse som ger besökare trygghet." }, { "title": "Konvertera", "text": "Tydliga uppmaningar till handling, förfrågningsvägar och kontaktmöjligheter som gör nästa steg enkelt." }, { "title": "Väx", "text": "Löpande förbättringar utifrån verksamhetens behov och hur webbplatsen presterar." }] },
+    "moreThan": { "eyebrow": "Långsiktig partner", "title": "Din webbplats ska inte vara slutet på projektet. Den ska vara början på din digitala tillväxt.", "subtitle": "Webbplatsen är grunden — inte nödvändigtvis slutet på samarbetet. Beroende på dina behov kan vi fortsätta hjälpa till.", "items": ["Behöver du uppdateringar? Vi sköter underhållet.", "Behöver du synas mer? Vi hjälper till med SEO och innehåll.", "Behöver du stöd med sociala medier? Vi hjälper till.", "Behöver du tekniska förbättringar? Vi genomför dem.", "Behöver du automatisering eller ett CRM? Vi bygger det.", "Behöver du rekryteringsstöd? Vi hjälper till."], "cycle": ["Lansera", "Förbättra", "Optimera", "Väx"] },
     "industries": { "eyebrow": "Anpassat efter din verksamhet", "title": "Rätt kombination för din bransch", "subtitle": "Varje företag behöver en egen mix. Välj en profil för att se en typisk startpunkt.", "profiles": { "ecommerce": { "title": "E-handel", "text": "Sälj online med en butik, lager- och kundsystem som fungerar tillsammans." }, "technology": { "title": "Teknikföretag", "text": "Rekrytera teknisk kompetens och driv interna system utan att störa produktteamet." }, "localBusiness": { "title": "Lokalt företag", "text": "Bli hittad lokalt, se trovärdig ut online och gör förfrågningar till kunder." }, "hiring": { "title": "Företag som anställer", "text": "Strukturerat stöd för rekrytering och introduktion medan teamet växer." }, "professional": { "title": "Professionella tjänster", "text": "En trovärdig närvaro, professionell e-post och ett enkelt sätt att hantera kunder." }, "operations": { "title": "Tillverkning och logistik", "text": "Orderflöden, dashboards och rapportering som minskar manuellt arbete." } } },
     "principles": { "eyebrow": "Så verkar vi", "title": "Ärlig omfattning. Ansvarsfull leverans.", "items": [{ "title": "Ett ansvarigt team", "text": "En kontaktpunkt för det digitala, i stället för en leverantör per verktyg." }, { "title": "Specialister vid behov", "text": "När en uppgift kräver djup specialistkompetens samordnar vi pålitliga partner — och säger det i förväg." }, { "title": "Byggt för att hålla", "text": "Vi dokumenterar det vi bygger så att dina system förblir begripliga och dina." }] },
     "engagement": {
       "eyebrow": "Sätt att samarbeta",
-      "title": "Tre sätt att arbeta med oss",
-      "subtitle": "Välj den samarbetsform som passar ditt företag i dag.",
-      "cta": "Se detaljer",
+      "title": "Välj hur vi arbetar tillsammans",
+      "subtitle": "Alla företag är olika. Oavsett om du behöver löpande stöd, ett avgränsat projekt eller ett djupare strategiskt partnerskap kan vi utforma samarbetet efter vad som passar ditt företag.",
+      "cta": "Utforska modellen",
       "models": {
         "monthly": {
           "title": "Månadspartnerskap",
-          "text": "Löpande digitalt och operativt stöd till en förutsägbar månadsavgift.",
+          "text": "Dedikerat, löpande digitalt och tekniskt stöd till en förutsägbar månadsavgift — som en förlängning av ditt eget team.",
           "points": ["Löpande stöd", "Överenskommen månatlig omfattning", "Långsiktigt samarbete"]
         },
         "growth": {
           "title": "Tillväxtpartnerskap",
           "text": "Utforska ett selektivt partnerskap där vi bidrar till företagets tillväxt enligt ett separat förhandlat avtal.",
-          "points": ["Utvalda möjligheter", "Gemensamma tillväxtmål", "Individuellt förhandlade villkor"]
+          "points": ["Utvalda möjligheter", "Gemensamma tillväxtmål", "Individuellt förhandlade villkor"],
+          "note": "Beroende på vad som avtalas kan det vara ett partnerskap, ett delägarskap eller en vinstdelning — alltid diskuterat och avtalat individuellt.",
+          "lead": "För företag som söker ett djupare, långsiktigt samarbete."
         },
         "project": {
           "title": "Uppdragsbaserat samarbete",
           "text": "Anlita oss för en tydligt avgränsad uppgift eller ett projekt med överenskommen omfattning, pris och leveransplan.",
           "points": ["Tydligt avgränsad omfattning", "Överenskommet projektpris", "Leverans i delmål där det passar"]
         }
+      },
+      "kinds": {
+        "monthly": "Löpande",
+        "growth": "Strategiskt",
+        "project": "Projekt"
       }
     },
-    "finalCta": { "title": "Låt oss ta hand om det digitala åt dig.", "subtitle": "Berätta var du står i dag. Vi föreslår en praktisk startpunkt — utan förpliktelser." }
+    "finalCta": { "title": "Redo att göra din webbplats till en tillväxtmotor?", "subtitle": "Berätta om ditt företag, dina mål eller problemet du vill lösa. Vi utforskar vad som skulle kunna fungera för dig." }
   },
   "services": {
     "overview": { "eyebrow": "Tjänster", "title": "Allt som den digitala sidan av ditt företag behöver", "subtitle": "En snabb överblick över hur vi kan stödja ditt företag — organiserat i sex områden som hänger ihop.", "includes": "Omfattar", "industryTitle": "Typiska kombinationer per bransch", "industrySubtitle": "En startpunkt — varje samarbete formas efter din verksamhet." },

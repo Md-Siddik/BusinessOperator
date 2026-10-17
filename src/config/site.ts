@@ -9,8 +9,8 @@ export const siteConfig = {
   legalName: process.env.NEXT_PUBLIC_LEGAL_NAME || "ExploreTechify",
   domain: process.env.NEXT_PUBLIC_SITE_DOMAIN || "exploretechify.com",
   url: siteUrl,
-  positioning: "Digital & Business Operations Partner",
-  tagline: "You run the business. We run the digital side.",
+  positioning: "Business Websites & Digital Growth",
+  tagline: "Websites That Turn Visitors Into Customers.",
   logo: { text: "ExploreTechify", mark: "ET" },
   contact: {
     email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@exploretechify.com",

@@ -1,9 +1,9 @@
 {
   "_meta": { "locale": "fi", "reviewStatus": "machine-assisted — pending native review" },
   "meta": {
-    "siteDescription": "ExploreTechify on kasvavien eurooppalaisten yritysten ulkoinen digitaalisten ja liiketoiminnan prosessien tiimi — verkkosivut, digitaalinen näkyvyys, liiketoimintajärjestelmät, rekrytoinnin tuki, automaatio ja jatkuva tekninen tuki.",
+    "siteDescription": "ExploreTechify rakentaa yritysten verkkosivustoja, jotka on suunniteltu houkuttelemaan oikeat kävijät, rakentamaan luottamusta ja tuottamaan yhteydenottoja — tukenaan hakukoneoptimointi, sisältö, liiketoimintajärjestelmät, rekrytoinnin tuki, automaatio ja jatkuva tekninen tuki kasvaville eurooppalaisille yrityksille.",
     "pages": {
-      "home": { "title": "ExploreTechify — Sinä pyörität liiketoimintaa. Me hoidamme digitaalisen puolen.", "description": "Ulkoinen digitaalisen toiminnan tiimi kasvaville yrityksille: verkkosivut, digitaalinen näkyvyys, liiketoimintajärjestelmät, rekrytoinnin tuki, automaatio ja tekninen tuki." },
+      "home": { "title": "ExploreTechify — Verkkosivut, jotka muuttavat kävijät asiakkaiksi", "description": "Konversioon keskittyvät yritysten verkkosivut, jotka on suunniteltu houkuttelemaan oikeat kävijät, rakentamaan luottamusta ja tuottamaan yhteydenottoja — tukenaan hakukoneoptimointi, digitaalinen näkyvyys, automaatio ja jatkuva tekninen tuki." },
       "services": { "title": "Palvelut", "description": "Kuusi toisiinsa liittyvää palvelualuetta — digitaalisesta perustasta jatkuvaan ylläpitoon, liiketoimintajärjestelmiin, kasvuun, henkilöstöön ja automaatioon." },
       "howWeWork": { "title": "Näin toimimme", "description": "Ymmärrä, rakenna, ylläpidä, kehitä, skaalaa — pitkäjänteinen malli yrityksesi digitaaliselle puolelle." },
       "about": { "title": "Meistä", "description": "ExploreTechify on digitaalisen ja liiketoiminnan toiminnan kumppani eurooppalaisille yrityksille, jotka haluavat yhden vastuullisen tiimin digitaaliselle puolelle." },
@@ -16,40 +16,47 @@
     }
   },
   "nav": { "home": "Etusivu", "services": "Palvelut", "howWeWork": "Näin toimimme", "about": "Meistä", "work": "Työmme", "contact": "Yhteystiedot", "clientLogin": "Kirjaudu", "language": "Kieli", "openMenu": "Avaa valikko", "closeMenu": "Sulje valikko", "skipToContent": "Siirry sisältöön", "mainNavigation": "Päänavigaatio", "signup": "Rekisteröidy" },
-  "cta": { "letsWorkTogether": "Tehdään yhteistyötä", "exploreServices": "Tutustu palveluihin", "exploreOurServices": "Tutustu palveluihimme", "talkToTeam": "Keskustele tiimimme kanssa", "needOngoingSupport": "Tarvitsetko jatkuvaa tukea? Jutellaan.", "learnMore": "Lue lisää", "viewService": "Katso palvelu" },
+  "cta": { "letsWorkTogether": "Tehdään yhteistyötä", "letsGrowTogether": "Kasvetaan yhdessä", "exploreServices": "Tutustu palveluihin", "exploreOurServices": "Tutustu palveluihimme", "talkToTeam": "Keskustele tiimimme kanssa", "needOngoingSupport": "Tarvitsetko jatkuvaa tukea? Jutellaan.", "learnMore": "Lue lisää", "viewService": "Katso palvelu" },
   "home": {
-    "hero": { "eyebrow": "Digitaalisen ja liiketoiminnan toiminnan kumppani", "titleStart": "Sinä pyörität liiketoimintaa.", "titleEnd": "Me hoidamme digitaalisen puolen.", "subtitle": "Verkkosivuista ja digitaalisesta näkyvyydestä liiketoimintajärjestelmiin, rekrytointiin, automaatioon ja jatkuvaan tekniseen tukeen — ExploreTechify toimii kasvavien yritysten ulkoisena digitaalisen toiminnan tiiminä.", "note": "Yksi pitkäaikainen kumppani yrityksesi digitaaliselle puolelle." },
-    "board": { "title": "Digitaalinen puolesi hoidettuna", "status": "Tällä viikolla", "items": { "website": "Verkkosivujen sisältö päivitetty", "seo": "Paikallisen SEO:n raportti jaettu", "email": "Uuden työntekijän sähköposti luotu", "crm": "CRM-myyntiputki siivottu", "hiring": "3 hakijaa jatkoon", "automation": "Maksumuistutukset automatisoitu" }, "done": "Valmis", "inProgress": "Käynnissä" },
-    "split": { "eyebrow": "Selkeä työnjako", "title": "Sinä keskityt liiketoimintaan. Me autamme digitaalisen puolen kanssa.", "subtitle": "Kasvava yritys ei tarvitse uutta toimittajaa jokaiselle työkalulle. Se tarvitsee yhden tiimin, joka vastaa digitaalisesta puolesta — ja koordinoi asiantuntijoita silloin, kun se on järkevää.", "youTitle": "Sinä", "youItems": ["Fyysinen liiketoiminta", "Asiakkaat", "Tuotteet", "Palvelut", "Myynti", "Toimitus", "Fyysinen toiminta", "Liiketoimintapäätökset"], "usTitle": "ExploreTechify", "usItems": ["Verkkosivut", "Näkyvyys verkossa", "SEO", "Sosiaalisen median tuki", "CRM", "Liiketoimintajärjestelmät", "Rekrytoinnin tuki", "HR-tuki", "Automaatio", "Tekninen tuki", "Data ja raportointi", "Digitaalinen toiminta"] },
-    "pillars": { "eyebrow": "Mitä teemme", "title": "Kuusi toisiinsa liittyvää aluetta. Yksi kumppani.", "subtitle": "Ei kolmeakymmentä irrallista palvelua — vaan yksi toimintamalli yrityksesi digitaaliselle puolelle." },
-    "process": { "eyebrow": "Näin toimimme", "title": "Pitkäjänteinen malli, ei kertaluonteinen projekti", "subtitle": "Aloitamme yrityksestäsi, rakennamme puuttuvan ja jatkamme sen ylläpitoa ja kehittämistä." },
-    "moreThan": { "eyebrow": "Pitkäaikainen kumppanuus", "title": "Enemmän kuin verkkosivut", "subtitle": "Kun tunnemme yrityksesi, seuraava pyyntö on helppo.", "items": ["Tarvitaanko verkkosivuille päivitys? Hoidamme sen.", "Tarvitaanko uusi liiketoimintajärjestelmä? Rakennamme sen.", "Tarvitaanko tukea rekrytointiin? Autamme.", "Tarvitaanko SEO-tukea? Hoidamme sen.", "Tarvitaanko automaatiota? Rakennamme sen.", "Tarvitaanko teknistä apua? Olemme tukena."] },
+    "hero": { "eyebrow": "Kasvuun rakennetut verkkosivut", "titleStart": "Verkkosivut, jotka muuttavat", "titleEnd": "kävijät asiakkaiksi.", "subtitle": "Rakennamme yritysten verkkosivuja, jotka on suunniteltu houkuttelemaan oikeat kävijät, rakentamaan luottamusta, tuottamaan yhteydenottoja ja auttamaan huomion muuttamisessa todellisiksi liiketoimintamahdollisuuksiksi.", "note": "Voimme myös jatkaa julkaisun jälkeen ja kehittää sivustoa yhdessä kanssasi." },
+    "board": { "title": "Verkkosivuista asiakkaaksi", "status": "Tähän verkkosivusi on rakennettu", "items": { "website": "Rakennettu yrityksesi ja asiakkaidesi ympärille", "visitors": "Auttaa oikeita ihmisiä löytämään sinut", "leads": "Muuttaa kiinnostuksen yhteydenotoiksi", "customers": "Tukee polkua kauppaan", "growth": "Kehittyy edelleen yrityksesi kasvaessa", "engagement": "Antaa kävijöille syyn luottaa sinuun" }, "stages": { "website": "Verkkosivut", "visitors": "Kävijät", "leads": "Yhteydenotot", "customers": "Asiakkaat", "growth": "Kasvu", "engagement": "Sitoutuminen" } },
+    "split": { "eyebrow": "Miksi sillä on väliä", "title": "Verkkosivujen ei pitäisi olla pelkkä verkkoesite.", "subtitle": "Monella yrityksellä on verkkosivut, jotka ovat olemassa mutta tekevät vähän liiketoiminnan hyväksi. Verkkosivuilla pitäisi olla tarkoitus: auttaa sinua erottumaan, rakentaa luottamusta, tuottaa yhteydenottoja ja tukea myyntiä.", "youTitle": "Verkkosivut, jotka vain ovat olemassa", "youItems": ["Näyttävät hyviltä, mutta tuovat vähän yhteydenottoja", "Vaikea löytää hakukoneista", "Kävijöille ei selkeää seuraavaa askelta", "Harvoin kehitetty julkaisun jälkeen"], "usTitle": "Verkkosivut, jotka on rakennettu liiketoimintasi tavoitteiden ympärille", "usItems": ["Yrityksesi ja tarjontasi", "Kohdeasiakkaasi", "Asiakaspolku", "Luottamus ja uskottavuus", "Selkeät toimintakehotteet", "Liidien hankinta", "Konversio", "Näkyvyys hakukoneissa", "Tuleva kasvu"] },
+    "pillars": { "eyebrow": "Verkkosivujen lisäksi", "title": "Verkkosivut ovat lähtökohta. Voimme auttaa rakentamaan järjestelmät niiden ympärille.", "subtitle": "Kuusi toisiinsa liittyvää palvelualuetta samalla tavoitteella: houkutella oikeat asiakkaat ja pyörittää liiketoimintaa niiden takana.", "roles": { "digitalFoundation": "Perusta", "growthVisibility": "Näkyvyys", "digitalOperations": "Jatkuva tekniikka", "businessSystems": "Toiminnot", "automationAi": "Automaatio", "peopleRecruitment": "Ihmiset" } },
+    "journey": { "eyebrow": "Verkkosivuista asiakkaaksi", "title": "Rakenna. Houkuttele. Sitouta. Konvertoi. Kasva.", "subtitle": "Strateginen lähestymistapa, ei taattu kaava — jokainen vaihe sovitetaan yritykseesi ja asiakkaisiisi.", "steps": [{ "title": "Rakenna", "text": "Ammattimaiset verkkosivut, jotka on rakennettu yrityksesi ja asiakkaidesi ympärille." }, { "title": "Houkuttele", "text": "Hakukonenäkyvyys, sisältö, sosiaalinen media ja muut sopivat kanavat, jotka tuovat oikeita kävijöitä." }, { "title": "Sitouta", "text": "Selkeä tieto, luottamusta herättävät elementit ja kokemus, joka antaa kävijöille varmuutta." }, { "title": "Konvertoi", "text": "Selkeät toimintakehotteet, yhteydenottopolut ja yhteystavat, jotka tekevät seuraavasta askeleesta helpon." }, { "title": "Kasva", "text": "Jatkuvaa kehittämistä liiketoiminnan tarpeiden ja sivuston toimivuuden perusteella." }] },
+    "moreThan": { "eyebrow": "Pitkäaikainen kumppani", "title": "Verkkosivujen ei pitäisi olla projektin loppu. Niiden pitäisi olla digitaalisen kasvusi alku.", "subtitle": "Verkkosivut ovat perusta — eivät välttämättä yhteistyön loppu. Tarpeidesi mukaan voimme jatkaa auttamista.", "items": ["Tarvitsetko päivityksiä? Hoidamme ylläpidon.", "Tarvitsetko lisää näkyvyyttä? Autamme hakukoneoptimoinnissa ja sisällössä.", "Tarvitsetko tukea sosiaaliseen mediaan? Autamme.", "Tarvitsetko teknisiä parannuksia? Toteutamme ne.", "Tarvitsetko automaatiota tai CRM:n? Rakennamme sen.", "Tarvitsetko rekrytoinnin tukea? Autamme."], "cycle": ["Julkaise", "Paranna", "Optimoi", "Kasva"] },
     "industries": { "eyebrow": "Yrityksesi ehdoilla", "title": "Oikea yhdistelmä toimialallesi", "subtitle": "Jokainen yritys tarvitsee erilaisen kokonaisuuden. Valitse profiili nähdäksesi tyypillisen lähtökohdan.", "profiles": { "ecommerce": { "title": "Verkkokauppa", "text": "Myy verkossa kaupalla, varasto- ja asiakasjärjestelmillä, jotka toimivat yhdessä." }, "technology": { "title": "Teknologiayritys", "text": "Rekrytoi teknisiä osaajia ja pyöritä sisäisiä järjestelmiä häiritsemättä tuotetiimiä." }, "localBusiness": { "title": "Paikallinen yritys", "text": "Tule löydetyksi paikallisesti, näytä luotettavalta verkossa ja muuta yhteydenotot asiakkaiksi." }, "hiring": { "title": "Rekrytoiva yritys", "text": "Jäsenneltyä tukea rekrytointiin ja perehdytykseen tiimin kasvaessa." }, "professional": { "title": "Asiantuntijapalvelut", "text": "Uskottava näkyvyys, ammattimainen sähköposti ja helppo tapa hallita asiakkuuksia." }, "operations": { "title": "Valmistus ja logistiikka", "text": "Tilausprosessit, koontinäkymät ja raportointi, jotka vähentävät käsityötä." } } },
     "principles": { "eyebrow": "Toimintatapamme", "title": "Rehellinen laajuus. Vastuullinen toteutus.", "items": [{ "title": "Yksi vastuullinen tiimi", "text": "Yksi yhteyshenkilö digitaaliselle puolelle sen sijaan, että jokaiselle työkalulle olisi oma toimittaja." }, { "title": "Asiantuntijat tarvittaessa", "text": "Kun tehtävä vaatii syvää erikoisosaamista, koordinoimme luotettavia kumppaneita — ja kerromme siitä etukäteen." }, { "title": "Rakennettu kestämään", "text": "Dokumentoimme rakentamamme, jotta järjestelmät pysyvät ymmärrettävinä ja omistuksessasi." }] },
     "engagement": {
       "eyebrow": "Yhteistyön muodot",
-      "title": "Kolme tapaa tehdä yhteistyötä kanssamme",
-      "subtitle": "Valitse yhteistyömalli, joka sopii yrityksellesi tänään.",
-      "cta": "Katso lisätiedot",
+      "title": "Valitse, miten teemme yhteistyötä",
+      "subtitle": "Jokainen yritys on erilainen. Tarvitsetpa jatkuvaa tukea, rajatun projektin tai syvemmän strategisen kumppanuuden, rakennamme yhteistyön sen mukaan, mikä on yrityksellesi järkevää.",
+      "cta": "Tutustu malliin",
       "models": {
         "monthly": {
           "title": "Kuukausikumppanuus",
-          "text": "Jatkuvaa digitaalista ja operatiivista tukea ennakoitavalla kuukausihinnalla.",
+          "text": "Omistautunutta, jatkuvaa digitaalista ja teknistä tukea ennustettavalla kuukausimaksulla — kuin oman tiimisi jatke.",
           "points": ["Jatkuva tuki", "Sovittu kuukausittainen laajuus", "Pitkäaikainen yhteistyö"]
         },
         "growth": {
           "title": "Kasvukumppanuus",
           "text": "Tutustu valikoivaan kumppanuuteen, jossa edistämme yrityksen kasvua erikseen neuvotellun sopimuksen mukaisesti.",
-          "points": ["Valikoidut mahdollisuudet", "Yhteiset kasvutavoitteet", "Yksilöllisesti neuvotellut ehdot"]
+          "points": ["Valikoidut mahdollisuudet", "Yhteiset kasvutavoitteet", "Yksilöllisesti neuvotellut ehdot"],
+          "note": "Sopimuksesta riippuen kyse voi olla kumppanuudesta, osakkuudesta tai voitonjaosta — aina yksilöllisesti keskusteltuna ja sovittuna.",
+          "lead": "Yrityksille, jotka etsivät syvempää ja pitkäaikaista yhteistyötä."
         },
         "project": {
           "title": "Tehtäväkohtainen yhteistyö",
           "text": "Palkkaa meidät selkeästi rajattuun tehtävään tai projektiin, jolle on sovittu laajuus, hinta ja toimitussuunnitelma.",
           "points": ["Selkeästi rajattu laajuus", "Sovittu projektihinta", "Vaiheittainen toimitus tarvittaessa"]
         }
+      },
+      "kinds": {
+        "monthly": "Jatkuva",
+        "growth": "Strateginen",
+        "project": "Projekti"
       }
     },
-    "finalCta": { "title": "Otetaan digitaalinen puoli harteiltasi.", "subtitle": "Kerro, missä olette tänään. Ehdotamme käytännöllisen lähtökohdan — ilman sitoumuksia." }
+    "finalCta": { "title": "Valmis tekemään verkkosivuistasi kasvun moottorin?", "subtitle": "Kerro meille yrityksestäsi, tavoitteistasi tai ongelmasta, jonka haluat ratkaista. Selvitämme, mikä voisi toimia sinulle." }
   },
   "services": {
     "overview": { "eyebrow": "Palvelut", "title": "Kaikki, mitä yrityksesi digitaalinen puoli tarvitsee", "subtitle": "Nopea katsaus siihen, miten voimme tukea yritystäsi — järjestettynä kuuteen toisiaan tukevaan alueeseen.", "includes": "Sisältää", "industryTitle": "Tyypilliset yhdistelmät toimialoittain", "industrySubtitle": "Lähtökohta — jokainen yhteistyö muotoillaan yrityksesi mukaan." },
