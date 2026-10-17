@@ -113,6 +113,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       collapsible: true,
       defaultOpen: false,
       items: [
+        // Owner-only one-to-one sender (the page, API routes and service enforce OWNER server-side too).
+        ...(isOwner(actor) ? [{ href: "/dashboard/email-sender", label: "Email Sender", icon: "email" }] : []),
         { href: `/dashboard/outreach${q}`, match: "/dashboard/outreach/campaigns", label: "Campaigns", icon: "campaigns" },
         { href: `/dashboard/outreach/queue${q}`, label: "Email Queue", icon: "queue", match: "/dashboard/outreach/queue" },
         { href: `/dashboard/outreach/templates${q}`, label: "Templates", icon: "templates", match: "/dashboard/outreach/templates" },

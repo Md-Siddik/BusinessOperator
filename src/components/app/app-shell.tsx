@@ -60,6 +60,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   templates: FileText,
   queue: Inbox,
   history: Mail,
+  email: Mail,
   suppression: ShieldCheck,
   clients: Building2,
   messages: MessageSquare,
