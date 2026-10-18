@@ -119,6 +119,9 @@ export async function ServicesPage({ base }: { base: WorkspaceBase }) {
                         technologies: cs.technologies,
                         isExample: cs.isExample,
                         published: cs.published,
+                        projectUrl: cs.projectUrl ?? undefined,
+                        thumbnailUrl: cs.thumbnailUrl ?? undefined,
+                        videoUrl: cs.videoUrl ?? undefined,
                         content: { title: cs.content.title ?? "", summary: cs.content.summary ?? undefined, challenge: cs.content.challenge ?? undefined, solution: cs.content.solution ?? undefined, results: cs.content.results ?? [], testimonial: cs.content.testimonial ?? undefined },
                       }}
                     />

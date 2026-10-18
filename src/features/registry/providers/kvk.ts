@@ -120,7 +120,7 @@ export function createKvkProvider(): CompanyRegistryProvider {
     sourceType: "OFFICIAL_REGISTRY",
     freshness: "NEAR_REAL_TIME",
     isDemo: false,
-    accessType: "API_KEY",
+    accessType: "COMMERCIAL",
     registrationDateType: "KVK start date of the new registration (startdatum)",
     homepage: "https://www.kvk.nl",
     docsUrl: "https://developers.kvk.nl/documentation/mutatieservice-api",

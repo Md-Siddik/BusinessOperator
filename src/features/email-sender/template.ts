@@ -64,7 +64,7 @@ const STYLE = {
  * about them is known. No promises of results.
  */
 export const DEFAULT_TEMPLATE = {
-  id: "default-v6",
+  id: "default-v7",
   subject: "A website built to turn visitors into customers",
   body: [
     "Hello,",
@@ -81,6 +81,7 @@ export const DEFAULT_TEMPLATE = {
     "## Beyond the website",
     "Depending on what the business needs, we can also support areas such as SEO and digital visibility, social media, automation, CRM and operational systems, and ongoing technical support.",
     "We don't necessarily disappear after the website goes live. For businesses that need it, we're open to ongoing collaboration: on a monthly basis, for a clearly defined project, or, for suitable businesses, as a longer-term growth partnership.",
+    "For website projects, we can build an agreed first version for you to review before you commit.",
     "If this sounds relevant, just reply to this email. We'd be glad to hear about your business.",
   ].join("\n\n"),
   includeCta: true,
@@ -88,13 +89,58 @@ export const DEFAULT_TEMPLATE = {
   cta: { label: "See How We Can Help", url: PUBLIC_SITE_URL },
 } as const;
 
+export const EMAIL_LOCALES = ["en", "no"] as const;
+export type EmailLocale = (typeof EMAIL_LOCALES)[number];
+
 export type EmailContent = {
   subject: string;
   /** Plain text with the safe markup described above. */
   body: string;
-  /** Adds the "More about …" button linking to our own website. */
+  /** Adds the single button linking to our own website. */
   includeCta?: boolean;
+  /** Button label and target (our own site only); defaults to the "See How We Can Help" homepage button. */
+  cta?: { label: string; url: string };
+  /** Language of the surrounding layout: signature, labels, tagline and opt-out. Default English. */
+  locale?: EmailLocale;
 };
+
+/** Layout text per language. Norwegian is written as Norwegian business email, not translated word for word. */
+const LAYOUT: Record<EmailLocale, { lang: string; regards: string; web: string; email: string; phone: string; optOut: string; unsubscribe: string; tagline: string; positioning: string }> = {
+  en: {
+    lang: "en",
+    regards: "Best regards,",
+    web: "Web",
+    email: "Email",
+    phone: "Phone",
+    optOut: "If you'd prefer not to receive further messages from us, simply reply and let us know, or",
+    unsubscribe: "unsubscribe here",
+    tagline: siteConfig.tagline,
+    positioning: siteConfig.positioning,
+  },
+  no: {
+    lang: "nb",
+    regards: "Med vennlig hilsen",
+    web: "Nett",
+    email: "E-post",
+    phone: "Telefon",
+    optOut: "Ønsker du ikke flere e-poster fra oss, kan du svare og si fra, eller",
+    unsubscribe: "melde deg av her",
+    tagline: "Nettsider som gjør besøkende til kunder.",
+    positioning: "Bedriftsnettsider og digital vekst",
+  },
+};
+
+/** Only links to our own website may be used as the button target. */
+function safeCta(cta: EmailContent["cta"]) {
+  if (!cta) return DEFAULT_TEMPLATE.cta;
+  try {
+    const u = new URL(cta.url);
+    if (u.protocol === "https:" && (u.hostname === siteConfig.domain || u.hostname === `www.${siteConfig.domain}`)) return { label: cta.label.slice(0, 60), url: u.toString() };
+  } catch {
+    /* fall through */
+  }
+  return DEFAULT_TEMPLATE.cta;
+}
 
 /**
  * Who signs the email: the From name, the monitored reply address, and optional phone
@@ -238,24 +284,25 @@ function contactRow(label: string, valueHtml: string) {
  */
 export function renderEmail(content: EmailContent, opts: { unsubscribeUrl: string; signature: Signature }): RenderedEmail {
   const subject = content.subject.trim();
-  const cta = content.includeCta ? DEFAULT_TEMPLATE.cta : null;
+  const cta = content.includeCta ? safeCta(content.cta) : null;
+  const L = LAYOUT[content.locale ?? "en"] ?? LAYOUT.en;
   const sig = opts.signature;
   const name = sig.name.trim() || `${siteConfig.name} Team`;
   const email = sig.email?.trim();
   const phone = sig.phone?.trim();
   const postal = sig.postalAddress?.trim();
-  const optOut = "If you'd prefer not to receive further messages from us, simply reply and let us know, or";
-  const company = `${siteConfig.name} · ${siteConfig.positioning}`;
+  const optOut = L.optOut;
+  const company = `${siteConfig.name} · ${L.positioning}`;
   const legal = `© ${new Date().getFullYear()} ${siteConfig.legalName}`;
 
   const contacts = [
-    contactRow("Web", `<a href="${PUBLIC_SITE_URL}" style="${STYLE.link}">${escapeHtml(siteConfig.domain)}</a>`),
-    email ? contactRow("Email", `<a href="mailto:${escapeHtml(email)}" style="${STYLE.link}">${escapeHtml(email)}</a>`) : "",
-    phone ? contactRow("Phone", escapeHtml(phone)) : "",
+    contactRow(L.web, `<a href="${PUBLIC_SITE_URL}" style="${STYLE.link}">${escapeHtml(siteConfig.domain)}</a>`),
+    email ? contactRow(L.email, `<a href="mailto:${escapeHtml(email)}" style="${STYLE.link}">${escapeHtml(email)}</a>`) : "",
+    phone ? contactRow(L.phone, escapeHtml(phone)) : "",
   ].join("");
 
   const html = `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="${L.lang}" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -295,8 +342,8 @@ table{border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt}
 </td></tr>
 
 <tr><td class="et-pad et-hero" bgcolor="${C.navy}" style="background-color:${C.navy};background-image:linear-gradient(135deg,${C.navy} 0%,#14224a 60%,#1b3170 100%);padding:36px 40px 34px">
-<p style="margin:0 0 14px;font-family:${SANS};font-size:12px;line-height:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${C.signalPale}">${escapeHtml(siteConfig.positioning)}</p>
-<h1 class="et-h1" style="margin:0;font-family:${SANS};font-size:30px;line-height:38px;font-weight:700;letter-spacing:-0.5px;color:${C.white}">${escapeHtml(siteConfig.tagline)}</h1>
+<p style="margin:0 0 14px;font-family:${SANS};font-size:12px;line-height:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${C.signalPale}">${escapeHtml(L.positioning)}</p>
+<h1 class="et-h1" style="margin:0;font-family:${SANS};font-size:30px;line-height:38px;font-weight:700;letter-spacing:-0.5px;color:${C.white}">${escapeHtml(L.tagline)}</h1>
 <table ${PRESENTATION} style="margin:20px 0 0"><tr>${cell(56, 3, C.signal, "border-radius:2px")}</tr></table>
 </td></tr>
 
@@ -307,7 +354,7 @@ ${cta ? button(cta.label, cta.url) : ""}
 <table ${PRESENTATION} style="margin:26px 0 36px"><tr>
 <td width="3" bgcolor="${C.accent}" style="width:3px;background-color:${C.accent};font-size:0;line-height:0">&nbsp;</td>
 <td style="padding-left:18px">
-<p style="margin:0 0 4px;font-family:${SANS};font-size:15px;line-height:22px;color:${C.muted}">Best regards,</p>
+<p style="margin:0 0 4px;font-family:${SANS};font-size:15px;line-height:22px;color:${C.muted}">${escapeHtml(L.regards)}</p>
 <p style="margin:0;font-family:${SANS};font-size:18px;line-height:26px;font-weight:700;color:${C.navy}">${escapeHtml(name)}</p>
 <p style="margin:0 0 12px;font-family:${SANS};font-size:13px;line-height:20px;color:${C.muted}">${escapeHtml(company)}</p>
 <table ${PRESENTATION}>${contacts}</table>
@@ -316,11 +363,11 @@ ${cta ? button(cta.label, cta.url) : ""}
 
 <tr><td class="et-pad" bgcolor="${C.navyDeep}" style="background-color:${C.navyDeep};padding:30px 40px;border-radius:0 0 14px 14px">
 <p style="margin:0 0 4px;font-family:${SANS};font-size:15px;line-height:22px;font-weight:700;color:${C.white}">${escapeHtml(siteConfig.name)}</p>
-<p style="margin:0 0 10px;font-family:${SANS};font-size:13px;line-height:20px;color:${C.signalPale}">${escapeHtml(siteConfig.tagline)}</p>
+<p style="margin:0 0 10px;font-family:${SANS};font-size:13px;line-height:20px;color:${C.signalPale}">${escapeHtml(L.tagline)}</p>
 <p style="margin:0 0 18px;font-family:${SANS};font-size:13px;line-height:20px;color:${C.footerText}"><a href="${PUBLIC_SITE_URL}" style="color:${C.white};text-decoration:none">${escapeHtml(siteConfig.domain)}</a> &nbsp;·&nbsp; <a href="mailto:${escapeHtml(BUSINESS_EMAIL)}" style="color:${C.white};text-decoration:none">${escapeHtml(BUSINESS_EMAIL)}</a></p>
 <table ${PRESENTATION} width="100%"><tr>${cell(1, 1, C.navySoft)}</tr></table>
 <p style="margin:18px 0 0;font-family:${SANS};font-size:12px;line-height:19px;color:${C.footerText}">${escapeHtml(legal)}${postal ? ` · ${escapeHtml(postal)}` : ""}<br>
-${escapeHtml(optOut)} <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:${C.signalPale};text-decoration:underline">unsubscribe here</a>.</p>
+${escapeHtml(optOut)} <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:${C.signalPale};text-decoration:underline">${escapeHtml(L.unsubscribe)}</a>.</p>
 </td></tr>
 
 </table>
@@ -331,11 +378,11 @@ ${escapeHtml(optOut)} <a href="${escapeHtml(opts.unsubscribeUrl)}" style="color:
 </html>`;
 
   const text = [
-    `${siteConfig.name} — ${siteConfig.positioning}\n${siteConfig.tagline}`,
+    `${siteConfig.name} — ${L.positioning}\n${L.tagline}`,
     bodyText(content.body),
     cta ? `${cta.label}: ${cta.url}` : "",
-    ["Best regards,", name, company, `Web: ${siteConfig.domain}`, email && `Email: ${email}`, phone && `Phone: ${phone}`].filter(Boolean).join("\n"),
-    `--\n${siteConfig.name}\n${siteConfig.tagline}\n${PUBLIC_SITE_URL}\n${BUSINESS_EMAIL}\n\n${legal}${postal ? `\n${postal}` : ""}\n${optOut} unsubscribe here: ${opts.unsubscribeUrl}`,
+    [L.regards, name, company, `${L.web}: ${siteConfig.domain}`, email && `${L.email}: ${email}`, phone && `${L.phone}: ${phone}`].filter(Boolean).join("\n"),
+    `--\n${siteConfig.name}\n${L.tagline}\n${PUBLIC_SITE_URL}\n${BUSINESS_EMAIL}\n\n${legal}${postal ? `\n${postal}` : ""}\n${optOut} ${L.unsubscribe}: ${opts.unsubscribeUrl}`,
   ]
     .filter(Boolean)
     .join("\n\n");

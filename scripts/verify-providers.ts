@@ -39,7 +39,8 @@ async function main() {
         const started = Date.now();
         const batch = await p.getRegistrations(day, day, { limit: 2000 });
         const list = batch.companies;
-        const wrongDay = list.filter((x) => x.registration.registrationDay !== day);
+        // Lagged sources select by publication day: the registration day is earlier, never later.
+        const wrongDay = p.windowBy === "publication" ? list.filter((x) => !x.registration.registrationDay || x.registration.registrationDay > day || (x.source.publishedAt && x.source.publishedAt.toISOString().slice(0, 10) !== day)) : list.filter((x) => x.registration.registrationDay !== day);
         const missingCore = list.filter((x) => !x.identity.name || !x.identity.registrationNumber || !x.registration.registrationDay);
         const n = (f: (x: (typeof list)[number]) => unknown) => list.filter(f).length;
         console.info(`${head} · ${day} (${c.timezone})`);

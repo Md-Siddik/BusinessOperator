@@ -3,6 +3,8 @@ import { COUNTRIES } from "@/config/countries";
 import { JURISDICTIONS } from "@/config/jurisdictions";
 import { isDemoModeEnabled } from "@/lib/data-mode";
 import { summarizeProvider, type CompanyRegistryProvider, type ProviderSummary } from "../types";
+import { createAresCzProvider } from "./ares-cz";
+import { createBodaccProvider } from "./bodacc";
 import { createBrregProvider } from "./brreg";
 import { createCompaniesHouseProvider } from "./companies-house";
 import { createCroProvider } from "./cro";
@@ -16,6 +18,9 @@ import { createOpenCorporatesProvider } from "./opencorporates";
 import { createOpenRegisterProvider } from "./openregister";
 import { createPrhProvider } from "./prh";
 import { createRikProvider } from "./rik";
+import { createRikOpenDataProvider } from "./rik-open-data";
+import { createShabProvider } from "./shab";
+import { createUrLvProvider } from "./ur-lv";
 
 /**
  * Provider registry. To connect a new source:
@@ -33,6 +38,11 @@ const REAL_FACTORIES: Record<string, () => CompanyRegistryProvider> = {
   "insee-sirene": createInseeSireneProvider,
   kvk: createKvkProvider,
   rik: createRikProvider,
+  "rik-open-data": createRikOpenDataProvider,
+  "ur-lv": createUrLvProvider,
+  shab: createShabProvider,
+  bodacc: createBodaccProvider,
+  "ares-cz": createAresCzProvider,
   openregister: createOpenRegisterProvider,
   cvr: createCvrProvider,
   bolagsverket: createBolagsverketProvider,

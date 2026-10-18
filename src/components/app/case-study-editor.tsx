@@ -20,6 +20,9 @@ export type CaseStudyForm = {
   technologies: string[];
   isExample: boolean;
   published: boolean;
+  projectUrl?: string;
+  thumbnailUrl?: string;
+  videoUrl?: string;
   content: { title: string; summary?: string; challenge?: string; solution?: string; results?: string[]; testimonial?: string };
 };
 
@@ -41,6 +44,9 @@ export function CaseStudyEditor({ initial }: { initial?: CaseStudyForm }) {
       technologies: String(fd.get("technologies") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
       isExample: fd.get("isExample") === "on",
       published: fd.get("published") === "on",
+      projectUrl: fd.get("projectUrl") ?? "",
+      thumbnailUrl: fd.get("thumbnailUrl") ?? "",
+      videoUrl: fd.get("videoUrl") ?? "",
       content: {
         title: fd.get("title"),
         summary: fd.get("summary") || undefined,
@@ -123,6 +129,17 @@ export function CaseStudyEditor({ initial }: { initial?: CaseStudyForm }) {
             </Field>
             <Field label="Technologies (comma-separated)" optional="optional">
               {(p) => <Input {...p} name="technologies" defaultValue={initial?.technologies.join(", ")} />}
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Project link" optional="optional" error={errors.projectUrl} hint="https://… (the live site)">
+              {(p) => <Input {...p} name="projectUrl" type="url" defaultValue={initial?.projectUrl} placeholder="https://" />}
+            </Field>
+            <Field label="Thumbnail image" optional="optional" error={errors.thumbnailUrl} hint="https:// image URL">
+              {(p) => <Input {...p} name="thumbnailUrl" type="url" defaultValue={initial?.thumbnailUrl} placeholder="https://" />}
+            </Field>
+            <Field label="Walkthrough video" optional="optional" error={errors.videoUrl} hint="YouTube, Vimeo or .mp4 / .webm">
+              {(p) => <Input {...p} name="videoUrl" type="url" defaultValue={initial?.videoUrl} placeholder="https://" />}
             </Field>
           </div>
           <fieldset>

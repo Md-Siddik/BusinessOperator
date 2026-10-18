@@ -4,13 +4,14 @@ import { getCountry } from "@/config/countries";
 import { INDUSTRY_LABELS, type IndustryKey } from "@/config/industries";
 import { Company, DailyRegistrationSnapshot, RegistrySync, SuppressionEntry, type CompanyDoc, type DailyRegistrationSnapshotDoc, type RegistrySyncDoc } from "@/models";
 import { audit } from "@/lib/audit";
-import { CONTACT_SOURCE_LABELS, type ContactSourceKind } from "@/lib/company-fields";
+import { CONTACT_SOURCE_LABELS, PENDING_RESEARCH_STATUSES, type ContactSourceKind } from "@/lib/company-fields";
 import { companyVisibilityFilter } from "@/lib/data-mode";
 import { addDays, eachDay, resolveDayRange, startOfMonth, todayIn, type Day, type DayRange } from "@/lib/dates/country-time";
 import { Errors } from "@/lib/errors";
 import { can, type Actor } from "@/lib/permissions";
 import { getEnabledCountries, getRunningSync, type CountryView } from "@/features/countries/service";
 import { DATA_FRESHNESS_LABELS, type DataFreshness } from "@/features/registry/types";
+import { sortCountries, type CountryCoverage } from "@/lib/integration-state";
 import { ALL, assertCanReadCompanies, buildCompanyFilter, companyQuerySchema, registrationDayFilter, sortFor } from "./service";
 
 type DayStats = { total: number; withEmail: number; withPhone: number; withWebsite: number; withPerson: number; fullyContactable: number; withDirect: number };
@@ -29,7 +30,19 @@ function add(a: DayStats, s: Pick<DailyRegistrationSnapshotDoc, "newCompanies" |
 }
 
 /** Research / verification counts for the selected window (new entities only). */
-export type ResearchStats = { directContacts: number; verifiedEmails: number; publishedPhones: number; pendingResearch: number; formOnly: number; needsReview: number };
+export type ResearchStats = {
+  directContacts: number;
+  verifiedEmails: number;
+  publishedPhones: number;
+  pendingResearch: number;
+  formOnly: number;
+  needsReview: number;
+  /** Usable direct email (same basis as directContacts). */
+  withEmail: number;
+  withWebsite: number;
+  withPerson: number;
+};
+const EMPTY_RESEARCH: ResearchStats = { directContacts: 0, verifiedEmails: 0, publishedPhones: 0, pendingResearch: 0, formOnly: 0, needsReview: 0, withEmail: 0, withWebsite: 0, withPerson: 0 };
 
 async function researchStats(filter: FilterQuery<CompanyDoc>): Promise<ResearchStats> {
   const [r] = await Company.aggregate<ResearchStats>([
@@ -41,12 +54,15 @@ async function researchStats(filter: FilterQuery<CompanyDoc>): Promise<ResearchS
         verifiedEmails: { $sum: { $cond: [{ $eq: ["$directContact.emailVerification", "DELIVERABLE"] }, 1, 0] } },
         publishedPhones: { $sum: { $cond: ["$directContact.hasPhone", 1, 0] } },
         formOnly: { $sum: { $cond: ["$directContact.formOnly", 1, 0] } },
-        pendingResearch: { $sum: { $cond: [{ $in: [{ $ifNull: ["$research.status", "NOT_STARTED"] }, ["NOT_STARTED", "SEARCHING", "NO_CONTACT_YET", "RETRY_SCHEDULED", "BUDGET_PAUSED", "PROVIDER_UNAVAILABLE"]] }, 1, 0] } },
+        pendingResearch: { $sum: { $cond: [{ $in: [{ $ifNull: ["$research.status", "NOT_STARTED"] }, PENDING_RESEARCH_STATUSES] }, 1, 0] } },
         needsReview: { $sum: { $cond: ["$directContact.pendingVerification", 1, 0] } },
+        withEmail: { $sum: { $cond: ["$directContact.hasEmail", 1, 0] } },
+        withWebsite: { $sum: { $cond: ["$contactFlags.website", 1, 0] } },
+        withPerson: { $sum: { $cond: ["$contactFlags.person", 1, 0] } },
       },
     },
   ]);
-  return r ?? { directContacts: 0, verifiedEmails: 0, publishedPhones: 0, pendingResearch: 0, formOnly: 0, needsReview: 0 };
+  return r ? { ...EMPTY_RESEARCH, ...r } : EMPTY_RESEARCH;
 }
 
 export type CountryCard = {
@@ -65,7 +81,46 @@ export type CountryCard = {
   lastSuccessAt?: Date | null;
   lastSyncAt?: Date | null;
   lastSyncStatus?: string | null;
+  /** Real adapter with a daily feed (not a catalogue placeholder). */
+  adapterReady: boolean;
+  /** The adapter's source is a paid commercial service. */
+  paid: boolean;
+  /** New registrations of the last COVERAGE_DAYS days and their contact availability (from snapshots). */
+  coverage: CountryCoverage;
 };
+
+/** Window used to rank countries by recent data and contact coverage. */
+export const COVERAGE_DAYS = 30;
+
+/**
+ * Recent-registration + contact coverage per country in ONE aggregate over the daily
+ * snapshots (a few documents per country and day — never a scan of the companies).
+ */
+async function coverageByCountry(countries: CountryView[]) {
+  const from = countries.reduce<Day>((min, c) => {
+    const d = addDays(todayIn(c.timezone), -(COVERAGE_DAYS - 1));
+    return d < min ? d : min;
+  }, "9999-12-31");
+  const rows = await DailyRegistrationSnapshot.aggregate<{ _id: { code: string; demo: boolean }; total: number; email: number; phone: number; website: number; person: number; direct: number }>([
+    { $match: { countryCode: { $in: countries.map((c) => c.code) }, date: { $gte: from } } },
+    {
+      $group: {
+        _id: { code: "$countryCode", demo: "$isDemo" },
+        total: { $sum: "$newCompanies" },
+        email: { $sum: "$withEmail" },
+        phone: { $sum: "$withPhone" },
+        website: { $sum: "$withWebsite" },
+        person: { $sum: "$withContactPerson" },
+        direct: { $sum: { $ifNull: ["$withDirectContact", 0] } },
+      },
+    },
+  ]);
+  const map = new Map(rows.map((r) => [`${r._id.code}:${!!r._id.demo}`, r]));
+  return (c: CountryView): CountryCoverage => {
+    const r = map.get(`${c.code}:${c.isDemo}`);
+    return { days: COVERAGE_DAYS, total: r?.total ?? 0, withEmail: r?.email ?? 0, withPhone: r?.phone ?? 0, withWebsite: r?.website ?? 0, withPerson: r?.person ?? 0, withDirect: r?.direct ?? 0 };
+  };
+}
 
 /** Counts for one country over a set of days, from snapshots. Missing snapshot = not synced = unknown. */
 async function snapshotsFor(country: CountryView, from: Day, to: Day) {
@@ -85,11 +140,16 @@ function sumDays(map: Map<string, DailyRegistrationSnapshotDoc>, days: Day[]): {
   return { stats, covered };
 }
 
-/** Country cards for the selector / overview: today's count only when the source supports it and today was synced. */
+/**
+ * Country cards for the selector / overview: today's count only when the source supports it
+ * and today was synced. Ordered by data availability (live + contactable first), computed
+ * from source health and snapshot statistics — never a fixed list.
+ */
 export async function listCountryCards(actor: Actor): Promise<CountryCard[]> {
   assertCanReadCompanies(actor);
   const countries = await getEnabledCountries();
-  return Promise.all(
+  const coverageOf = await coverageByCountry(countries);
+  const cards = await Promise.all(
     countries.map(async (c) => {
       const today = todayIn(c.timezone);
       const snap = c.dailyFeed ? await DailyRegistrationSnapshot.findOne({ countryCode: c.code, isDemo: c.isDemo, date: today }).lean<DailyRegistrationSnapshotDoc>() : null;
@@ -108,9 +168,13 @@ export async function listCountryCards(actor: Actor): Promise<CountryCard[]> {
         lastSuccessAt: c.lastSuccessAt,
         lastSyncAt: c.lastSyncAt,
         lastSyncStatus: c.lastSyncStatus,
+        adapterReady: !!c.provider && !c.provider.catalogueState && c.provider.capabilities.supportsDailyRegistrations,
+        paid: c.provider?.accessType === "COMMERCIAL",
+        coverage: coverageOf(c),
       };
     }),
   );
+  return sortCountries(cards);
 }
 
 export type RegistrationOverview = {

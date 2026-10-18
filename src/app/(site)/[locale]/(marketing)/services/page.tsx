@@ -8,6 +8,11 @@ import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext, type LocaleParams } from "@/features/site/context";
 import { CATEGORY_ICONS, CtaBand, PageHero, SectionHeading } from "@/components/site/sections";
 import { IndustryProfiles } from "@/components/site/industry-profiles";
+import { ServiceCardsGrid } from "@/components/site/service-landing";
+import { listPublicServices } from "@/features/service-catalog/service";
+
+/** Updated on every Service Management change (revalidatePath) and periodically. */
+export const revalidate = 600;
 
 export async function generateMetadata({ params }: LocaleParams): Promise<Metadata> {
   const { locale } = await params;
@@ -19,6 +24,7 @@ export async function generateMetadata({ params }: LocaleParams): Promise<Metada
 export default async function ServicesPage({ params }: LocaleParams) {
   const { locale } = await params;
   const { t } = await getPublicContext(locale);
+  const services = await listPublicServices(locale);
   const profiles = INDUSTRY_PROFILES.map((p) => ({
     key: p.key,
     title: t(`home.industries.profiles.${p.key}.title`),
@@ -29,7 +35,18 @@ export default async function ServicesPage({ params }: LocaleParams) {
     <>
       <PageHero eyebrow={t("services.overview.eyebrow")} title={t("services.overview.title")} subtitle={t("services.overview.subtitle")} />
       <section className="py-16 sm:py-24">
-        <div className="container-page space-y-5">
+        <div className="container-page">
+          <SectionHeading eyebrow={t("homeV2.services.eyebrow")} title={t("homeV2.services.title")} subtitle={t("homeV2.services.subtitle")} />
+          <div className="mt-10">
+            <ServiceCardsGrid services={services} locale={locale} t={t} />
+          </div>
+        </div>
+      </section>
+      <section className="border-t border-ink-100 pb-16 pt-16 sm:pb-24 sm:pt-24">
+        <div className="container-page">
+          <SectionHeading title={t("servicePages.ui.areasTitle")} subtitle={t("servicePages.ui.areasSubtitle")} />
+        </div>
+        <div className="container-page mt-10 space-y-5">
           {SERVICE_CATEGORIES.map((c, i) => {
             const Icon = CATEGORY_ICONS[c.icon]!;
             return (

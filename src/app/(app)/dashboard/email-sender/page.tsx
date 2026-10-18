@@ -1,7 +1,7 @@
 import { Mail } from "lucide-react";
 import { requireOwnerPage } from "@/lib/auth/session";
 import { formatDateTime } from "@/lib/utils/format";
-import { getDefaultTemplate, getSenderStatus, listSentEmails, previewEmail } from "@/features/email-sender/service";
+import { getDefaultTemplate, getSenderStatus, listSentEmails, listTemplates, previewEmail, TEMPLATE_OPTIONS } from "@/features/email-sender/service";
 import { ownerMetadata } from "@/features/opportunities/metadata";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -23,8 +23,11 @@ export default async function EmailSenderPage({ searchParams }: { searchParams: 
   const actor = await requireOwnerPage();
   const page = Number((await searchParams).page) || 1;
   const status = getSenderStatus(actor);
-  const initialPreview = previewEmail(actor, { mode: "TEMPLATE" });
+  const initialPreview = await previewEmail(actor, { mode: "TEMPLATE" });
   const template = getDefaultTemplate(actor);
+  const templates = await listTemplates(actor);
+  // The reminder needs an earlier email to a company, so it is offered from Company Intelligence only.
+  const options = TEMPLATE_OPTIONS.filter((o) => o.id !== "reminder");
   const history = await listSentEmails(actor, { page });
 
   return (
@@ -34,7 +37,7 @@ export default async function EmailSenderPage({ searchParams }: { searchParams: 
         title="Email Sender"
         description="Send a professional one-to-one email from ExploreTechify — the ready-made introduction or your own message. One recipient per email; opted-out addresses are blocked automatically."
       />
-      <EmailSender status={JSON.parse(JSON.stringify(status))} initialPreview={initialPreview} template={template} />
+      <EmailSender status={JSON.parse(JSON.stringify(status))} initialPreview={initialPreview} template={template} templates={templates} options={options} />
 
       <Card>
         <CardHeader
@@ -59,7 +62,10 @@ export default async function EmailSenderPage({ searchParams }: { searchParams: 
                   return (
                     <tr key={String(m._id)}>
                       <td className="px-5 py-2.5 font-medium text-ink-900">{m.to}</td>
-                      <td className="px-4 py-2.5 text-ink-600">{m.mode === "CUSTOM" ? "Custom" : "Template"}</td>
+                      <td className="px-4 py-2.5 text-ink-600">
+                        {m.mode === "CUSTOM" ? "Custom" : m.outreachStep === "REMINDER" ? "Reminder" : "Template"}
+                        {m.locale === "no" && <span className="ml-1.5 text-xs text-ink-400">NO</span>}
+                      </td>
                       <td className="max-w-xs truncate px-4 py-2.5 text-ink-700" title={m.subject}>
                         {m.subject}
                       </td>

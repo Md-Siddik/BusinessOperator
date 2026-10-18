@@ -32,3 +32,4 @@ export * from "./ServicePackage";
 export * from "./Quotation";
 export * from "./Opportunity";
 export * from "./OpportunityFeed";
+export * from "./Service";

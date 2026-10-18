@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
 import { localizedPath } from "@/config/languages";
-import { SERVICE_CATEGORIES } from "@/config/services";
 import { siteConfig } from "@/config/site";
 import type { Translator } from "@/lib/i18n/translator";
 import type { SettingValue } from "@/features/settings/schemas";
 import { Logo } from "./logo";
 
-export function SiteFooter({ locale, t, general }: { locale: string; t: Translator["t"]; general: SettingValue<"general"> }) {
+/** Services come from Service Management (featured first); the full list is one click away. */
+export function SiteFooter({ locale, t, general, services = [] }: { locale: string; t: Translator["t"]; general: SettingValue<"general">; services?: { slug: string; name: string }[] }) {
   const lp = (p: string) => localizedPath(locale, p);
   const year = new Date().getFullYear();
   const socials = Object.entries(general.social).filter(([, url]) => url);
@@ -22,13 +22,18 @@ export function SiteFooter({ locale, t, general }: { locale: string; t: Translat
         <div className="md:col-span-3">
           <h2 className="text-sm font-semibold text-white">{t("footer.servicesTitle")}</h2>
           <ul className="mt-4 space-y-2.5 text-sm">
-            {SERVICE_CATEGORIES.map((c) => (
-              <li key={c.slug}>
-                <Link href={lp(`/services/${c.slug}`)} className="text-ink-300 transition-colors hover:text-white">
-                  {t(`services.categories.${c.key}.name`)}
+            {services.map((s) => (
+              <li key={s.slug}>
+                <Link href={lp(`/services/${s.slug}`)} className="text-ink-300 transition-colors hover:text-white">
+                  {s.name}
                 </Link>
               </li>
             ))}
+            <li>
+              <Link href={lp("/services")} className="font-medium text-white transition-colors hover:text-brand-200">
+                {t("servicePages.ui.allServices")}
+              </Link>
+            </li>
           </ul>
         </div>
         <div className="md:col-span-2">

@@ -134,7 +134,7 @@ export function HomeHero({ locale, t }: { locale: string; t: T }) {
           <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-ink-300">{t("home.hero.subtitle")}</p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <ButtonLink href={localizedPath(locale, "/contact")} size="lg" className="bg-brand-500 shadow-[0_10px_30px_-10px_rgb(61_102_240/0.8)] hover:bg-brand-400 active:bg-brand-600">
-              {t("cta.letsGrowTogether")} <ArrowRight className="h-4 w-4" aria-hidden />
+              {t("cta.letsWorkTogether")} <ArrowRight className="h-4 w-4" aria-hidden />
             </ButtonLink>
             <ButtonLink href={localizedPath(locale, "/services")} size="lg" variant="outline" className="border-white/20 bg-white/5 text-white shadow-none hover:border-white/30 hover:bg-white/10">
               {t("cta.exploreServices")}

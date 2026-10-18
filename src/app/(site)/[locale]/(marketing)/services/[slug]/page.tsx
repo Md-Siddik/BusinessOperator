@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { LANGUAGE_CODES, localizedPath } from "@/config/languages";
 import { SERVICE_CATEGORIES, getServiceCategory } from "@/config/services";
+import { SERVICE_PAGE_SLUGS } from "@/config/service-pages";
+import { listCaseStudiesForServices } from "@/features/content/service";
+import { getPublicService, listPublicServices } from "@/features/service-catalog/service";
+import { ServiceLanding } from "@/components/site/service-landing";
 import { absoluteUrl, siteConfig } from "@/config/site";
 import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext } from "@/features/site/context";
@@ -12,13 +16,34 @@ import { CATEGORY_ICONS, CtaBand, Eyebrow, ProcessSteps, SectionHeading } from "
 
 type Params = { params: Promise<{ locale: string; slug: string }> };
 
+/**
+ * Re-rendered on every Service Management change (revalidatePath) and periodically, so
+ * newly published examples appear too. New services render on first request.
+ */
+export const revalidate = 600;
+
+/**
+ * The original service-area pages, kept for their existing URLs — only for slugs that were
+ * never a service landing page, so a deactivated service really disappears.
+ */
+function legacyCategory(slug: string) {
+  return SERVICE_PAGE_SLUGS.includes(slug) ? undefined : getServiceCategory(slug);
+}
+
 export function generateStaticParams() {
-  return LANGUAGE_CODES.flatMap((locale) => SERVICE_CATEGORIES.map((c) => ({ locale, slug: c.slug })));
+  const slugs = new Set([...SERVICE_PAGE_SLUGS, ...SERVICE_CATEGORIES.map((c) => c.slug)]);
+  return LANGUAGE_CODES.flatMap((locale) => [...slugs].map((slug) => ({ locale, slug })));
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { locale, slug } = await params;
-  const category = getServiceCategory(slug);
+  const service = await getPublicService(slug, locale);
+  if (service) {
+    const { enabledLanguages } = await getPublicContext(locale);
+    const meta = buildMetadata({ locale, path: `/services/${slug}`, title: service.seo.title || service.name, description: service.seo.description || service.shortDescription, enabledLanguages });
+    return service.seo.noindex ? { ...meta, robots: { index: false, follow: true } } : meta;
+  }
+  const category = legacyCategory(slug);
   if (!category) return {};
   const { t, enabledLanguages } = await getPublicContext(locale);
   return buildMetadata({
@@ -32,7 +57,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function ServiceDetailPage({ params }: Params) {
   const { locale, slug } = await params;
-  const category = getServiceCategory(slug);
+  const service = await getPublicService(slug, locale);
+  if (service) {
+    const { t } = await getPublicContext(locale);
+    const [cases, all] = await Promise.all([listCaseStudiesForServices(service.portfolioServices, locale), listPublicServices(locale)]);
+    const related = service.related.map((s) => all.find((x) => x.slug === s)).filter((x): x is NonNullable<typeof x> => !!x);
+    return <ServiceLanding service={service} related={related} locale={locale} t={t} cases={cases} />;
+  }
+  const category = legacyCategory(slug);
   if (!category) notFound();
   const { t, list, raw } = await getPublicContext(locale);
   const k = `services.categories.${category.key}`;
@@ -60,6 +92,12 @@ export default async function ServiceDetailPage({ params }: Params) {
         <div className="container-page relative grid gap-10 py-16 sm:py-24 lg:grid-cols-[1.4fr_1fr] lg:items-end">
           <div className="animate-fade-up">
             <nav aria-label="Breadcrumb" className="mb-6 text-sm text-ink-500">
+              <Link href={localizedPath(locale, "/")} className="hover:text-ink-800">
+                {t("nav.home")}
+              </Link>
+              <span className="mx-2" aria-hidden>
+                /
+              </span>
               <Link href={localizedPath(locale, "/services")} className="hover:text-ink-800">
                 {t("nav.services")}
               </Link>

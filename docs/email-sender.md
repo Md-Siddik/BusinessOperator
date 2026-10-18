@@ -13,8 +13,37 @@
 - **Preview = what is sent.** The preview is rendered by the same server code as the send, and shown in a sandboxed iframe (no scripts).
 - **HTML is never accepted** from the composer. Everything you type is escaped first; only the markup above becomes formatting. So there is no untrusted HTML to sanitize, by construction.
 - **Every email is multipart:** HTML plus a readable plain-text version.
-- **"Start from template"** copies the default subject and text into the composer. Editing it never changes the saved default template.
-- **No placeholders** are evaluated, so nothing is personalised automatically. Write the name yourself when you know it.
+- **"Start from template"** copies the selected template's subject and text into the composer. Editing it never changes the saved template.
+
+## Templates, language and personalisation
+
+Templates live in `src/features/email-sender/outreach.ts`, each in **English** and **Norwegian Bokmål** (written as Norwegian business email, not translated word for word). Pick the language next to the template; it also switches the layout (greeting, "Med vennlig hilsen", labels, tagline and opt-out).
+
+| Template | Use for | Button links to |
+|---|---|---|
+| General introduction | Nothing specific is known (the original default, unchanged in English) | Homepage |
+| No website — website offer | Presentation website + Google setup + mobile-friendly + clear contact path, with price and delivery | `/services/web-development` |
+| Has website — visibility & enquiries | Search visibility, clearer enquiry paths, mobile | `/services/seo` |
+| Hiring — recruitment support | The company appears to be hiring | `/services/recruitment` |
+| Operations — CRM & automation | Manual follow-up, scattered customer data | `/services/web-crm` |
+| One polite reminder | One short follow-up after the first email (Company Intelligence only) | — |
+
+- **Quick send / Custom email in Company Intelligence** personalise on the **server** from the company record: company name, registry contact person, city, website, registration date, website research status, hiring signal and website audit. The browser never supplies these values. The suggested template is preselected: hiring signal → recruitment; no website → website offer; otherwise → visibility. Norwegian companies default to Norwegian. You can change both before sending, and the preview is exactly what is sent.
+- **Observations are only stated when the data supports them.** "We could not find a dedicated website" appears only after website research actually ran; HTTPS/mobile remarks only when a website audit found them. Without data the email stays general.
+- **Prices:** the emails show a price or delivery time only when it is approved in `src/config/service-pages.ts`. Until then they say the price is fixed and agreed in writing before work starts.
+- The **Email Sender page** (no company attached) offers the same templates without personal details.
+
+## One reminder, then stop
+
+The **One polite reminder** template is accepted only when all of these hold (checked by the service on every send):
+
+1. It is sent from Company Intelligence, so a company is attached.
+2. A first email to that company was accepted by the provider.
+3. At least `EMAIL_SENDER_REMINDER_MIN_DAYS` days have passed since then (default **7**; 7–14 days is the intended range).
+4. The company has not replied (lead stage before *Replied*).
+5. No reminder was sent before. **At most one reminder per company**, then no more follow-ups.
+
+Nothing is sent automatically. Each history entry records the template (`outreachTemplate`), the step (`INITIAL` / `REMINDER`) and the language. Message bodies are still never stored.
 
 ## Security (Owner only, enforced on the server)
 
@@ -23,7 +52,7 @@
 | Navigation | The "Email Sender" item is rendered only for the OWNER role. |
 | Proxy | `/dashboard/**` is owner-only (ADMIN/STAFF are redirected to `/staff`, clients to `/portal`). |
 | Page | `requireOwnerPage()`: every other role gets a 404. |
-| API | `/api/email-sender/{preview,send,history}` use `route({ ownerOnly: true })`: 401 when signed out, 403 for ADMIN/STAFF/CLIENT. The role comes from the server session, never from the request body. |
+| API | `/api/email-sender/{preview,send,history,template}` use `route({ ownerOnly: true })`: 401 when signed out, 403 for ADMIN/STAFF/CLIENT. The role comes from the server session, never from the request body. |
 | Service | Every function in `src/features/email-sender/service.ts` calls `assertOwner(actor)` first, so internal callers can't bypass it. |
 
 ## Guards on every send

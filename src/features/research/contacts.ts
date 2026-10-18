@@ -178,7 +178,18 @@ export async function recomputeCompanyContacts(companyId: Types.ObjectId | strin
       set["contactSources.website"] = { kind: site.sourceKind, source: site.source, url: site.sourceUrl, at: site.collectedAt ?? new Date(), verified: true };
     }
   }
-  const q = contactQuality({ ...primary, address: company.address ?? company.city, contactPerson: company.contactPerson });
+  // Contact person: the registry's (or a manual) value stays; otherwise a person the company's
+  // own website names with a role (structured data), once not pending / rejected in review.
+  let contactPerson: { name?: string | null; role?: string | null } | null | undefined = company.contactPerson;
+  if (!contactPerson?.name) {
+    const person = contacts.find((c) => c.type === "CONTACT_PERSON" && (c.ownership === "CONFIRMED" || c.ownership === "LIKELY") && c.review !== "PENDING" && c.review !== "REJECTED");
+    if (person) {
+      contactPerson = { name: person.personName ?? person.value, role: person.role ?? undefined };
+      set.contactPerson = { name: contactPerson.name, role: contactPerson.role, group: "Contact person" };
+      set["contactSources.contactPerson"] = { kind: person.sourceKind, source: person.source, url: person.sourceUrl, at: person.collectedAt ?? new Date(), verified: false };
+    }
+  }
+  const q = contactQuality({ ...primary, address: company.address ?? company.city, contactPerson });
   set.contactFlags = q.flags;
   set.completeness = q.completeness;
   set.fullyContactable = q.fullyContactable;

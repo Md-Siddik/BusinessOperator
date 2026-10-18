@@ -11,15 +11,43 @@ import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type { CompanyRow } from "@/components/intel/types";
 import { EMAIL_RE, isDraftValid, MessageEditor, newSendKey, type DefaultTemplate, type Draft } from "./message-editor";
+import { TemplatePickers, type TemplateOption } from "./email-sender";
 
 /** Passed only to the Owner (decided on the server); every send is re-checked by the API and the service. */
-export type CompanyEmailContext = { template: DefaultTemplate; configured: boolean; problems: string[]; from: string; fromName: string };
+export type CompanyEmailContext = { template: DefaultTemplate; configured: boolean; problems: string[]; from: string; fromName: string; options?: TemplateOption[] };
 
 type Rendered = { subject: string; html: string; text: string };
 type SendResponse = { provider: string; duplicate?: boolean; company?: { stage: string; lastContactedAt: string } };
+type CompanyTemplate = DefaultTemplate & { templateId: string; locale: string; suggestion: { templateId: string; locale: string; reason: string }; reminder: { allowed: boolean; reason: string } };
 
 const SEND_URL = "/api/email-sender/send";
 const PREVIEW_URL = "/api/email-sender/preview";
+const TEMPLATE_URL = "/api/email-sender/template";
+
+/**
+ * The personalised template for this company, rendered by the server from the company record.
+ * The first load returns the suggestion; changing template or language re-fetches.
+ */
+function useCompanyTemplate(companyId: string) {
+  const [choice, setChoice] = useState<{ templateId?: string; locale?: string }>({});
+  const [data, setData] = useState<CompanyTemplate | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const key = JSON.stringify(choice);
+  useEffect(() => {
+    let live = true;
+    apiFetch<CompanyTemplate>(TEMPLATE_URL, { body: { companyId, ...JSON.parse(key) } })
+      .then((r) => {
+        if (!live) return;
+        setData(r);
+        setError(null);
+      })
+      .catch((e) => live && setError(e instanceof ApiError ? e.message : "Template unavailable"));
+    return () => {
+      live = false;
+    };
+  }, [companyId, key]);
+  return { data, error, choose: (p: { templateId?: string; locale?: string }) => setChoice((c) => ({ templateId: data?.templateId, locale: data?.locale, ...c, ...p })) };
+}
 
 function lastContactedLabel(iso?: string) {
   if (!iso) return null;
@@ -125,8 +153,8 @@ export function CompanyEmailActions({ row, ctx, onSent }: { row: CompanyRow; ctx
           setQuickOpen(true);
         }}
         disabled={!!blocked}
-        title={blocked ?? `Send the default ExploreTechify email to ${row.email}`}
-        aria-label={`Quick send the default email to ${row.email ?? name}`}
+        title={blocked ?? `Send a personalised template email to ${row.email}`}
+        aria-label={`Quick send a template email to ${row.email ?? name}`}
         className={cn(btn, justSent ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-brand-200 bg-brand-50 text-brand-700 hover:border-brand-300 hover:bg-brand-100")}
       >
         {justSent ? <Check className="h-3 w-3" aria-hidden /> : <Send className="h-3 w-3" aria-hidden />}
@@ -157,29 +185,43 @@ function QuickSendDialog({ row, ctx, onClose, onSent }: { row: CompanyRow; ctx: 
   const to = row.email!.trim();
   const { send, sending, error } = useSend(row, onSent);
   const [showPreview, setShowPreview] = useState(false);
+  const tpl = useCompanyTemplate(row.id);
+  const t = tpl.data;
+  const reminderBlocked = t?.templateId === "reminder" && !t.reminder.allowed;
 
   async function submit() {
-    if (await send({ mode: "TEMPLATE", to })) onClose();
+    if (!t || reminderBlocked) return;
+    if (await send({ mode: "TEMPLATE", to, templateId: t.templateId, locale: t.locale })) onClose();
   }
 
   return (
     <Modal
       open
       onClose={() => !sending && onClose()}
-      title="Send the default email?"
-      description="The standard ExploreTechify outreach template — sent emails cannot be recalled."
-      size={showPreview ? "lg" : "sm"}
+      title="Send the template email?"
+      description="Personalised with this company's registry data. Sent emails cannot be recalled."
+      size={showPreview ? "lg" : "md"}
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={sending}>
             Cancel
           </Button>
-          <Button onClick={submit} loading={sending}>
+          <Button onClick={submit} loading={sending} disabled={!t || reminderBlocked}>
             {!sending && <Send className="h-4 w-4" aria-hidden />} {sending ? "Sending…" : "Send"}
           </Button>
         </>
       }
     >
+      {t && ctx.options && (
+        <div className="mb-4 space-y-2">
+          <TemplatePickers idPrefix={`qs-${row.id}`} templateId={t.templateId} locale={t.locale} options={ctx.options} onTemplate={(v) => tpl.choose({ templateId: v })} onLocale={(v) => tpl.choose({ locale: v })} />
+          <p className="text-xs text-ink-500">
+            Suggested: <span className="font-medium text-ink-700">{ctx.options.find((o) => o.id === t.suggestion.templateId)?.label}</span> — {t.suggestion.reason}
+          </p>
+          {reminderBlocked && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">{t.reminder.reason}</p>}
+        </div>
+      )}
+      {tpl.error && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">{tpl.error}</p>}
       <dl className="space-y-2 text-sm">
         <div>
           <dt className="text-xs text-ink-500">To</dt>
@@ -191,7 +233,7 @@ function QuickSendDialog({ row, ctx, onClose, onSent }: { row: CompanyRow; ctx: 
         </div>
         <div>
           <dt className="text-xs text-ink-500">Subject</dt>
-          <dd className="text-ink-800">{ctx.template.subject}</dd>
+          <dd className="text-ink-800">{t?.subject ?? "Loading…"}</dd>
         </div>
         <div>
           <dt className="text-xs text-ink-500">From</dt>
@@ -204,9 +246,9 @@ function QuickSendDialog({ row, ctx, onClose, onSent }: { row: CompanyRow; ctx: 
       <button type="button" onClick={() => setShowPreview((v) => !v)} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline" aria-expanded={showPreview}>
         <Eye className="h-3.5 w-3.5" aria-hidden /> {showPreview ? "Hide preview" : "Preview the email"}
       </button>
-      {showPreview && (
+      {showPreview && t && (
         <div className="mt-2">
-          <PreviewFrame payload={{ mode: "TEMPLATE", to }} />
+          <PreviewFrame payload={{ mode: "TEMPLATE", to, companyId: row.id, templateId: t.templateId, locale: t.locale }} />
         </div>
       )}
       {error && (
@@ -223,6 +265,8 @@ function CustomEmailDialog({ row, ctx, onClose, onSent }: { row: CompanyRow; ctx
   const [to, setTo] = useState(row.email?.trim() ?? "");
   const [draft, setDraft] = useState<Draft>({ subject: "", body: "", includeCta: false });
   const [tab, setTab] = useState<"edit" | "preview">("edit");
+  const tpl = useCompanyTemplate(row.id);
+  const locale = tpl.data?.locale ?? "en";
   const toValid = EMAIL_RE.test(to.trim());
   const valid = toValid && isDraftValid(draft);
   const dirty = !!(draft.subject || draft.body);
@@ -241,7 +285,7 @@ function CustomEmailDialog({ row, ctx, onClose, onSent }: { row: CompanyRow; ctx
 
   async function submit() {
     if (!valid) return;
-    if (await send({ mode: "CUSTOM", to: to.trim(), ...draft })) onClose();
+    if (await send({ mode: "CUSTOM", to: to.trim(), ...draft, locale })) onClose();
   }
 
   const context: [string, string | undefined][] = [
@@ -308,10 +352,21 @@ function CustomEmailDialog({ row, ctx, onClose, onSent }: { row: CompanyRow; ctx
           ))}
         </div>
 
+        {tpl.data && ctx.options && (
+          <TemplatePickers
+            idPrefix={`ce-${row.id}`}
+            templateId={tpl.data.templateId}
+            locale={tpl.data.locale}
+            options={ctx.options.filter((o) => o.id !== "reminder")}
+            onTemplate={(v) => tpl.choose({ templateId: v })}
+            onLocale={(v) => tpl.choose({ locale: v })}
+          />
+        )}
+
         {tab === "edit" ? (
-          <MessageEditor idPrefix={`ce-${row.id}`} draft={draft} onChange={setDraft} template={ctx.template} bodyClassName="min-h-60 font-mono text-[13px]" />
+          <MessageEditor idPrefix={`ce-${row.id}`} draft={draft} onChange={setDraft} template={tpl.data ?? ctx.template} bodyClassName="min-h-60 font-mono text-[13px]" />
         ) : isDraftValid(draft) ? (
-          <PreviewFrame payload={{ mode: "CUSTOM", to: toValid ? to.trim() : undefined, ...draft }} />
+          <PreviewFrame payload={{ mode: "CUSTOM", to: toValid ? to.trim() : undefined, ...draft, locale }} />
         ) : (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">The preview is available once the subject has at least 3 characters and the message at least 10.</p>
         )}

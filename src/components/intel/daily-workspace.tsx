@@ -4,7 +4,7 @@ import { INDUSTRIES, INDUSTRY_LABELS } from "@/config/industries";
 import { DATE_PRESET_LABELS, formatDay } from "@/lib/dates/country-time";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/utils/format";
 import { can, isOwner, type Actor } from "@/lib/permissions";
-import { getDefaultTemplate, getSenderStatus } from "@/features/email-sender/service";
+import { getDefaultTemplate, getSenderStatus, TEMPLATE_OPTIONS } from "@/features/email-sender/service";
 import type { CompanyEmailContext } from "@/components/email-sender/company-email-actions";
 import { Pagination } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback";
@@ -31,7 +31,7 @@ export type WorkspaceMode = "daily" | "research" | "saved";
 function ownerEmailContext(actor: Actor): CompanyEmailContext | undefined {
   if (!isOwner(actor)) return undefined;
   const s = getSenderStatus(actor);
-  return { template: getDefaultTemplate(actor), configured: s.configured, problems: s.problems, from: s.from, fromName: s.fromName };
+  return { template: getDefaultTemplate(actor), configured: s.configured, problems: s.problems, from: s.from, fromName: s.fromName, options: TEMPLATE_OPTIONS };
 }
 
 const pct = (part: number, total: number) => (total ? `${Math.round((part / total) * 100)}%` : "—");
@@ -371,15 +371,16 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
             </div>
             {sel.known && (
               <>
-                <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
                   <Kpi label="Direct contact (email or phone)" value={overview.research.directContacts} total={sel.total} tone="good" />
-                  <Kpi label="Verified emails" value={overview.research.verifiedEmails} total={sel.total} />
-                  <Kpi label="Published phones" value={overview.research.publishedPhones} total={sel.total} />
-                  <Kpi label="Contact form only" value={overview.research.formOnly} total={sel.total} />
+                  <Kpi label="Email available" value={overview.research.withEmail} total={sel.total} />
+                  <Kpi label="Phone available" value={overview.research.publishedPhones} total={sel.total} />
+                  <Kpi label="Website available" value={overview.research.withWebsite} total={sel.total} />
+                  <Kpi label="Contact person" value={overview.research.withPerson} total={sel.total} />
                   <Kpi label="Research pending" value={overview.research.pendingResearch} total={sel.total} />
                 </div>
                 <p className="mt-2 text-xs text-ink-500">
-                  Direct-contact coverage {sel.total ? `${Math.round((overview.research.directContacts / sel.total) * 100)}%` : "—"} (a company with both email and phone counts once). &ldquo;Received registrations&rdquo; = what the source has delivered so far; national completeness is only claimed where the source documents it.
+                  Direct-contact coverage {sel.total ? `${Math.round((overview.research.directContacts / sel.total) * 100)}%` : "—"} (a company with both email and phone counts once) · {formatNumber(overview.research.verifiedEmails)} deliverability-verified email{overview.research.verifiedEmails === 1 ? "" : "s"} · {formatNumber(overview.research.formOnly)} with a contact form only. Contact person = named by the registry or the company&apos;s own website. &ldquo;Received registrations&rdquo; = what the source has delivered so far; national completeness is only claimed where the source documents it.
                 </p>
               </>
             )}

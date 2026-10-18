@@ -1,6 +1,6 @@
 import type { NormalizedAddress } from "./types";
 
-export const DIAL_CODES: Record<string, string> = { NO: "47", SE: "46", DK: "45", FI: "358", DE: "49", FR: "33", GB: "44" };
+export const DIAL_CODES: Record<string, string> = { NO: "47", SE: "46", DK: "45", FI: "358", DE: "49", FR: "33", GB: "44", IE: "353", EE: "372", LV: "371", CH: "41", CZ: "420" };
 
 export function clean(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;

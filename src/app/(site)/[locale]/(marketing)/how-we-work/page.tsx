@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext, type LocaleParams } from "@/features/site/context";
 import { CtaBand, Eyebrow, MoreThanWebsite, PageHero, PROCESS_STEPS } from "@/components/site/sections";
+import { EngagementModels } from "@/components/site/engagement-models";
+import { BuildFirstTeaser } from "@/components/site/build-first";
 
 export async function generateMetadata({ params }: LocaleParams): Promise<Metadata> {
   const { locale } = await params;
@@ -38,6 +40,13 @@ export default async function HowWeWorkPage({ params }: LocaleParams) {
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-ink-900">{t("howWeWork.partnershipTitle")}</h2>
           </div>
           <p className="text-lg leading-relaxed text-ink-600">{t("howWeWork.partnershipText")}</p>
+        </div>
+      </section>
+      {/* The three ways to work together (detail pages under /how-we-work/<model>) and build-first. */}
+      <EngagementModels locale={locale} t={t} list={list} />
+      <section className="pb-16 sm:pb-20">
+        <div className="container-page max-w-6xl">
+          <BuildFirstTeaser locale={locale} t={t} />
         </div>
       </section>
       <MoreThanWebsite locale={locale} t={t} list={list} />

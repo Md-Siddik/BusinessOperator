@@ -174,5 +174,1007 @@
     "teamTitle": "Kundemeldinger",
     "noConversations": "Ingen kundesamtaler ennå. Nye meldinger vises her med en gang.",
     "back": "Tilbake til samtaler"
+  },
+  "servicePages": {
+    "ui": {
+      "requestOffer": "Be om tilbud",
+      "seeWork": "Se arbeidet vårt",
+      "discuss": "Fortell om bedriften din",
+      "problemTitle": "Utfordringen",
+      "solutionTitle": "Slik løser vi det",
+      "includedTitle": "Dette er inkludert",
+      "howTitle": "Slik foregår det",
+      "deliverablesTitle": "Dette får du",
+      "pricingTitle": "Pris og levering",
+      "priceLabel": "Pris",
+      "deliveryLabel": "Levering",
+      "notIncludedTitle": "Ikke inkludert",
+      "optionalTitle": "Valgfrie tillegg",
+      "pricing": {
+        "fixed": "Fastpris: {amount}",
+        "from": "Fra {amount}",
+        "monthly": "{amount} per måned",
+        "quote": "Fra {amount}",
+        "fixedOpen": "Fastpris, avtalt skriftlig før vi starter",
+        "fromOpen": "Pris etter omfang, bekreftet i et skriftlig tilbud",
+        "monthlyOpen": "Fast månedspris for et avtalt omfang",
+        "quoteOpen": "Pris per prosjekt etter en kort samtale",
+        "percentOff": "{amount} rabatt",
+        "amountOff": "{amount} rabatt"
+      },
+      "delivery": {
+        "weeks": "Vanligvis {min}–{max} uker",
+        "open": "Tidsplanen avtales i tilbudet før arbeidet starter"
+      },
+      "priceNote": "Du får alltid et skriftlig tilbud med omfang, pris og tidsplan før vi begynner. Ingen skjulte kostnader og ingen forpliktelser.",
+      "examplesTitle": "Eksempler på arbeidet vårt",
+      "examplesSubtitle": "Prosjekter knyttet til denne tjenesten.",
+      "examplesEmptyTitle": "Eksempler for denne tjenesten er under arbeid",
+      "examplesEmptyText": "Vi publiserer bare ekte prosjekter. Spør oss gjerne, så viser vi relevant arbeid i en kort samtale.",
+      "relatedTitle": "Relaterte tjenester",
+      "longTermTitle": "Etter levering",
+      "waysTitle": "Slik kan vi samarbeide",
+      "waysText": "Et enkeltprosjekt, en løpende månedlig tjeneste eller – for utvalgte bedrifter – et langsiktig vekstpartnerskap.",
+      "waysCta": "Se samarbeidsformene",
+      "faqTitle": "Spørsmål og svar",
+      "ctaTitle": "Vil du vite hvordan dette kan se ut for din bedrift?",
+      "ctaSubtitle": "Fortell kort om bedriften din. Vi svarer med et konkret forslag – helt uforpliktende.",
+      "allServices": "Alle tjenester",
+      "breadcrumb": "Tjenester",
+      "areasTitle": "Alle fagområder",
+      "areasSubtitle": "Alt vi kan hjelpe med, samlet i seks områder. De fleste kunder starter med én tjeneste og utvider etter hvert.",
+      "regularPrice": "Ordinær pris",
+      "validUntil": "Tilbudet gjelder til {date}",
+      "servicePriceNote": "Dette er prisen for selve tjenesten. Hvordan vi samarbeider, avtales separat.",
+      "engagementTitle": "Slik kan vi samarbeide",
+      "engagementText": "Prisen gjelder tjenesten – samarbeidsformen er et eget valg. Velg det som passer bedriften:",
+      "growthNote": "Selektivt og etter samtale – et eget strategisk samarbeid med individuelt avtalte vilkår, ikke en betalingsplan.",
+      "engagementCta": "Les mer",
+      "whoForTitle": "Hvem passer det for",
+      "nextStepTitle": "Hva skjer videre",
+      "nextStepDefault": "Fortell kort om bedriften din. Vi svarer med et konkret forslag og, hvis det passer, et skriftlig tilbud med omfang, pris og tidsplan. Helt uforpliktende.",
+      "relatedSubtitle": "Mange kunder starter med én tjeneste og legger til flere etter hvert som bedriften vokser.",
+      "backHome": "Tilbake til hovedsiden",
+      "previewBanner": "Forhåndsvisning – slik vil siden se ut. Den er bare synlig for deg så lenge tjenesten er inaktiv.",
+      "previewEdit": "Tilbake til redigering"
+    },
+    "webDevelopment": {
+      "name": "Nettsideutvikling",
+      "card": "Profesjonelle nettsider som gjør besøkende til kunder.",
+      "metaTitle": "Nettsideutvikling for små bedrifter",
+      "metaDescription": "Profesjonelle, mobilvennlige nettsider med tydelig presentasjon av tjenestene, grunnleggende SEO og en enkel vei fra besøk til henvendelse.",
+      "heroTitle": "Profesjonelle nettsider som gjør besøkende til kunder",
+      "heroSubtitle": "En tydelig, rask og mobilvennlig nettside som forklarer hva du tilbyr, bygger tillit og gjør det enkelt for de riktige kundene å ta kontakt.",
+      "problem": [
+        "Potensielle kunder finner deg ikke, eller de finner en utdatert side.",
+        "Nettsiden forklarer ikke tydelig hva du tilbyr og hvorfor de bør velge deg.",
+        "Besøkende forsvinner uten å ta kontakt fordi neste steg er uklart."
+      ],
+      "solution": "Vi planlegger nettsiden ut fra kundene dine og målet ditt: en tydelig struktur, en overbevisende presentasjon av tjenestene og en åpenbar måte å ta kontakt på. Den bygges på et teknisk grunnlag som Google forstår, og som fungerer godt på alle enheter.",
+      "included": [
+        "Presentasjonsside, bedriftsnettside eller nettside for oppstartsbedrift",
+        "Mobilvennlig, responsivt design",
+        "Tydelig presentasjon av tjenestene dine",
+        "Kontaktskjema og vei til henvendelse",
+        "Grunnleggende SEO (titler, beskrivelser, struktur)",
+        "Oppsett av Google Search Console og enkel statistikk"
+      ],
+      "steps": [
+        {
+          "title": "Kort samtale",
+          "text": "Vi blir kjent med bedriften, kundene og målet ditt."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang, pris og tidsplan – avtalt før vi starter."
+        },
+        {
+          "title": "Design og utvikling",
+          "text": "Du ser struktur og design underveis."
+        },
+        {
+          "title": "Lansering og overlevering",
+          "text": "Vi publiserer, sjekker alt og viser deg hvordan det fungerer."
+        }
+      ],
+      "deliverables": [
+        "En publisert, mobilvennlig nettside på ditt domene",
+        "Kontaktskjema koblet til e-posten din",
+        "Grunnleggende SEO på alle sider",
+        "En kort veiledning for å oppdatere innholdet"
+      ],
+      "notIncluded": [
+        "Skriving av store mengder ny tekst (kan legges til)",
+        "Annonsebudsjett",
+        "Domene- og hostingkostnader hos tredjepart"
+      ],
+      "optional": [
+        "Booking- eller tilbudsskjema",
+        "Integrasjon med CRM",
+        "Flere språk",
+        "Månedlig vedlikehold og forbedringer"
+      ],
+      "longTerm": "Mange kunder fortsetter med oss etter lansering for oppdateringer, sikkerhet, SEO og små forbedringer – månedlig, slik at nettsiden fortsetter å jobbe for bedriften.",
+      "faq": [
+        {
+          "q": "Hvor lang tid tar en nettside?",
+          "a": "Det avhenger av antall sider og innhold. Tidsplanen avtales i det skriftlige tilbudet før vi starter."
+        },
+        {
+          "q": "Kan jeg oppdatere nettsiden selv?",
+          "a": "Ja. Du får en kort veiledning, og vi kan også ta oppdateringene for deg hvis du ønsker det."
+        },
+        {
+          "q": "Garanterer dere toppplassering på Google?",
+          "a": "Ingen kan ærlig garantere rangering. Vi bygger et solid teknisk og innholdsmessig grunnlag som gir nettsiden en god mulighet til å bli funnet."
+        }
+      ]
+    },
+    "webCrm": {
+      "name": "Nettside med integrert CRM",
+      "card": "Nettside og CRM som jobber sammen, fra første besøk til oppfølging.",
+      "metaTitle": "Nettside med integrert CRM",
+      "metaDescription": "En bedriftsnettside koblet til et CRM, slik at hver henvendelse blir registrert, fulgt opp og gjort om til et kundeforhold.",
+      "heroTitle": "Fra besøk på nettsiden til kunde – i ett sammenhengende system",
+      "heroSubtitle": "Henvendelser fra nettsiden går rett inn i et CRM, slik at ingenting blir borte og hver henvendelse blir fulgt opp i tide.",
+      "problem": [
+        "Henvendelser kommer på e-post, telefon og skjema og er vanskelige å holde oversikt over.",
+        "Oppfølging avhenger av hukommelsen, så noen henvendelser blir glemt.",
+        "Du ser ikke hvilke henvendelser som ble til kunder."
+      ],
+      "solution": "Vi bygger eller forbedrer nettsiden og kobler skjemaene til et CRM som passer salgsprosessen din. Hver henvendelse blir en mulighet med status, neste steg og historikk – nettside → henvendelse → CRM → oppfølging → kunde.",
+      "included": [
+        "Bedriftsnettside med tydelige veier til henvendelse",
+        "CRM satt opp for salgsprosessen din",
+        "Skjemaene på nettsiden koblet til CRM",
+        "Statuser og påminnelser om oppfølging",
+        "Enkel oversikt over henvendelser og resultat",
+        "Opplæring for deg og teamet"
+      ],
+      "steps": [
+        {
+          "title": "Kartlegg prosessen",
+          "text": "Hvordan kommer henvendelser inn i dag, og hva bør skje videre?"
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang, pris og tidsplan for nettside og CRM."
+        },
+        {
+          "title": "Bygg og koble",
+          "text": "Nettside, CRM og koblingen mellom dem."
+        },
+        {
+          "title": "Gå live sammen",
+          "text": "Vi tester ekte henvendelser fra start til slutt og lærer opp teamet."
+        }
+      ],
+      "deliverables": [
+        "En nettside med henvendelsesskjema",
+        "Et ferdig oppsatt CRM med salgstrakten din",
+        "Automatisk registrering av henvendelser fra nettsiden",
+        "En enkel rutine for oppfølging"
+      ],
+      "notIncluded": [
+        "Lisenskostnader for CRM, hvis dere velger et betalt system",
+        "Flytting av store historiske databaser (prises separat)"
+      ],
+      "optional": [
+        "E-postmaler for oppfølging",
+        "Automatiske påminnelser og oppgaver",
+        "Rapportoversikt"
+      ],
+      "longTerm": "Etter hvert som bedriften vokser, kan vi justere salgstrakten, legge til automatisering og holde nettside og CRM i takt.",
+      "faq": [
+        {
+          "q": "Hvilket CRM bruker dere?",
+          "a": "Vi anbefaler et CRM ut fra behov og budsjett, eller jobber i det dere allerede bruker."
+        },
+        {
+          "q": "Kan dere koble til nettsiden vi har i dag?",
+          "a": "Som regel ja. Vi ser på nettsiden først og sier ærlig fra hvis en ny løsning er mer fornuftig."
+        },
+        {
+          "q": "Er dette bare for større bedrifter?",
+          "a": "Nei. Det er ofte mest nyttig for små bedrifter der én person håndterer alle henvendelsene."
+        }
+      ]
+    },
+    "crm": {
+      "name": "CRM",
+      "card": "Kunder, henvendelser og oppfølging samlet på ett sted.",
+      "metaTitle": "CRM for små bedrifter",
+      "metaDescription": "Et praktisk CRM for små bedrifter: hold orden på kunder og henvendelser, følg opp i tide og reduser manuelt arbeid.",
+      "heroTitle": "Et CRM som gir kontroll på kunder og oppfølging",
+      "heroSubtitle": "Ett sted for kunder, henvendelser og neste steg – satt opp etter hvordan bedriften faktisk selger.",
+      "problem": [
+        "Kundeinformasjon ligger spredt i e-post, regneark og notatbøker.",
+        "Det er uklart hvem som skal følge opp hvem, og når.",
+        "Mye tid går med til manuell oppdatering og leting etter informasjon."
+      ],
+      "solution": "Vi setter opp et CRM som passer salgsarbeidet ditt, flytter eksisterende kundedata inn og legger til enkle rutiner for oppfølging. Målet er mindre manuelt arbeid og bedre oversikt.",
+      "included": [
+        "Råd om valg av CRM, eller oppsett av det dere har",
+        "Salgstrakt og statuser for prosessen din",
+        "Import av eksisterende kunder og kontakter",
+        "Oppfølgingsoppgaver og påminnelser",
+        "Enkle rapporter",
+        "Opplæring og en kort brukerveiledning"
+      ],
+      "steps": [
+        {
+          "title": "Forstå arbeidsflyten",
+          "text": "Hvordan dere finner, vinner og beholder kunder i dag."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang, pris og tidsplan avtalt på forhånd."
+        },
+        {
+          "title": "Oppsett og import",
+          "text": "Vi konfigurerer CRM-et og flytter dataene."
+        },
+        {
+          "title": "Opplæring og justering",
+          "text": "Vi lærer dere opp og justerer etter de første ukene."
+        }
+      ],
+      "deliverables": [
+        "Et ferdig konfigurert CRM",
+        "Kunder og kontakter importert",
+        "En salgstrakt som passer prosessen din",
+        "En brukerveiledning for teamet"
+      ],
+      "notIncluded": [
+        "Lisenskostnader for CRM, hvis dere velger et betalt system",
+        "Utvikling av egen programvare (se Automatisering)"
+      ],
+      "optional": [
+        "Kobling til skjemaene på nettsiden",
+        "Automatiske oppfølgings-e-poster",
+        "Integrasjon med regnskap eller andre verktøy"
+      ],
+      "longTerm": "Vi kan fortsette som CRM-støtte: nye felt, rapporter, automatisering og hjelp til nye ansatte.",
+      "faq": [
+        {
+          "q": "Trenger vi et dyrt CRM?",
+          "a": "Ikke nødvendigvis. Mange små bedrifter klarer seg godt med et rimelig eller gratis CRM som er satt riktig opp."
+        },
+        {
+          "q": "Kan dere flytte data fra regneark?",
+          "a": "Ja. Vi rydder og importerer eksisterende kundelister som en del av oppsettet."
+        },
+        {
+          "q": "Hvem eier dataene?",
+          "a": "Det gjør dere. CRM-kontoen og alle data tilhører bedriften."
+        }
+      ]
+    },
+    "seo": {
+      "name": "SEO og synlighet på nett",
+      "card": "Hjelp de riktige kundene å finne bedriften på Google.",
+      "metaTitle": "SEO og synlighet på nett",
+      "metaDescription": "Teknisk SEO, SEO på siden og innholdsstrategi som hjelper de riktige kundene å finne bedriften – uten løfter om garantert rangering.",
+      "heroTitle": "Bli lettere å finne for kundene som allerede søker",
+      "heroSubtitle": "Et solid teknisk og innholdsmessig grunnlag for synlighet i søk – forklart tydelig, uten løfter ingen kan holde.",
+      "problem": [
+        "Bedriften dukker ikke opp når kunder søker etter det du tilbyr.",
+        "Nettsiden har tekniske feil som gjør den vanskeligere for Google å forstå.",
+        "Det finnes ingen plan for innhold eller lokal synlighet."
+      ],
+      "solution": "Vi går gjennom det tekniske grunnlaget, forbedrer struktur og innhold, setter opp lokal synlighet og avtaler en realistisk plan. Vi rapporterer hva vi har gjort og hva som har endret seg – uten å garantere rangering.",
+      "included": [
+        "Teknisk SEO-gjennomgang og utbedring",
+        "SEO på siden: titler, beskrivelser, overskrifter, struktur",
+        "Google-bedriftsprofil og lokal synlighet",
+        "Søkeord- og innholdsplan",
+        "Oppsett og oppfølging i Search Console",
+        "Tydelig rapportering av utført arbeid"
+      ],
+      "steps": [
+        {
+          "title": "Gjennomgang",
+          "text": "Teknisk sjekk og en titt på hvordan dere vises i dag."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "En realistisk plan med omfang og pris."
+        },
+        {
+          "title": "Forbedring",
+          "text": "Vi utbedrer grunnlaget og forbedrer de viktigste sidene."
+        },
+        {
+          "title": "Oppfølging",
+          "text": "Overvåking, rapportering og neste steg."
+        }
+      ],
+      "deliverables": [
+        "En teknisk SEO-rapport med utbedringer gjennomført",
+        "Optimaliserte nøkkelsider",
+        "Oppsett for lokal synlighet",
+        "En innholdsplan for de neste månedene"
+      ],
+      "notIncluded": [
+        "Garantert rangering eller trafikk",
+        "Annonsebudsjett",
+        "Kjøp av lenker eller andre metoder i strid med Googles retningslinjer"
+      ],
+      "optional": [
+        "Løpende månedlig SEO-støtte",
+        "Innholdsproduksjon",
+        "Støtte med Google Ads"
+      ],
+      "longTerm": "Synlighet bygges over tid. Med løpende månedlig støtte kan vi fortsette å forbedre innhold og struktur etter hvert som bedriften utvikler seg.",
+      "faq": [
+        {
+          "q": "Kan dere garantere førsteplass på Google?",
+          "a": "Nei. Den som garanterer rangering, lover noe de ikke styrer. Vi jobber med det som faktisk er innenfor din kontroll."
+        },
+        {
+          "q": "Hvor raskt ser vi resultater?",
+          "a": "Tekniske utbedringer kan hjelpe raskt, mens innhold og lokal synlighet som regel tar måneder. Vi sier tydelig hva som er realistisk."
+        },
+        {
+          "q": "Trenger vi ny nettside for SEO?",
+          "a": "Ikke alltid. Vi sjekker nettsiden dere har først."
+        }
+      ]
+    },
+    "visualIdentity": {
+      "name": "Visuell identitet",
+      "card": "Et helhetlig, profesjonelt uttrykk på nettside og kanaler.",
+      "metaTitle": "Visuell identitet for små bedrifter",
+      "metaDescription": "Helhetlig visuell identitet for små bedrifter: farger, typografi, logo og digitalt profilmateriell for et profesjonelt uttrykk på nett.",
+      "heroTitle": "Et profesjonelt og helhetlig uttrykk på nett",
+      "heroSubtitle": "Farger, typografi og digitalt materiell som får bedriften til å fremstå like troverdig på nett som den gjør i virkeligheten.",
+      "problem": [
+        "Nettside, profiler i sosiale medier og dokumenter ser forskjellige ut.",
+        "Bedriften fremstår mindre profesjonell på nett enn den egentlig er.",
+        "Det finnes ingen tydelige retningslinjer, så alt nytt materiell starter fra bunnen."
+      ],
+      "solution": "Vi definerer en praktisk visuell retning for den digitale tilstedeværelsen – farger, typografi, bruk av logo og enkle maler – og tar den i bruk på nettsiden og de viktigste kanalene. Ved større merkevareprosjekter samarbeider vi med erfarne designere og koordinerer arbeidet for deg.",
+      "included": [
+        "Visuell retning for nettsiden",
+        "Fargepalett og typografi",
+        "Justering av logo eller enkel logodesign",
+        "Digitalt profilmateriell (bilder og grafikk til profiler)",
+        "En kort profilmanual",
+        "Implementering på nettsiden"
+      ],
+      "steps": [
+        {
+          "title": "Samtale",
+          "text": "Bedriften, kundene og inntrykket du vil gi."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang, pris og tidsplan."
+        },
+        {
+          "title": "Forslag",
+          "text": "En visuell retning du kan kommentere."
+        },
+        {
+          "title": "Ferdigstilling",
+          "text": "Endelige filer og bruk på nettside og kanaler."
+        }
+      ],
+      "deliverables": [
+        "Logofiler i vanlige formater",
+        "Veiledning for farger og typografi",
+        "Maler for sosiale medier",
+        "Oppdatert utseende på nettsiden"
+      ],
+      "notIncluded": [
+        "Registrering av varemerke",
+        "Trykkekostnader",
+        "Store merkevarestrategiprosjekter (koordineres med partnere ved behov)"
+      ],
+      "optional": [
+        "Visittkort og trykkmaler",
+        "Presentasjonsmaler",
+        "Retning for foto"
+      ],
+      "longTerm": "Vi kan holde nye sider, kampanjer og innhold i sosiale medier i tråd med identiteten over tid.",
+      "faq": [
+        {
+          "q": "Lager dere helt nye merkevarer?",
+          "a": "For små bedrifter lager vi praktiske identiteter. Til større merkevarestrategi koordinerer vi med spesialiserte designere."
+        },
+        {
+          "q": "Kan vi beholde logoen vi har?",
+          "a": "Ja. Ofte er det beste å justere den og bruke den konsekvent."
+        },
+        {
+          "q": "Hvilke filer får vi?",
+          "a": "Logo og materiell i vanlige digitale formater, og en kort veiledning for bruk."
+        }
+      ]
+    },
+    "socialMedia": {
+      "name": "Sosiale medier og digital tilstedeværelse",
+      "card": "Hold profilene aktive, helhetlige og profesjonelle.",
+      "metaTitle": "Sosiale medier og digital tilstedeværelse",
+      "metaDescription": "Forvaltning av sosiale medier, optimalisering av profiler og koordinering av innhold for små bedrifter som vil ha en jevn digital tilstedeværelse.",
+      "heroTitle": "En digital tilstedeværelse som holdes aktiv uten at det tar tiden din",
+      "heroSubtitle": "Vi hjelper deg å holde profilene oppdaterte, helhetlige og profesjonelle – slik at kundene ser en aktiv bedrift.",
+      "problem": [
+        "Profilene er utdaterte eller mangelfulle.",
+        "Det publiseres sjelden fordi ingen har tid.",
+        "Nettside, profiler og budskap henger ikke sammen."
+      ],
+      "solution": "Vi optimaliserer profilene, avtaler en enkel innholdsplan og koordinerer publisering etter en fast plan. Du godkjenner innholdet, vi sørger for at det skjer. Kampanjer og betalt annonsering koordineres når det er relevant.",
+      "included": [
+        "Oppsett og optimalisering av profiler",
+        "En enkel månedlig innholdsplan",
+        "Koordinering og planlegging av innhold",
+        "Helhetlig visuelt uttrykk og tone",
+        "En enkel månedsoversikt",
+        "Koordinering av kampanjer ved behov"
+      ],
+      "steps": [
+        {
+          "title": "Gjennomgå kanalene",
+          "text": "Hvilke kanaler som betyr noe for kundene dine."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Månedlig omfang og pris."
+        },
+        {
+          "title": "Planlegg og godkjenn",
+          "text": "En innholdsplan du godkjenner."
+        },
+        {
+          "title": "Gjennomføring og oppsummering",
+          "text": "Vi publiserer og sender en kort månedsoppsummering."
+        }
+      ],
+      "deliverables": [
+        "Optimaliserte bedriftsprofiler",
+        "En månedlig innholdsplan",
+        "Planlagte innlegg i din stil",
+        "En kort oppsummering hver måned"
+      ],
+      "notIncluded": [
+        "Annonsebudsjett",
+        "Profesjonell foto- eller videoproduksjon (koordineres ved behov)",
+        "Garantert vekst i antall følgere"
+      ],
+      "optional": [
+        "Koordinering av betalte kampanjer",
+        "Korte videoer",
+        "Oppfølging av kommentarer og meldinger"
+      ],
+      "longTerm": "Digital tilstedeværelse fungerer best når den er jevn over tid. Derfor løper denne tjenesten som regel månedlig.",
+      "faq": [
+        {
+          "q": "Må vi godkjenne hvert innlegg?",
+          "a": "Du godkjenner planen og kan se gjennom innlegg før de publiseres. Vi avtaler det som passer deg."
+        },
+        {
+          "q": "Hvilke kanaler dekker dere?",
+          "a": "De som gir mening for kundene dine – vanligvis to eller tre, ikke alle."
+        },
+        {
+          "q": "Garanterer dere flere følgere eller mer salg?",
+          "a": "Nei. Vi garanterer jevnt, profesjonelt arbeid og ærlig rapportering."
+        }
+      ]
+    },
+    "dataCollection": {
+      "name": "Datainnsamling og bedriftsanalyse",
+      "card": "Strukturert research og ryddige datasett for bedre beslutninger.",
+      "metaTitle": "Datainnsamling og bedriftsanalyse",
+      "metaDescription": "Strukturert bedriftsresearch, research på selskaper og potensielle kunder, kontrollerte datasett og organisering av data fra lovlige, offentlige kilder.",
+      "heroTitle": "Pålitelig bedriftsinformasjon, samlet inn og organisert for deg",
+      "heroSubtitle": "Strukturert research og skreddersydde datasett fra lovlige kilder – kontrollert, dokumentert og klart til bruk.",
+      "problem": [
+        "Du trenger informasjon om selskaper, markeder eller leverandører, men har ikke tid til å finne den.",
+        "Eksisterende data er rotete, dobbeltregistrert eller utdatert.",
+        "Det er uklart hvor informasjonen kommer fra, og om den er til å stole på."
+      ],
+      "solution": "Vi definerer nøyaktig hva du trenger, henter det fra lovlige offentlige og offisielle kilder, kontrollerer det og leverer et ryddig, strukturert datasett – med kilden dokumentert for hver post.",
+      "included": [
+        "Kartlegging av behov og definisjon av data",
+        "Research på selskaper og potensielle kunder",
+        "Innsamling fra offisielle og offentlige kilder",
+        "Kontroll og fjerning av duplikater",
+        "Strukturert levering (regneark eller import til CRM)",
+        "Dokumentasjon av kilder"
+      ],
+      "steps": [
+        {
+          "title": "Definer behovet",
+          "text": "Hvilke data, fra hvor og i hvilket format."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang, kilder, pris og tidsplan."
+        },
+        {
+          "title": "Innsamling og kontroll",
+          "text": "Research, opprydding og kvalitetskontroll."
+        },
+        {
+          "title": "Levering",
+          "text": "Et dokumentert datasett klart til bruk."
+        }
+      ],
+      "deliverables": [
+        "Et strukturert datasett i avtalt format",
+        "Kildedokumentasjon for hver post",
+        "En kort oppsummering av metode og begrensninger"
+      ],
+      "notIncluded": [
+        "Data fra kilder som ikke tillater det",
+        "Personopplysninger uten lovlig grunnlag",
+        "Kjøpte kontaktlister"
+      ],
+      "optional": [
+        "Jevnlig oppdatering av datasettet",
+        "Import til CRM-et ditt",
+        "Enkle rapportoversikter"
+      ],
+      "longTerm": "Data blir fort utdatert. Vi kan holde datasettet oppdatert etter en fast plan.",
+      "faq": [
+        {
+          "q": "Hvor kommer dataene fra?",
+          "a": "Fra offisielle registre og andre lovlige, offentlige kilder. Hver post dokumenteres med kilde."
+        },
+        {
+          "q": "Behandler dere personopplysninger?",
+          "a": "Bare der det finnes et lovlig grunnlag, og i tråd med GDPR. Dette avklarer vi med deg på forhånd."
+        },
+        {
+          "q": "Hvilke formater kan dere levere?",
+          "a": "Regneark, CSV eller direkte import til CRM-et ditt."
+        }
+      ]
+    },
+    "recruitment": {
+      "name": "Rekruttering og HR-støtte",
+      "card": "Hjelp med rekruttering for bedrifter uten egen HR-avdeling.",
+      "metaTitle": "Rekruttering og HR-støtte for små bedrifter",
+      "metaDescription": "Rekrutteringsstøtte, søk etter kandidater, koordinering av ansettelser og praktisk HR-støtte for små bedrifter uten egen HR-avdeling.",
+      "heroTitle": "Ansett de riktige folkene uten å bygge en HR-avdeling",
+      "heroSubtitle": "Praktisk hjelp med stillingsannonser, kandidatsøk og en strukturert ansettelsesprosess – for små bedrifter som trenger hjelp når de skal ansette.",
+      "problem": [
+        "Rekruttering tar mye tid bort fra driften.",
+        "Stillingsannonser gir få relevante søkere.",
+        "Det finnes ingen tydelig prosess for utvelgelse, intervjuer og opplæring."
+      ],
+      "solution": "Vi hjelper deg å beskrive stillingen, skrive og publisere annonsen, finne og vurdere kandidater og koordinere intervjuer. Du tar den endelige avgjørelsen. Der det trengs spesialisert rekruttering, koordinerer vi med erfarne partnere.",
+      "included": [
+        "Stillingsbeskrivelse og annonse",
+        "Publisering i relevante kanaler",
+        "Kandidatsøk og første utvelgelse",
+        "Koordinering av intervjuer",
+        "En enkel ansettelsesprosess",
+        "Sjekkliste for opplæring av nyansatte"
+      ],
+      "steps": [
+        {
+          "title": "Forstå stillingen",
+          "text": "Hva du trenger, og hva stillingen innebærer."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang og pris for rekrutteringen."
+        },
+        {
+          "title": "Finn og vurder",
+          "text": "Annonse, kandidatsøk og en kortliste."
+        },
+        {
+          "title": "Beslutning og oppstart",
+          "text": "Du velger, vi hjelper med neste steg."
+        }
+      ],
+      "deliverables": [
+        "En publisert stillingsannonse",
+        "En kortliste med vurderte kandidater",
+        "Koordinerte intervjuer",
+        "En sjekkliste for oppstart"
+      ],
+      "notIncluded": [
+        "Arbeidskontrakter og juridisk rådgivning (kontakt advokat)",
+        "Lønnskjøring",
+        "Garantert ansettelse"
+      ],
+      "optional": [
+        "Teknisk rekruttering",
+        "Rekrutteringsprosess i CRM-et ditt",
+        "Støtte med HR-administrasjon"
+      ],
+      "longTerm": "For bedrifter som ansetter jevnlig, kan vi gi løpende rekrutterings- og HR-støtte.",
+      "faq": [
+        {
+          "q": "Hvem tar den endelige avgjørelsen?",
+          "a": "Det gjør du. Vi forbereder og koordinerer, men ansettelsen er alltid din beslutning."
+        },
+        {
+          "q": "Gir dere juridisk HR-rådgivning?",
+          "a": "Nei. Til kontrakter og arbeidsrett anbefaler vi advokat eller HR-spesialist."
+        },
+        {
+          "q": "Kan dere hjelpe med tekniske stillinger?",
+          "a": "Ja, også med vurdering av tekniske ferdigheter."
+        }
+      ]
+    },
+    "automation": {
+      "name": "Automatisering",
+      "card": "Automatiser gjentakende arbeid og koble sammen verktøyene dere bruker.",
+      "metaTitle": "Automatisering og integrasjoner for bedrifter",
+      "metaDescription": "Automatisering av arbeidsflyt, integrasjoner, interne verktøy og skreddersydde systemer som reduserer gjentakende manuelt arbeid.",
+      "heroTitle": "Bruk mindre tid på gjentakende arbeid",
+      "heroSubtitle": "Automatisering, integrasjoner og interne verktøy som tar over manuelle steg – utformet etter hvordan dere faktisk jobber.",
+      "problem": [
+        "Den samme informasjonen tastes inn i flere systemer.",
+        "Rutineoppgaver tar timer hver uke.",
+        "Verktøyene snakker ikke sammen, og det sniker seg inn feil."
+      ],
+      "solution": "Vi kartlegger hvor tiden går, og automatiserer de stegene der det gir mening: integrasjoner mellom verktøy, automatiske rapporter og varsler, eller et lite internt verktøy. Den konkrete løsningen avhenger av behovet – vi anbefaler den enkleste som fungerer.",
+      "included": [
+        "Gjennomgang av arbeidsflyten",
+        "Integrasjoner mellom verktøyene dine",
+        "Automatisering av gjentakende oppgaver",
+        "Automatiske rapporter og varsler",
+        "Interne verktøy ved behov",
+        "Dokumentasjon og overlevering"
+      ],
+      "steps": [
+        {
+          "title": "Kartlegg arbeidsflyten",
+          "text": "Hvor går tiden, og hva kan automatiseres?"
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Foreslått løsning, pris og tidsplan."
+        },
+        {
+          "title": "Bygg og test",
+          "text": "Vi bygger og tester med reelle eksempler."
+        },
+        {
+          "title": "Overlevering",
+          "text": "Dokumentasjon og opplæring for teamet."
+        }
+      ],
+      "deliverables": [
+        "Fungerende automatisering eller integrasjoner",
+        "Dokumentasjon av hva som kjører hvor",
+        "En gjennomgang ved overlevering"
+      ],
+      "notIncluded": [
+        "Lisenskostnader for verktøy fra tredjepart",
+        "Utskifting av kjernesystemer som regnskap"
+      ],
+      "optional": [
+        "KI-støttede arbeidsflyter",
+        "Overvåking og vedlikehold",
+        "Rapportoversikter"
+      ],
+      "longTerm": "Automatisering trenger litt oppfølging når verktøy endres. Vi kan overvåke og vedlikeholde den månedlig.",
+      "faq": [
+        {
+          "q": "Hva kan automatiseres?",
+          "a": "Som regel alt som er gjentakende og regelbasert: registrering av data, rapporter, varsler og overføring mellom systemer."
+        },
+        {
+          "q": "Trenger vi ny programvare?",
+          "a": "Ofte ikke. Vi starter med verktøyene dere allerede bruker."
+        },
+        {
+          "q": "Hva koster det?",
+          "a": "Det avhenger av løsningen. Etter en kort samtale får du et skriftlig tilbud."
+        }
+      ]
+    },
+    "digitalPartner": {
+      "name": "Digital partner",
+      "card": "Du driver bedriften. Vi hjelper deg med den digitale delen.",
+      "metaTitle": "Løpende digital partner for bedriften",
+      "metaDescription": "En løpende digital partner for små bedrifter: drift av nettside, SEO, synlighet, CRM, data, automatisering og teknisk vedlikehold – månedlig.",
+      "heroTitle": "Du driver den fysiske bedriften. Vi hjelper deg med den digitale delen.",
+      "heroSubtitle": "Én fast partner for nettside, synlighet, systemer og teknisk vedlikehold – som et eksternt digitalt team, uten at du må bygge et selv.",
+      "problem": [
+        "De digitale oppgavene er fordelt på flere frilansere – eller ingen.",
+        "Små oppdateringer blir liggende i ukevis fordi ingen har ansvaret.",
+        "Det er for dyrt å bygge et eget digitalt team."
+      ],
+      "solution": "Vi tar løpende ansvar for de avtalte delene av den digitale driften og forbedrer dem måned for måned. Du har én kontaktperson og et tydelig månedlig omfang. Der det trengs spesialister, koordinerer vi dem for deg.",
+      "included": [
+        "Drift og oppdatering av nettsiden",
+        "SEO og synlighet på nett",
+        "CRM og datahåndtering",
+        "Teknisk vedlikehold og sikkerhet",
+        "Automatisering og små forbedringer",
+        "Rekrutteringsstøtte ved behov"
+      ],
+      "steps": [
+        {
+          "title": "Samtale",
+          "text": "Hva som fungerer, hva som ikke gjør det, og hva som er viktigst."
+        },
+        {
+          "title": "Månedlig omfang",
+          "text": "En skriftlig avtale med omfang og månedspris."
+        },
+        {
+          "title": "Løpende arbeid",
+          "text": "Faste oppgaver og forbedringer."
+        },
+        {
+          "title": "Månedlig gjennomgang",
+          "text": "En kort oppsummering og prioriteringer for neste måned."
+        }
+      ],
+      "deliverables": [
+        "Én kontaktperson",
+        "Et tydelig månedlig omfang",
+        "En kort månedlig oppsummering",
+        "Prioriteringer vi blir enige om sammen"
+      ],
+      "notIncluded": [
+        "Arbeid utenfor avtalt omfang (prises separat)",
+        "Lisens- og annonsekostnader hos tredjepart"
+      ],
+      "optional": [
+        "Større prosjekter til avtalt pris",
+        "Vekstpartnerskap for utvalgte bedrifter"
+      ],
+      "longTerm": "Dette er den langsiktige samarbeidsmodellen: vi holder kontakten med bedriften og fortsetter å forbedre den digitale delen.",
+      "faq": [
+        {
+          "q": "Er det lang bindingstid?",
+          "a": "Vilkårene avtales skriftlig på forhånd, også oppsigelsestid."
+        },
+        {
+          "q": "Hva om vi trenger noe utenfor omfanget?",
+          "a": "Vi sier fra før vi gjør det, og gir en egen pris."
+        },
+        {
+          "q": "Er dette det samme som vekstpartnerskap?",
+          "a": "Nei. Vekstpartnerskap er en egen, selektiv modell som diskuteres individuelt."
+        }
+      ]
+    }
+  },
+  "homeV2": {
+    "services": {
+      "eyebrow": "Tjenester",
+      "title": "Én tydelig løsning om gangen",
+      "subtitle": "Start med det du trenger nå. Hver tjeneste har sin egen side med hva som er inkludert, hvordan det foregår og hvordan prisen avtales.",
+      "partnerEyebrow": "Langsiktig",
+      "partnerCta": "Les om digital partner",
+      "all": "Se alle tjenester"
+    },
+    "work": {
+      "eyebrow": "Arbeidet vårt",
+      "title": "Se hva vi lager",
+      "subtitle": "Ekte prosjekter og gjennomganger. Vi publiserer ikke oppdiktede kunder eller resultater.",
+      "cta": "Se arbeidet vårt"
+    }
+  },
+  "portfolio": {
+    "viewProject": "Besøk prosjektet",
+    "whatWasBuilt": "Hva vi laget",
+    "goal": "Mål",
+    "servicesProvided": "Tjenester",
+    "video": {
+      "eyebrow": "Arbeid i praksis",
+      "title": "Videogjennomganger",
+      "subtitle": "Korte skjermopptak av ekte prosjekter: hvordan de fungerer og hva som ble levert.",
+      "placeholderBadge": "Kommer snart",
+      "placeholderTitle": "Videogjennomganger er under arbeid",
+      "placeholderText": "Vi publiserer opptak av ekte prosjekter her. Inntil da viser vi gjerne relevant arbeid i en kort videosamtale.",
+      "watch": "Se gjennomgangen",
+      "videoOf": "Video: {title}"
+    }
+  },
+  "engagementPages": {
+    "ui": {
+      "breadcrumb": "Slik jobber vi",
+      "whoForTitle": "Hvem passer det for",
+      "gettingStartedTitle": "Slik kommer vi i gang",
+      "otherModels": "Andre måter å samarbeide på",
+      "notAPlan": "Vekstpartnerskap er ikke en standard betalingsplan. Det er en selektiv ordning som diskuteres og forhandles individuelt mellom ExploreTechify og bedriften.",
+      "selectionTitle": "Slik utforsker vi et partnerskap",
+      "possibilitiesTitle": "Mulige former for partnerskap",
+      "buildFirstTitle": "Usikker? Se resultatet før du forplikter deg.",
+      "buildFirstText": "For nettsideprosjekter kan vi bygge den avtalte første versjonen som du kan vurdere – så bestemmer du deg.",
+      "buildFirstCta": "Slik fungerer «bygg først»",
+      "metaMonthly": "Løpende digital, teknisk og operativ støtte for en avtalt månedspris – ExploreTechify som en forlengelse av teamet ditt.",
+      "metaProject": "En tydelig avgrenset oppgave eller prosjekt med avtalt omfang, pris, tidsplan og milepæler.",
+      "metaGrowth": "Et selektivt, individuelt forhandlet langsiktig partnerskap for bedrifter som ønsker et tettere strategisk samarbeid."
+    },
+    "monthly": {
+      "whoFor": [
+        "Bedrifter som trenger jevnlig digital hjelp, men ikke et helt internt team",
+        "Eiere som vil ha én ansvarlig partner i stedet for flere frilansere",
+        "Bedrifter med nettside, systemer eller markedsføring som trenger jevnlig oppfølging",
+        "Bedrifter som vil bygge ut den digitale delen steg for steg"
+      ],
+      "steps": [
+        {
+          "title": "Samtale",
+          "text": "Hva du trenger hjelp med i dag, og hva som er viktigst."
+        },
+        {
+          "title": "Forslag til omfang",
+          "text": "Et skriftlig månedlig omfang, ansvarsfordeling og pris."
+        },
+        {
+          "title": "Oppstart",
+          "text": "Vi tar over det avtalte arbeidet og setter opp faste avstemminger."
+        },
+        {
+          "title": "Gjennomgang og justering",
+          "text": "Omfanget gjennomgås sammen med avtalte mellomrom."
+        }
+      ]
+    },
+    "project": {
+      "whoFor": [
+        "En ny nettside eller en ny versjon av nettsiden",
+        "Oppsett av CRM eller en konkret integrasjon",
+        "En automatisering eller et internt verktøy",
+        "Et avgrenset SEO-, data- eller rekrutteringsprosjekt"
+      ],
+      "steps": [
+        {
+          "title": "Beskriv oppgaven",
+          "text": "En kort beskrivelse holder for å komme i gang."
+        },
+        {
+          "title": "Skriftlig tilbud",
+          "text": "Omfang, pris, tidsplan og milepæler – avtalt før vi starter."
+        },
+        {
+          "title": "Gjennomføring",
+          "text": "Vi bygger, og du gjennomgår hver milepæl."
+        },
+        {
+          "title": "Overlevering",
+          "text": "Endelig levering, dokumentasjon og betaling som avtalt."
+        }
+      ]
+    },
+    "growth": {
+      "lead": "For utvalgte bedrifter som ønsker et tettere, langsiktig samarbeid.",
+      "whoFor": [
+        "Bedrifter med stort potensial der digital kompetanse er det som begrenser",
+        "Eiere som ser etter en langsiktig strategisk partner, ikke bare en leverandør",
+        "Situasjoner der felles mål og en avtalt forretningsinteresse gir mening for begge parter"
+      ],
+      "steps": [
+        {
+          "title": "Innledende samtale",
+          "text": "Bedriften, planene og hva du ser etter."
+        },
+        {
+          "title": "Gjensidig vurdering",
+          "text": "Begge parter vurderer om det er en reell match. Ofte er et vanlig samarbeid det beste valget – det sier vi i så fall rett ut."
+        },
+        {
+          "title": "Forslag til struktur",
+          "text": "Hvis det passer, skisseres og diskuteres en mulig struktur."
+        },
+        {
+          "title": "Skriftlig avtale",
+          "text": "Vilkårene forhandles og dokumenteres, og vi anbefaler uavhengig rådgivning for begge parter."
+        }
+      ]
+    }
+  },
+  "buildFirst": {
+    "eyebrow": "Bygg før du forplikter deg",
+    "title": "Se hva vi kan bygge før du tar den endelige beslutningen",
+    "subtitle": "For nettsideprosjekter kan vi bygge den avtalte første versjonen, slik at du vurderer det faktiske resultatet – ikke et løfte. Omfang og vilkår avtales før vi starter.",
+    "steps": [
+      {
+        "title": "Fortell hva du trenger",
+        "text": "Bedriften, kundene og målene dine."
+      },
+      {
+        "title": "Vi avtaler omfanget",
+        "text": "Hva vi bygger først, pris og vilkår – skriftlig."
+      },
+      {
+        "title": "Vi bygger",
+        "text": "En fungerende første versjon av den foreslåtte nettsiden."
+      },
+      {
+        "title": "Du vurderer",
+        "text": "Se den, klikk deg gjennom og gi tilbakemelding."
+      },
+      {
+        "title": "Godkjenn og motta",
+        "text": "Godkjenn, betal det avtalte beløpet og motta den ferdige nettsiden."
+      }
+    ],
+    "alternativeTitle": "Foretrekker du en klassisk ordning?",
+    "alternativeText": "Betal som avtalt først – så bygger og leverer vi nettsiden etter avtalt omfang.",
+    "alternativeSteps": [
+      "Avtalt betaling",
+      "Vi bygger",
+      "Du mottar den ferdige nettsiden"
+    ],
+    "scopeNote": "Ikke gratis utvikling: omfang, pris og antall gjennomgangsrunder avtales skriftlig før arbeidet starter.",
+    "cta": "Snakk med oss om «bygg først»",
+    "learnMore": "Slik fungerer «bygg først»",
+    "page": {
+      "metaTitle": "Bygg før du forplikter deg",
+      "metaDescription": "Se den foreslåtte nettsiden før du forplikter deg: vi bygger den avtalte første versjonen, du vurderer den, og så godkjenner og betaler du – med omfang og vilkår avtalt på forhånd.",
+      "heroTitle": "Bygg først. Vurder i ro og mak. Forplikt deg når du er klar.",
+      "heroSubtitle": "Å kjøpe en nettside bør ikke bety å betale for noe du aldri har sett. For passende prosjekter bygger vi den avtalte første versjonen først – slik at du kan vurdere det faktiske resultatet før den endelige beslutningen.",
+      "arrangementsTitle": "To måter å starte på",
+      "optionA": {
+        "label": "Alternativ A",
+        "title": "Bygg, vurder, godkjenn og betal",
+        "text": "Vi bygger den foreslåtte nettsiden etter avtalt omfang. Du vurderer den. Godkjenner du resultatet, betaler du det avtalte beløpet og mottar den ferdige nettsiden og koden som avtalt.",
+        "points": [
+          "Du ser det faktiske resultatet før du betaler den avtalte prisen",
+          "Avtalte runder for tilbakemelding",
+          "Ferdig nettside og kode leveres etter godkjenning og betaling"
+        ]
+      },
+      "optionB": {
+        "label": "Alternativ B",
+        "title": "Betal, så bygger og leverer vi",
+        "text": "Avhengig av prosjektet og avtalen betaler du det avtalte beløpet først, og vi ferdigstiller og leverer nettsiden etter avtalt omfang.",
+        "points": [
+          "En tydelig, fast ordning fra start",
+          "Samme omfang, kvalitet og gjennomgang",
+          "Ofte foretrukket ved større eller mer komplekse prosjekter"
+        ]
+      },
+      "whatTitle": "Hva som bygges først",
+      "whatItems": [
+        "De avtalte sidene og strukturen i den foreslåtte nettsiden",
+        "Innholdet, tjenestene og kontaktveien din i en fungerende layout",
+        "Mobil- og desktopversjon du kan åpne og klikke deg gjennom",
+        "Publisert på en forhåndsvisningsadresse, ikke på ditt eget domene ennå"
+      ],
+      "reviewTitle": "Hva du vurderer",
+      "reviewText": "Du åpner forhåndsvisningen, sjekker struktur, design og tekster, og gir tilbakemelding innenfor de avtalte rundene. Vi justerer etter avtalt omfang.",
+      "paymentTitle": "Når betalingen skjer",
+      "paymentText": "Med alternativ A betaler du når du godkjenner resultatet. Med alternativ B betaler du som avtalt før vi bygger. Beløp og betalingsvilkår fastsettes alltid skriftlig før arbeidet starter.",
+      "deliveryTitle": "Når du mottar den ferdige nettsiden og koden",
+      "deliveryText": "Etter godkjenning og avtalt betaling publiserer vi nettsiden på ditt domene og overleverer tilganger, filer og kode slik avtalen beskriver.",
+      "agreedTitle": "Avtalt før vi starter",
+      "agreedItems": [
+        "Omfanget av den første versjonen",
+        "Pris og betalingsvilkår",
+        "Antall gjennomgangsrunder",
+        "Hva som leveres til slutt, og hvordan"
+      ],
+      "notTitle": "Hva «bygg først» ikke er",
+      "notItems": [
+        "Ikke gratis utvikling – prisen avtales før vi starter",
+        "Ikke ubegrensede endringer – et avtalt antall gjennomgangsrunder",
+        "Ikke riktig for alle prosjekter – vi foreslår det der det passer",
+        "Ikke en fjerde betalingsplan – det er en måte å starte et nettsideprosjekt med mindre usikkerhet"
+      ],
+      "faq": [
+        {
+          "q": "Hva om jeg ikke godkjenner den første versjonen?",
+          "a": "Hva som skjer da, avtales skriftlig før vi starter – for eksempel hva som eventuelt betales for arbeidet som er gjort. Ingen overraskelser i etterkant."
+        },
+        {
+          "q": "Gjelder «bygg først» alle tjenester?",
+          "a": "Det fungerer best for nettsideprosjekter med et tydelig omfang. For løpende arbeid eller større systemer avtaler vi som regel milepæler i stedet."
+        },
+        {
+          "q": "Kan jeg kombinere «bygg først» med en månedlig tjeneste?",
+          "a": "Ja. Mange starter med et nettsideprosjekt og fortsetter med løpende støtte månedlig."
+        }
+      ],
+      "ctaTitle": "Vil du se nettsiden før du forplikter deg?",
+      "ctaText": "Fortell kort om bedriften din. Vi svarer med et konkret forslag og vilkårene for en «bygg først»-start."
+    }
   }
 }

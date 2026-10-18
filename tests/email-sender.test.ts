@@ -208,7 +208,7 @@ describe("Fixed template", () => {
     expect(Object.keys(m.headers ?? {}).sort()).toEqual(["List-Unsubscribe", "List-Unsubscribe-Post"]);
     const rec = await EmailMessage.findById(res.id).lean<EmailMessageDoc>();
     expect(rec).toMatchObject({ kind: "DIRECT", mode: "TEMPLATE", status: "SENT", provider: "test-provider", providerMessageId: "msg-1" });
-    expect(rec?.body).toBe("[template default-v6]");
+    expect(rec?.body).toBe("[template default-v7]");
     expect(rec?.deliveredAt ?? null).toBeNull();
   });
 
@@ -250,7 +250,7 @@ describe("Custom email", () => {
     const before = JSON.stringify(service.getDefaultTemplate(t.owner.actor));
     await service.sendEmail(t.owner.actor, { mode: "CUSTOM", to: "c@example.test", subject: "Changed subject", body: "Changed body text here", includeCta: true, idempotencyKey: key() });
     expect(JSON.stringify(service.getDefaultTemplate(t.owner.actor))).toBe(before);
-    expect(service.previewEmail(t.owner.actor, { mode: "TEMPLATE" }).subject).toBe(DEFAULT_TEMPLATE.subject);
+    expect((await service.previewEmail(t.owner.actor, { mode: "TEMPLATE" })).subject).toBe(DEFAULT_TEMPLATE.subject);
   });
 });
 
@@ -451,10 +451,12 @@ describe("Company Intelligence: Quick Send and Custom email", () => {
     return { id: String(c._id), email: `info${seq}@company.test` };
   }
 
-  it("Quick Send sends the one default template to the company and marks it contacted", async () => {
+  it("Quick Send sends the chosen default template to the company and marks it contacted", async () => {
     const c = await company();
     as(t.owner);
-    const r = await sendRoute(req("/api/email-sender/send", json({ mode: "TEMPLATE", to: c.email, companyId: c.id, idempotencyKey: key() })), ctx);
+    // Without a template choice Quick Send suggests one for the company (see outreach-email.test.ts);
+    // the general English template is still available and unchanged.
+    const r = await sendRoute(req("/api/email-sender/send", json({ mode: "TEMPLATE", templateId: "general", locale: "en", to: c.email, companyId: c.id, idempotencyKey: key() })), ctx);
     expect(r.status).toBe(200);
     const body = (await r.json()) as { status: string; company: { stage: string; lastContactedAt: string } };
     expect(body).toMatchObject({ status: "SENT", company: { stage: "CONTACTED" } });

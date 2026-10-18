@@ -193,7 +193,11 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
 
     peopleFetched = await fetchPeopleForRecent(p, records.map((x) => x.identity.sourceId), beat, errors);
     await rescoreCompanies({ countryCode: code, source: p.provider.id, sourceId: { $in: records.map((x) => x.identity.sourceId) } });
-    await rebuildSnapshots(code, p.from, p.to, { providerId: p.provider.id, isDemo: p.provider.isDemo, complete, sourceTotal: p.from === p.to ? sourceTotal : undefined });
+    // Sources that publish with a lag (SHAB) can return companies registered before the
+    // window; their days' counts are rebuilt too. For every other source this is p.from.
+    const earliest = records.reduce<Day>((min, x) => (x.registration.registrationDay && x.registration.registrationDay < min ? x.registration.registrationDay : min), p.from);
+    const snapshotFrom = daysBetween(earliest, p.from) <= 31 ? earliest : p.from;
+    await rebuildSnapshots(code, snapshotFrom, p.to, { providerId: p.provider.id, isDemo: p.provider.isDemo, complete, sourceTotal: p.from === p.to && snapshotFrom === p.from ? sourceTotal : undefined });
   } catch (err) {
     failed = Math.max(failed, 1);
     errors.unshift(err instanceof Error ? err.message : String(err));

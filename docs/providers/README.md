@@ -15,8 +15,13 @@ The "Status (4 Oct 2026)" column uses these levels: **Documented** → **Configu
 | 🇮🇪 Ireland | `cro` | CRO open data (CKAN `datastore_search_sql`) | **Real-data tested.** Live, no key. | Labelled daily by the publisher; the observed lag is shown on Data Sources | None | [ireland.md](ireland.md) |
 | 🇬🇧 United Kingdom | `companies-house` + streaming worker | Companies House REST + Streaming API | **Documented.** Needs 2 free keys. | REST: current data. Stream: changes as published. | None | [united-kingdom.md](united-kingdom.md) |
 | 🇳🇱 Netherlands | `kvk` | KVK Mutatieservice + Basisprofiel | **Documented**, and checked against KVK's public test environment. Needs a paid subscription. | Near real-time (KVK: within 15 minutes) | None (non-mailing flag honoured) | [netherlands.md](netherlands.md) |
-| 🇪🇪 Estonia | `rik` | RIK XML services (`ettevotjaMuudatusedTasuline_v1`, `detailandmed_v2`) | **Documented.** Needs an agreement. | Real-time XML services (to be measured) | Email, phone, mobile, website (`sidevahendid`) | [estonia.md](estonia.md) |
-| 🇫🇷 France | `insee-sirene` | INSEE API Sirene 3.11 | **Documented.** Needs a free key. | Daily | None | [france.md](france.md) |
+| 🇪🇪 Estonia | `rik-open-data` (default) | RIK open data, daily "Basic data" file | **Real-data tested.** Live, no key. | Daily | None | [estonia.md](estonia.md) |
+| 🇪🇪 Estonia | `rik` (alternative) | RIK XML services (`ettevotjaMuudatusedTasuline_v1`, `detailandmed_v2`) | **Documented.** Needs an agreement. | Real-time XML services (to be measured) | Email, phone, mobile, website (`sidevahendid`) | [estonia.md](estonia.md) |
+| 🇱🇻 Latvia | `ur-lv` | UR open data, daily `register.csv` (EU HVD) | **Real-data tested.** Live, no key. | Daily | None | [latvia.md](latvia.md) |
+| 🇨🇭 Switzerland | `shab` | SHAB HR01 new entries (Official Gazettes Portal API) | **Real-data tested.** Live, no key. | Daily; published 1–5 working days after the journal date | None | [switzerland.md](switzerland.md) |
+| 🇫🇷 France | `bodacc` (default) | BODACC A "Créations", DILA open data (Opendatasoft API) | **Real-data tested** (18 Oct 2026). Live, no key. | Daily (publication days); registrations appear a few days later | None. Officers (Président, Gérant …) as registry contact person | [france.md](france.md) |
+| 🇫🇷 France | `insee-sirene` (alternative) | INSEE API Sirene 3.11 | **Documented.** Needs a free key. | Daily | None | [france.md](france.md) |
+| 🇨🇿 Czechia | `ares-cz` | ARES notification batches (public register) + `/ekonomicke-subjekty-vr/{ico}` | **Real-data tested** (18 Oct 2026). Live, no key. | Daily batches (working days), 1–3 days after registration | None. Statutory body (jednatel …) as registry contact person | [czechia.md](czechia.md) |
 | 🇩🇪 Germany | `openregister` | OpenRegister (commercial) | **Documented.** Needs a key. | Unknown until measured | Not evidenced | [germany.md](germany.md) |
 | 🇩🇰 Denmark | `cvr` | CVR system-to-system | **Documented.** Needs credentials. | Continuous (to be measured) | Email, phone, website (reklamebeskyttelse honoured) | [denmark.md](denmark.md) |
 | 🇸🇪 Sweden | — | SCB Business Register API | **Needs approval** (client certificate). No adapter yet. | Nightly (per SCB) | Not yet verified | [sweden.md](sweden.md) |
@@ -27,7 +32,7 @@ The "Status (4 Oct 2026)" column uses these levels: **Documented** → **Configu
 
 | Provider | Used for | Application variable | Credential type | Docs |
 |---|---|---|---|---|
-| Company website (built-in) | Contact, About, Team, Impressum and legal pages: emails, phone numbers, contact forms | — | — | [contact-data.md](contact-data.md) |
+| Company website (built-in) | Contact, About, Team, Impressum and legal pages: emails, phone numbers, contact forms, and people named with a role in schema.org structured data | — | — | [contact-data.md](contact-data.md) |
 | Hunter | Domain Search (sourced emails), Email Verifier, Domain Finder (beta, candidates only) | `HUNTER_API_KEY` | Account API key | [contact-data.md](contact-data.md#hunter) |
 | Apollo | Organization enrichment: corporate phone for a **confirmed** domain | `APOLLO_API_KEY` | Account API key (`x-api-key`) | [contact-data.md](contact-data.md#apollo) |
 | Brave Search API | Finds candidate websites and public business pages. Every candidate is verified by registration number before use. | `BRAVE_SEARCH_API_KEY` | Subscription token (`X-Subscription-Token`) | [contact-data.md](contact-data.md#brave) |

@@ -20,8 +20,16 @@ export async function ensureCountries() {
   for (const c of COUNTRIES) {
     const doc = await Country.findOne({ code: c.code }).select("providerId").lean<{ providerId: string }>();
     if (doc && !getRegistryProvider(doc.providerId)) await Country.updateOne({ code: c.code }, { $set: { providerId: c.defaultProviderId } });
+    // One-way upgrade: a stored provider that cannot run (credentials missing, so it never synced)
+    // moves to its credential-free successor. A configured provider is never changed.
+    const upgrade = doc && PROVIDER_UPGRADES[doc.providerId];
+    const current = upgrade ? getRegistryProvider(doc.providerId) : undefined;
+    if (upgrade && current && !current.isConfigured() && getRegistryProvider(upgrade)) await Country.updateOne({ code: c.code, providerId: doc.providerId }, { $set: { providerId: upgrade } });
   }
 }
+
+/** Credential-free successors for adapters that need access the Owner may not have. */
+const PROVIDER_UPGRADES: Record<string, string> = { rik: "rik-open-data", "insee-sirene": "bodacc" };
 
 /**
  * Effective integration state shown in the UI — derived honestly from the

@@ -1,7 +1,12 @@
 import "server-only";
 import type { Types } from "mongoose";
-import { Company, Contact, SystemSetting, type ContactDoc } from "@/models";
+import { Company, Contact, Service, SystemSetting, type ContactDoc } from "@/models";
 import { classifyContactValue } from "@/lib/company-fields";
+import { LANGUAGE_CODES } from "@/config/languages";
+import { SERVICE_PAGES } from "@/config/service-pages";
+import { getBaseMessages } from "@/lib/i18n/dictionaries";
+import { createTranslator } from "@/lib/i18n/translator";
+import { defaultServiceRecord, defaultTranslation } from "@/features/service-catalog/view";
 
 /**
  * Safe, idempotent schema migrations (tracked in SystemSetting "__migrations").
@@ -39,6 +44,31 @@ const STEPS: { id: string; run: (log: (m: string) => void) => Promise<void> }[] 
       const { recomputeCompanyContacts } = await import("@/features/research/contacts");
       for (const id of touched) await recomputeCompanyContacts(id as unknown as Types.ObjectId);
       log(`companies re-ranked: ${touched.size}`);
+    },
+  },
+  {
+    id: "2026-10-service-catalogue-v1",
+    /**
+     * Seed the public service catalogue from the services the website already presented
+     * (src/config/service-pages.ts + "servicePages.*" in the dictionaries). Only when the
+     * collection is empty; no prices are invented (amounts stay empty). Norwegian and any
+     * other written translation become per-language overrides.
+     */
+    async run(log) {
+      if (await Service.exists({})) return log("services: catalogue already exists — nothing seeded");
+      const en = createTranslator(getBaseMessages("en")).raw;
+      const docs = SERVICE_PAGES.map((page, i) => {
+        const base = defaultServiceRecord(page, en, i);
+        const enText = JSON.stringify(defaultTranslation(page, en));
+        const translations: Record<string, unknown> = {};
+        for (const locale of LANGUAGE_CODES.filter((l) => l !== "en")) {
+          const tr = defaultTranslation(page, createTranslator(getBaseMessages(locale)).raw);
+          if (JSON.stringify(tr) !== enText) translations[locale] = tr; // only real translations, not English copies
+        }
+        return { ...base, translations };
+      });
+      await Service.insertMany(docs);
+      log(`services: seeded ${docs.length} services from the existing landing pages`);
     },
   },
 ];
