@@ -33,7 +33,9 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const lp = (p: string) => localizedPath(locale, p);
+  const home = lp("/");
   const nav = [
+    { href: home, label: labels.home },
     { href: lp("/services"), label: labels.services },
     { href: lp("/how-we-work"), label: labels.howWeWork },
     { href: lp("/work"), label: labels.work },
@@ -46,7 +48,8 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // Home is active only on the homepage itself (every page starts with "/").
+  const isActive = (href: string) => (href === home ? pathname === home : pathname === href || pathname.startsWith(`${href}/`));
 
   return (
     <header className={cn("sticky top-0 z-40 border-b transition-colors duration-200", scrolled ? "border-ink-200/70 bg-white/85 backdrop-blur-md" : "border-transparent bg-white")}>
@@ -82,9 +85,6 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4" aria-label={labels.mainNavigation}>
-          <Link href={lp("/")} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-base font-medium text-ink-800 hover:bg-ink-50">
-            {labels.home}
-          </Link>
           {nav.map((n) => (
             <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-base font-medium text-ink-800 hover:bg-ink-50">
               {n.label}

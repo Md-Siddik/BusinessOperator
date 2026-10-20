@@ -174,5 +174,1007 @@
     "teamTitle": "Asiakasviestit",
     "noConversations": "Ei vielä asiakaskeskusteluja. Uudet viestit näkyvät täällä heti.",
     "back": "Takaisin keskusteluihin"
+  },
+  "servicePages": {
+    "ui": {
+      "requestOffer": "Request an Offer",
+      "seeWork": "See Our Work",
+      "discuss": "Discuss Your Business",
+      "problemTitle": "The challenge",
+      "solutionTitle": "How we solve it",
+      "includedTitle": "What is included",
+      "howTitle": "How it works",
+      "deliverablesTitle": "What you receive",
+      "pricingTitle": "Price and delivery",
+      "priceLabel": "Price",
+      "deliveryLabel": "Delivery",
+      "notIncludedTitle": "Not included",
+      "optionalTitle": "Optional additions",
+      "pricing": {
+        "fixed": "Fixed price: {amount}",
+        "from": "From {amount}",
+        "monthly": "{amount} per month",
+        "quote": "From {amount}",
+        "fixedOpen": "Fixed price, agreed in writing before we start",
+        "fromOpen": "Priced by scope, confirmed in a written offer",
+        "monthlyOpen": "Fixed monthly fee for an agreed scope",
+        "quoteOpen": "Quoted per project after a short conversation",
+        "percentOff": "{amount} off",
+        "amountOff": "{amount} off"
+      },
+      "delivery": {
+        "weeks": "Typically {min}–{max} weeks",
+        "open": "Timeline agreed in the offer before work starts"
+      },
+      "priceNote": "You always receive a written offer with scope, price and timeline before any work begins. No hidden costs, no obligation.",
+      "examplesTitle": "Examples of our work",
+      "examplesSubtitle": "Projects related to this service.",
+      "examplesEmptyTitle": "Examples for this service are being prepared",
+      "examplesEmptyText": "We only publish real projects. Ask us and we will gladly walk you through relevant work in a short call.",
+      "relatedTitle": "Related services",
+      "longTermTitle": "After delivery",
+      "waysTitle": "Ways to work with us",
+      "waysText": "A single project, an ongoing monthly service, or — for selected businesses — a longer-term growth partnership.",
+      "waysCta": "Compare the ways of working",
+      "faqTitle": "Questions and answers",
+      "ctaTitle": "Want to know what this would look like for your business?",
+      "ctaSubtitle": "Tell us briefly about your business. We reply with a concrete suggestion — no obligation.",
+      "allServices": "All services",
+      "breadcrumb": "Services",
+      "areasTitle": "All capabilities by area",
+      "areasSubtitle": "Everything we can help with, grouped into six areas. Most clients start with one focused service and add more over time.",
+      "regularPrice": "Regular price",
+      "validUntil": "Offer valid until {date}",
+      "servicePriceNote": "This is the price of the service itself. How we work together is agreed separately.",
+      "engagementTitle": "How you can work with us",
+      "engagementText": "The service price is one thing; the working relationship is another. Choose what suits your business:",
+      "growthNote": "Selective and by discussion — a separate strategic relationship with individually agreed terms, not a payment plan.",
+      "engagementCta": "Read more",
+      "whoForTitle": "Who it is for",
+      "nextStepTitle": "What happens next",
+      "nextStepDefault": "Tell us briefly about your business. We reply with a concrete suggestion and, if it fits, a written offer with scope, price and timeline. No obligation.",
+      "relatedSubtitle": "Many clients start with one service and add more as the business grows.",
+      "backHome": "Back to the main website",
+      "previewBanner": "Preview — this is how the page will look. It is only visible to you while the service is inactive.",
+      "previewEdit": "Back to the editor"
+    },
+    "webDevelopment": {
+      "name": "Website Development",
+      "card": "Professional websites built to turn visitors into customers.",
+      "metaTitle": "Website Development for Small Businesses",
+      "metaDescription": "Professional, mobile-friendly business websites with clear service presentation, a basic SEO foundation and an easy path from visitor to enquiry.",
+      "heroTitle": "Professional websites built to turn visitors into customers",
+      "heroSubtitle": "A clear, fast and mobile-friendly website that explains what you offer, builds trust and makes it easy for the right customers to get in touch.",
+      "problem": [
+        "Potential customers cannot find you, or find an outdated page.",
+        "Your website does not clearly explain what you offer and why to choose you.",
+        "Visitors leave without contacting you because the next step is unclear."
+      ],
+      "solution": "We plan the website around your customers and your goal: a clear structure, convincing service presentation and an obvious way to get in touch. It is built on a technical foundation that Google can read and that works well on every device.",
+      "included": [
+        "Presentation, business or startup website",
+        "Mobile-friendly, responsive design",
+        "Clear presentation of your services",
+        "Contact form and enquiry path",
+        "Basic SEO foundation (titles, descriptions, structure)",
+        "Google Search Console and basic analytics setup"
+      ],
+      "steps": [
+        {
+          "title": "Short conversation",
+          "text": "We learn about your business, customers and goal."
+        },
+        {
+          "title": "Written offer",
+          "text": "Scope, price and timeline — agreed before we start."
+        },
+        {
+          "title": "Design and build",
+          "text": "You review the structure and design along the way."
+        },
+        {
+          "title": "Launch and handover",
+          "text": "We publish, check everything and show you how it works."
+        }
+      ],
+      "deliverables": [
+        "A published, mobile-friendly website on your domain",
+        "Contact form connected to your email",
+        "Basic on-page SEO for every page",
+        "A short guide to updating your content"
+      ],
+      "notIncluded": [
+        "Copywriting of large amounts of new text (available as an option)",
+        "Paid advertising budgets",
+        "Domain and hosting fees from third parties"
+      ],
+      "optional": [
+        "Booking or quote forms",
+        "Integration with a CRM",
+        "Multiple languages",
+        "Monthly maintenance and improvements"
+      ],
+      "longTerm": "Many clients keep us on after launch for updates, security, SEO and small improvements — on a monthly basis, so the website keeps working for the business.",
+      "faq": [
+        {
+          "q": "How long does a website take?",
+          "a": "It depends on the number of pages and content. We agree the timeline in the written offer before we start."
+        },
+        {
+          "q": "Can I update the website myself?",
+          "a": "Yes. You receive a short guide, and we can also handle updates for you if you prefer."
+        },
+        {
+          "q": "Do you guarantee a top position on Google?",
+          "a": "No one can honestly guarantee rankings. We build a solid technical and content foundation that gives your website a fair chance to be found."
+        }
+      ]
+    },
+    "webCrm": {
+      "name": "Website + Integrated CRM",
+      "card": "Website and CRM working together, from first visit to follow-up.",
+      "metaTitle": "Website with Integrated CRM",
+      "metaDescription": "A business website connected to a CRM, so every enquiry is captured, followed up and turned into a customer relationship.",
+      "heroTitle": "From website visit to customer — in one connected system",
+      "heroSubtitle": "Enquiries from your website go straight into a CRM, so nothing gets lost and every lead gets a timely follow-up.",
+      "problem": [
+        "Enquiries arrive by email, phone and forms and are hard to keep track of.",
+        "Follow-ups depend on memory, so some leads are simply forgotten.",
+        "You cannot see which enquiries became customers."
+      ],
+      "solution": "We build or improve your website and connect its forms to a CRM that fits your sales process. Every enquiry becomes a lead with a status, a next step and a history — website → lead → CRM → follow-up → customer.",
+      "included": [
+        "Business website with clear enquiry paths",
+        "CRM set up for your sales process",
+        "Website forms connected to the CRM",
+        "Lead statuses and follow-up reminders",
+        "Basic overview of leads and outcomes",
+        "Training for you and your team"
+      ],
+      "steps": [
+        {
+          "title": "Map the process",
+          "text": "How do enquiries arrive today, and what should happen next?"
+        },
+        {
+          "title": "Written offer",
+          "text": "Website and CRM scope, price and timeline."
+        },
+        {
+          "title": "Build and connect",
+          "text": "Website, CRM and the connection between them."
+        },
+        {
+          "title": "Go live together",
+          "text": "We test real enquiries end to end and train your team."
+        }
+      ],
+      "deliverables": [
+        "A website with enquiry forms",
+        "A configured CRM with your pipeline",
+        "Automatic lead capture from the website",
+        "A simple routine for follow-ups"
+      ],
+      "notIncluded": [
+        "CRM licence fees, if a paid CRM is chosen",
+        "Migration of large historical databases (quoted separately)"
+      ],
+      "optional": [
+        "Email templates for follow-ups",
+        "Automated reminders and tasks",
+        "Reporting dashboard"
+      ],
+      "longTerm": "As the business grows we can adjust the pipeline, add automations and keep website and CRM working together.",
+      "faq": [
+        {
+          "q": "Which CRM do you use?",
+          "a": "We recommend a CRM based on your needs and budget, or work with the one you already have."
+        },
+        {
+          "q": "Can you connect our existing website?",
+          "a": "Usually yes. We look at the website first and tell you honestly if a rebuild makes more sense."
+        },
+        {
+          "q": "Is this only for larger companies?",
+          "a": "No. It is often most valuable for small businesses where one person handles all the enquiries."
+        }
+      ]
+    },
+    "crm": {
+      "name": "CRM",
+      "card": "Organise customers, leads and follow-ups in one place.",
+      "metaTitle": "CRM Setup for Small Businesses",
+      "metaDescription": "A practical CRM for small businesses: organise customers and leads, track follow-ups and reduce manual work.",
+      "heroTitle": "A CRM that keeps customers and follow-ups under control",
+      "heroSubtitle": "One place for customers, leads and next steps — set up around how your business actually sells.",
+      "problem": [
+        "Customer information is spread across email, spreadsheets and notebooks.",
+        "It is unclear who should follow up with whom, and when.",
+        "A lot of time goes into manual updates and searching for information."
+      ],
+      "solution": "We set up a CRM that matches your sales workflow, move your existing customer data into it and add simple routines for follow-ups. The goal is less manual work and a clear overview.",
+      "included": [
+        "CRM selection advice or setup of your existing CRM",
+        "Pipeline and lead statuses for your process",
+        "Import of existing customers and contacts",
+        "Follow-up tasks and reminders",
+        "Basic reports",
+        "Training and a short user guide"
+      ],
+      "steps": [
+        {
+          "title": "Understand your workflow",
+          "text": "How you find, win and keep customers today."
+        },
+        {
+          "title": "Written offer",
+          "text": "Scope, price and timeline agreed in advance."
+        },
+        {
+          "title": "Set up and import",
+          "text": "We configure the CRM and move your data."
+        },
+        {
+          "title": "Train and adjust",
+          "text": "We train you and adjust after the first weeks of use."
+        }
+      ],
+      "deliverables": [
+        "A configured CRM",
+        "Your customers and contacts imported",
+        "A pipeline that matches your sales process",
+        "A user guide for your team"
+      ],
+      "notIncluded": [
+        "CRM licence fees, if a paid CRM is chosen",
+        "Custom software development (see Business Automation)"
+      ],
+      "optional": [
+        "Connection to your website forms",
+        "Automated follow-up emails",
+        "Integration with accounting or other tools"
+      ],
+      "longTerm": "We can stay on as your CRM support: new fields, reports, automations and help for new team members.",
+      "faq": [
+        {
+          "q": "Do we need an expensive CRM?",
+          "a": "Not necessarily. Many small businesses do well with an affordable or free CRM set up properly."
+        },
+        {
+          "q": "Can you move our data from spreadsheets?",
+          "a": "Yes. We clean and import existing customer lists as part of the setup."
+        },
+        {
+          "q": "Who owns the data?",
+          "a": "You do. The CRM account and all data belong to your business."
+        }
+      ]
+    },
+    "seo": {
+      "name": "SEO & Online Visibility",
+      "card": "Help the right customers find your business on Google.",
+      "metaTitle": "SEO and Online Visibility",
+      "metaDescription": "Technical SEO, on-page SEO and content strategy that help the right customers find your business — with no guaranteed-ranking promises.",
+      "heroTitle": "Be easier to find for the customers who are already searching",
+      "heroSubtitle": "A solid technical and content foundation for search visibility — explained clearly, without promises no one can keep.",
+      "problem": [
+        "Your business does not appear when customers search for what you offer.",
+        "The website has technical issues that make it harder for Google to understand it.",
+        "There is no plan for content or local visibility."
+      ],
+      "solution": "We review the technical foundation, improve page structure and content, set up local visibility and agree a realistic plan. We report what we did and what changed — without guaranteeing rankings.",
+      "included": [
+        "Technical SEO review and fixes",
+        "On-page SEO: titles, descriptions, headings, structure",
+        "Google Business Profile and local visibility",
+        "Keyword and content plan",
+        "Search Console setup and monitoring",
+        "Clear reporting of work done"
+      ],
+      "steps": [
+        {
+          "title": "Review",
+          "text": "Technical check and a look at how you appear today."
+        },
+        {
+          "title": "Written offer",
+          "text": "A realistic plan with scope and price."
+        },
+        {
+          "title": "Improve",
+          "text": "We fix the foundation and improve key pages."
+        },
+        {
+          "title": "Follow up",
+          "text": "Monitoring, reporting and next steps."
+        }
+      ],
+      "deliverables": [
+        "A technical SEO report with fixes applied",
+        "Optimised key pages",
+        "A local visibility setup",
+        "A content plan for the coming months"
+      ],
+      "notIncluded": [
+        "Guaranteed rankings or traffic",
+        "Paid advertising budgets",
+        "Link buying or other practices against Google's guidelines"
+      ],
+      "optional": [
+        "Ongoing monthly SEO support",
+        "Content writing",
+        "Google Ads support"
+      ],
+      "longTerm": "Visibility is built over time. Ongoing monthly support lets us keep improving content and structure as your business develops.",
+      "faq": [
+        {
+          "q": "Can you guarantee first place on Google?",
+          "a": "No. Anyone who guarantees rankings is promising something they do not control. We focus on the factors that are in your control."
+        },
+        {
+          "q": "How soon will we see results?",
+          "a": "Technical fixes can help quickly; content and local visibility usually take months. We tell you what to realistically expect."
+        },
+        {
+          "q": "Do we need a new website for SEO?",
+          "a": "Not always. We check your current website first."
+        }
+      ]
+    },
+    "visualIdentity": {
+      "name": "Visual Identity",
+      "card": "A consistent, professional look across website and channels.",
+      "metaTitle": "Visual Identity for Small Businesses",
+      "metaDescription": "Consistent visual identity for small businesses: colours, typography, logo refinement and digital brand assets for a professional online appearance.",
+      "heroTitle": "A professional, consistent appearance online",
+      "heroSubtitle": "Colours, typography and digital assets that make your business look as trustworthy online as it is in person.",
+      "problem": [
+        "Your website, social profiles and documents all look different.",
+        "The business looks less professional online than it really is.",
+        "There are no clear guidelines, so every new material starts from scratch."
+      ],
+      "solution": "We define a practical visual direction for your digital presence — colours, typography, logo use and simple templates — and apply it to your website and key channels. For larger brand projects we work with experienced designers and coordinate the work for you.",
+      "included": [
+        "Visual direction for your website",
+        "Colour palette and typography",
+        "Logo refinement or simple logo design",
+        "Digital brand assets (social images, profile graphics)",
+        "A short brand guide",
+        "Application on your website"
+      ],
+      "steps": [
+        {
+          "title": "Conversation",
+          "text": "Your business, customers and the impression you want to make."
+        },
+        {
+          "title": "Written offer",
+          "text": "Scope, price and timeline."
+        },
+        {
+          "title": "Proposal",
+          "text": "A visual direction you can comment on."
+        },
+        {
+          "title": "Finalise and apply",
+          "text": "Final files and use on your website and channels."
+        }
+      ],
+      "deliverables": [
+        "Logo files in common formats",
+        "Colour and typography guide",
+        "Templates for social media",
+        "Updated website styling"
+      ],
+      "notIncluded": [
+        "Trademark registration",
+        "Printing costs",
+        "Large-scale brand strategy projects (coordinated with partners on request)"
+      ],
+      "optional": [
+        "Business cards and print templates",
+        "Presentation templates",
+        "Photo direction"
+      ],
+      "longTerm": "We can keep new website pages, campaigns and social content consistent with your identity over time.",
+      "faq": [
+        {
+          "q": "Do you create completely new brands?",
+          "a": "For small businesses we design practical identities. For large brand strategy work we coordinate with specialist designers."
+        },
+        {
+          "q": "Can you keep our existing logo?",
+          "a": "Yes. Often refining and applying it consistently is the best option."
+        },
+        {
+          "q": "Which files do we receive?",
+          "a": "Logo and assets in common digital formats, plus a short guide on how to use them."
+        }
+      ]
+    },
+    "socialMedia": {
+      "name": "Social Media & Digital Presence",
+      "card": "Keep your profiles active, consistent and professional.",
+      "metaTitle": "Social Media and Digital Presence",
+      "metaDescription": "Social media management, profile optimisation and content coordination for small businesses that want a consistent digital presence.",
+      "heroTitle": "A digital presence that stays active without taking your time",
+      "heroSubtitle": "We help keep your profiles up to date, consistent and professional — so customers see an active business.",
+      "problem": [
+        "Profiles are outdated or incomplete.",
+        "Posting happens rarely because nobody has time.",
+        "Website, profiles and messages are not connected."
+      ],
+      "solution": "We optimise your profiles, agree a simple content plan and coordinate posting on an agreed schedule. You approve the content; we keep it moving. Campaigns and paid advertising are coordinated when relevant.",
+      "included": [
+        "Profile setup and optimisation",
+        "A simple monthly content plan",
+        "Content coordination and scheduling",
+        "Consistent visuals and tone",
+        "Basic monthly overview",
+        "Campaign coordination on request"
+      ],
+      "steps": [
+        {
+          "title": "Review your channels",
+          "text": "Which channels matter for your customers."
+        },
+        {
+          "title": "Written offer",
+          "text": "Monthly scope and price."
+        },
+        {
+          "title": "Plan and approve",
+          "text": "A content plan you approve."
+        },
+        {
+          "title": "Run and report",
+          "text": "We publish and give you a short monthly overview."
+        }
+      ],
+      "deliverables": [
+        "Optimised business profiles",
+        "A monthly content plan",
+        "Scheduled posts in your style",
+        "A short monthly summary"
+      ],
+      "notIncluded": [
+        "Advertising budgets",
+        "Professional photo or video production (coordinated on request)",
+        "Guaranteed follower growth"
+      ],
+      "optional": [
+        "Paid campaign coordination",
+        "Short video content",
+        "Community and message handling"
+      ],
+      "longTerm": "Digital presence works best when it is consistent over time, which is why this service usually runs monthly.",
+      "faq": [
+        {
+          "q": "Do we have to approve every post?",
+          "a": "You approve the plan and can review posts before they go out. We agree what suits you."
+        },
+        {
+          "q": "Which channels do you cover?",
+          "a": "The ones that make sense for your customers — usually two or three, not all of them."
+        },
+        {
+          "q": "Do you guarantee more followers or sales?",
+          "a": "No. We guarantee consistent, professional work and honest reporting."
+        }
+      ]
+    },
+    "dataCollection": {
+      "name": "Data Collection & Business Research",
+      "card": "Structured research and clean datasets for better decisions.",
+      "metaTitle": "Data Collection and Business Research",
+      "metaDescription": "Structured business research, company and lead research, verified datasets and data organisation from legitimate public sources.",
+      "heroTitle": "Reliable business information, collected and organised for you",
+      "heroSubtitle": "Structured research and custom datasets from legitimate sources — verified, documented and ready to use.",
+      "problem": [
+        "You need information about companies, markets or suppliers, but have no time to research it.",
+        "Existing data is messy, duplicated or out of date.",
+        "It is unclear where information comes from and whether it can be trusted."
+      ],
+      "solution": "We define exactly what you need, collect it from legitimate public and official sources, verify it and deliver a clean, structured dataset — with the source of every record documented.",
+      "included": [
+        "Requirements and data definition",
+        "Company and lead research",
+        "Collection from official and public sources",
+        "Verification and deduplication",
+        "Structured delivery (spreadsheet or CRM import)",
+        "Source documentation"
+      ],
+      "steps": [
+        {
+          "title": "Define the need",
+          "text": "What data, from where, in which format."
+        },
+        {
+          "title": "Written offer",
+          "text": "Scope, sources, price and timeline."
+        },
+        {
+          "title": "Collect and verify",
+          "text": "Research, cleaning and quality checks."
+        },
+        {
+          "title": "Deliver",
+          "text": "A documented dataset ready to use."
+        }
+      ],
+      "deliverables": [
+        "A structured dataset in the agreed format",
+        "Source documentation per record",
+        "A short summary of method and limitations"
+      ],
+      "notIncluded": [
+        "Data from sources whose terms do not allow it",
+        "Personal data without a lawful basis",
+        "Purchased contact lists"
+      ],
+      "optional": [
+        "Regular updates of the dataset",
+        "Import into your CRM",
+        "Simple dashboards"
+      ],
+      "longTerm": "Data gets old. We can keep your dataset updated on a regular schedule.",
+      "faq": [
+        {
+          "q": "Where does the data come from?",
+          "a": "From official registers and other legitimate public sources. Every record is documented with its source."
+        },
+        {
+          "q": "Do you handle personal data?",
+          "a": "Only where there is a lawful basis, and in line with GDPR. We will discuss this with you up front."
+        },
+        {
+          "q": "Which formats can you deliver?",
+          "a": "Spreadsheet, CSV or a direct import into your CRM."
+        }
+      ]
+    },
+    "recruitment": {
+      "name": "Recruitment & HR Support",
+      "card": "Recruitment help for businesses without their own HR team.",
+      "metaTitle": "Recruitment and HR Support for Small Businesses",
+      "metaDescription": "Recruitment support, candidate sourcing, hiring coordination and practical HR support for small businesses without an internal HR team.",
+      "heroTitle": "Hire the right people without building an HR department",
+      "heroSubtitle": "Practical support with job ads, candidate sourcing and a structured hiring process — for small businesses that need help when they hire.",
+      "problem": [
+        "Recruiting takes a lot of time away from running the business.",
+        "Job ads get few relevant applicants.",
+        "There is no clear process for screening, interviews and onboarding."
+      ],
+      "solution": "We help you describe the role, write and publish the ad, source and screen candidates, and coordinate interviews. You make the final decision. Where specialist recruitment is needed, we coordinate with experienced partners.",
+      "included": [
+        "Role description and job ad",
+        "Publishing on relevant channels",
+        "Candidate sourcing and screening",
+        "Interview coordination",
+        "A simple hiring workflow",
+        "Onboarding checklist"
+      ],
+      "steps": [
+        {
+          "title": "Understand the role",
+          "text": "What you need and what the role involves."
+        },
+        {
+          "title": "Written offer",
+          "text": "Scope and price for the recruitment."
+        },
+        {
+          "title": "Find and screen",
+          "text": "Ad, sourcing and a shortlist of candidates."
+        },
+        {
+          "title": "Decide and onboard",
+          "text": "You choose; we help with the next steps."
+        }
+      ],
+      "deliverables": [
+        "A published job ad",
+        "A shortlist of screened candidates",
+        "Coordinated interviews",
+        "An onboarding checklist"
+      ],
+      "notIncluded": [
+        "Employment contracts and legal advice (consult a lawyer)",
+        "Payroll",
+        "Guaranteed hires"
+      ],
+      "optional": [
+        "Technical recruitment",
+        "Recruitment workflow in your CRM",
+        "HR administration support"
+      ],
+      "longTerm": "For businesses that hire regularly we can provide ongoing recruitment and HR support.",
+      "faq": [
+        {
+          "q": "Who makes the final decision?",
+          "a": "You do. We prepare and coordinate; the hiring decision is always yours."
+        },
+        {
+          "q": "Do you offer legal HR advice?",
+          "a": "No. For contracts and employment law we recommend a lawyer or HR specialist."
+        },
+        {
+          "q": "Can you help with technical roles?",
+          "a": "Yes, including screening for technical skills."
+        }
+      ]
+    },
+    "automation": {
+      "name": "Business Automation",
+      "card": "Automate repetitive work and connect the tools you use.",
+      "metaTitle": "Business Automation and Integrations",
+      "metaDescription": "Workflow automation, integrations, internal tools and custom business systems that reduce repetitive manual work.",
+      "heroTitle": "Spend less time on repetitive work",
+      "heroSubtitle": "Automations, integrations and internal tools that take over manual steps — designed around your actual workflow.",
+      "problem": [
+        "The same information is typed into several systems.",
+        "Routine tasks take hours every week.",
+        "Tools do not talk to each other, so mistakes creep in."
+      ],
+      "solution": "We map where time is lost, then automate the steps that make sense: integrations between tools, automated reports and notifications, or a small internal tool. The exact solution depends on your requirements — we recommend the simplest one that works.",
+      "included": [
+        "Workflow review",
+        "Integrations between your tools",
+        "Automation of repetitive tasks",
+        "Automated reports and notifications",
+        "Internal tools where needed",
+        "Documentation and handover"
+      ],
+      "steps": [
+        {
+          "title": "Map the workflow",
+          "text": "Where does time go, and what can be automated?"
+        },
+        {
+          "title": "Written offer",
+          "text": "Proposed solution, price and timeline."
+        },
+        {
+          "title": "Build and test",
+          "text": "We build and test with real cases."
+        },
+        {
+          "title": "Hand over",
+          "text": "Documentation and training for your team."
+        }
+      ],
+      "deliverables": [
+        "Working automations or integrations",
+        "Documentation of what runs where",
+        "A handover session"
+      ],
+      "notIncluded": [
+        "Licence fees for third-party tools",
+        "Replacing core systems such as accounting"
+      ],
+      "optional": [
+        "AI-assisted workflows",
+        "Monitoring and maintenance",
+        "Dashboards"
+      ],
+      "longTerm": "Automations need occasional care when tools change. We can monitor and maintain them on a monthly basis.",
+      "faq": [
+        {
+          "q": "What can be automated?",
+          "a": "Usually anything repetitive and rule-based: data entry, reports, notifications and transfers between systems."
+        },
+        {
+          "q": "Do we need new software?",
+          "a": "Often not. We start with the tools you already use."
+        },
+        {
+          "q": "What does it cost?",
+          "a": "It depends on the solution. After a short conversation you receive a written offer."
+        }
+      ]
+    },
+    "digitalPartner": {
+      "name": "Digital Partner",
+      "card": "You run the business. We help run the digital side.",
+      "metaTitle": "Ongoing Digital Operations Partner",
+      "metaDescription": "An ongoing digital partner for small businesses: website management, SEO, online presence, CRM, data, automation and technical maintenance on a monthly basis.",
+      "heroTitle": "You run the physical business. We help run the digital side.",
+      "heroSubtitle": "One ongoing partner for your website, visibility, systems and technical maintenance — like an external digital team, without building one in-house.",
+      "problem": [
+        "Digital tasks are spread across several freelancers — or nobody.",
+        "Small updates wait for weeks because nobody owns them.",
+        "Building an internal digital team is too expensive."
+      ],
+      "solution": "We take ongoing responsibility for the agreed parts of your digital operations and improve them month by month. You have one contact person and a clear monthly scope. Where specialists are needed, we coordinate them for you.",
+      "included": [
+        "Website management and updates",
+        "SEO and online presence",
+        "CRM and data management",
+        "Technical maintenance and security",
+        "Automation and small improvements",
+        "Recruitment support when needed"
+      ],
+      "steps": [
+        {
+          "title": "Conversation",
+          "text": "What is working, what is not, and what matters most."
+        },
+        {
+          "title": "Monthly scope",
+          "text": "A written agreement with scope and monthly fee."
+        },
+        {
+          "title": "Ongoing work",
+          "text": "Regular tasks and improvements."
+        },
+        {
+          "title": "Monthly review",
+          "text": "A short summary and priorities for the next month."
+        }
+      ],
+      "deliverables": [
+        "One contact person",
+        "A clear monthly scope",
+        "A short monthly summary",
+        "Priorities agreed together"
+      ],
+      "notIncluded": [
+        "Work outside the agreed scope (quoted separately)",
+        "Third-party licence and advertising costs"
+      ],
+      "optional": [
+        "Larger projects at agreed prices",
+        "Growth partnership for selected businesses"
+      ],
+      "longTerm": "This is the long-term partnership model: we stay connected with your business and keep improving its digital side.",
+      "faq": [
+        {
+          "q": "Is there a long binding period?",
+          "a": "The terms are agreed in writing up front, including notice period."
+        },
+        {
+          "q": "What if we need something outside the scope?",
+          "a": "We tell you before doing it and quote it separately."
+        },
+        {
+          "q": "Is this the same as the growth partnership?",
+          "a": "No. The growth partnership is a separate, selective model discussed individually."
+        }
+      ]
+    }
+  },
+  "homeV2": {
+    "services": {
+      "eyebrow": "Services",
+      "title": "One clear solution at a time",
+      "subtitle": "Start with what you need now. Each service has its own page with what is included, how it works and how pricing is agreed.",
+      "partnerEyebrow": "Long-term",
+      "partnerCta": "Read about the digital partner",
+      "all": "See all services"
+    },
+    "work": {
+      "eyebrow": "Our work",
+      "title": "See what we build",
+      "subtitle": "Real projects and walkthroughs. We do not publish invented clients or results.",
+      "cta": "See our work"
+    }
+  },
+  "portfolio": {
+    "viewProject": "Visit project",
+    "whatWasBuilt": "What was built",
+    "goal": "Goal",
+    "servicesProvided": "Services provided",
+    "video": {
+      "eyebrow": "Work showcase",
+      "title": "Video walkthroughs",
+      "subtitle": "Short screen recordings of real projects: how they work and what was delivered.",
+      "placeholderBadge": "Coming soon",
+      "placeholderTitle": "Video walkthroughs are being prepared",
+      "placeholderText": "We will publish recordings of real projects here. Until then, we are happy to show relevant work in a short video call.",
+      "watch": "Watch walkthrough",
+      "videoOf": "Video: {title}"
+    }
+  },
+  "engagementPages": {
+    "ui": {
+      "breadcrumb": "How we work",
+      "whoForTitle": "Who it suits",
+      "gettingStartedTitle": "Getting started",
+      "otherModels": "Other ways to work with us",
+      "notAPlan": "Growth Partnership is not a standard payment plan. It is a selective arrangement individually discussed and negotiated between ExploreTechify and the business.",
+      "selectionTitle": "How a partnership is explored",
+      "possibilitiesTitle": "Possible forms of partnership",
+      "buildFirstTitle": "Not sure yet? See it before you commit.",
+      "buildFirstText": "For website projects we can build the agreed first version for you to review — then you decide.",
+      "buildFirstCta": "How build-first works",
+      "metaMonthly": "Ongoing digital, technical and operational support for an agreed monthly fee — ExploreTechify as an extension of your team.",
+      "metaProject": "A clearly defined task or project with an agreed scope, price, timeline and milestones.",
+      "metaGrowth": "A selective, individually negotiated long-term partnership for businesses looking for a deeper strategic relationship."
+    },
+    "monthly": {
+      "whoFor": [
+        "Businesses that need regular digital help but not a full in-house team",
+        "Owners who want one accountable partner instead of several freelancers",
+        "Companies with a website, systems or marketing that need steady care",
+        "Businesses that want to grow their digital side step by step"
+      ],
+      "steps": [
+        {
+          "title": "Conversation",
+          "text": "What you need help with today, and what matters most."
+        },
+        {
+          "title": "Proposed scope",
+          "text": "A written monthly scope, responsibilities and fee."
+        },
+        {
+          "title": "Start",
+          "text": "We take over the agreed work and set up regular check-ins."
+        },
+        {
+          "title": "Review and adjust",
+          "text": "The scope is reviewed together at agreed intervals."
+        }
+      ]
+    },
+    "project": {
+      "whoFor": [
+        "A new website or a website redesign",
+        "A CRM setup or a specific integration",
+        "An automation or internal tool",
+        "A one-off SEO, data or recruitment project"
+      ],
+      "steps": [
+        {
+          "title": "Describe the task",
+          "text": "A short description is enough to start."
+        },
+        {
+          "title": "Written proposal",
+          "text": "Scope, price, timeline and milestones — agreed before we start."
+        },
+        {
+          "title": "Delivery",
+          "text": "We build, with your review at each milestone."
+        },
+        {
+          "title": "Handover",
+          "text": "Final delivery, documentation and payment as agreed."
+        }
+      ]
+    },
+    "growth": {
+      "lead": "For selected businesses looking for a deeper long-term relationship.",
+      "whoFor": [
+        "Businesses with strong potential where digital capability is the limiting factor",
+        "Owners looking for a long-term strategic partner, not only a supplier",
+        "Situations where shared goals and an agreed business interest make sense for both sides"
+      ],
+      "steps": [
+        {
+          "title": "Introductory conversation",
+          "text": "Your business, your plans and what you are looking for."
+        },
+        {
+          "title": "Mutual evaluation",
+          "text": "Both sides assess whether there is a genuine fit. Often a regular engagement is the better choice — we will say so."
+        },
+        {
+          "title": "Proposed structure",
+          "text": "If there is a fit, a possible structure is outlined and discussed."
+        },
+        {
+          "title": "Written agreement",
+          "text": "Terms are negotiated and documented, with independent advice recommended for both parties."
+        }
+      ]
+    }
+  },
+  "buildFirst": {
+    "eyebrow": "Build before you commit",
+    "title": "See what we can build before you make the final commitment",
+    "subtitle": "For website projects, we can build the agreed first version so you can review the real result — not a promise. The scope and terms are agreed before we start.",
+    "steps": [
+      {
+        "title": "Tell us what you need",
+        "text": "Your business, your customers and your goals."
+      },
+      {
+        "title": "We agree the scope",
+        "text": "What we build first, the price and the terms — in writing."
+      },
+      {
+        "title": "We build it",
+        "text": "A working first version of the proposed website."
+      },
+      {
+        "title": "You review it",
+        "text": "See it, click through it, give feedback."
+      },
+      {
+        "title": "Approve and receive",
+        "text": "Approve, make the agreed payment, receive the final website."
+      }
+    ],
+    "alternativeTitle": "Prefer a classic arrangement?",
+    "alternativeText": "Pay as agreed first — we then build and deliver the website according to the agreed scope.",
+    "alternativeSteps": [
+      "Agreed payment",
+      "We build",
+      "You receive the finished website"
+    ],
+    "scopeNote": "Not free development: the scope, price and number of review rounds are agreed in writing before any work starts.",
+    "cta": "Discuss a build-first project",
+    "learnMore": "How build-first works",
+    "page": {
+      "metaTitle": "Build Before You Commit",
+      "metaDescription": "See the proposed website before the final commitment: we build the agreed first version, you review it, then approve and pay — with scope and terms agreed in advance.",
+      "heroTitle": "Build first. Review with confidence. Commit when you're ready.",
+      "heroSubtitle": "Buying a website should not mean paying for something you have never seen. For suitable projects we build the agreed first version first — so you can judge the actual result before the final commitment.",
+      "arrangementsTitle": "Two ways to start",
+      "optionA": {
+        "label": "Option A",
+        "title": "Build, review, approve and pay",
+        "text": "We build the proposed website according to the agreed scope. You review it. If you approve the result, you make the agreed payment and receive the final website and code as agreed.",
+        "points": [
+          "You see the real result before paying the agreed price",
+          "Agreed review rounds for feedback",
+          "Final website and code delivered after approval and payment"
+        ]
+      },
+      "optionB": {
+        "label": "Option B",
+        "title": "Pay, then we build and deliver",
+        "text": "Depending on the project and agreement, you make the agreed payment first and we complete and deliver the website according to the agreed scope.",
+        "points": [
+          "A clear fixed arrangement from the start",
+          "Same scope, quality and review steps",
+          "Often preferred for larger or more complex projects"
+        ]
+      },
+      "whatTitle": "What is built first",
+      "whatItems": [
+        "The agreed pages and structure of the proposed website",
+        "Your content, services and contact path in a working layout",
+        "Mobile and desktop versions you can open and click through",
+        "Hosted on a preview address, not yet on your own domain"
+      ],
+      "reviewTitle": "What you review",
+      "reviewText": "You open the preview, check the structure, design and texts, and give feedback within the agreed review rounds. We adjust according to the agreed scope.",
+      "paymentTitle": "When payment happens",
+      "paymentText": "With Option A, payment is due when you approve the result. With Option B, payment is made as agreed before we build. The amount and payment terms are always set in writing before work starts.",
+      "deliveryTitle": "When you receive the final website and code",
+      "deliveryText": "After approval and the agreed payment, we publish the website on your domain and hand over access, files and code as described in the agreement.",
+      "agreedTitle": "Agreed before we start",
+      "agreedItems": [
+        "The scope of the first version",
+        "The price and payment terms",
+        "The number of review rounds",
+        "What is delivered at the end, and how"
+      ],
+      "notTitle": "What build-first is not",
+      "notItems": [
+        "Not free development — the price is agreed before we start",
+        "Not unlimited changes — an agreed number of review rounds",
+        "Not suitable for every project — we suggest it where it fits",
+        "Not a fourth payment plan — it is a way to start a website project with less uncertainty"
+      ],
+      "faq": [
+        {
+          "q": "What if I don't approve the first version?",
+          "a": "What happens is agreed in writing before we start — for example what is paid for the work done, if anything. There are no surprises afterwards."
+        },
+        {
+          "q": "Is build-first available for every service?",
+          "a": "It works best for website projects with a clear scope. For ongoing work or larger systems we usually agree milestones instead."
+        },
+        {
+          "q": "Can I combine build-first with a monthly service?",
+          "a": "Yes. Many clients start with a website project and continue with ongoing support on a monthly basis."
+        }
+      ],
+      "ctaTitle": "Want to see your website before you commit?",
+      "ctaText": "Tell us briefly about your business. We reply with a concrete suggestion and the terms for a build-first start."
+    }
   }
 }

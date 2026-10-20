@@ -59,8 +59,37 @@ async function robotsDisallow(origin: string): Promise<string[]> {
 }
 
 export type FetchedPage = { url: string; status: number; html: string };
+export type PageResult = FetchedPage | { error: string };
 
-export async function fetchPublicPage(rawUrl: string, opts: { timeoutMs?: number } = {}): Promise<FetchedPage | { error: string }> {
+/**
+ * Politeness: at most one request per host every FETCH_HOST_GAP_MS (default 1 s), across
+ * all research workers in this process — a site is never hit in parallel bursts.
+ */
+const hostNext = new Map<string, number>();
+async function hostSlot(hostname: string) {
+  const gap = Number(process.env.FETCH_HOST_GAP_MS ?? 1000);
+  if (!(gap > 0)) return;
+  const now = Date.now();
+  const at = Math.max(now, hostNext.get(hostname) ?? 0);
+  hostNext.set(hostname, at + gap);
+  if (hostNext.size > 5000) for (const [h, t] of hostNext) if (t < now) hostNext.delete(h);
+  if (at > now) await new Promise((r) => setTimeout(r, at - now));
+}
+
+/**
+ * Fetch one public page. `cache` (one research run) de-duplicates requests: the same URL is
+ * fetched once even when discovery and website research both need it; failures are cached too.
+ */
+export async function fetchPublicPage(rawUrl: string, opts: { timeoutMs?: number; cache?: Map<string, PageResult> } = {}): Promise<PageResult> {
+  const hit = opts.cache?.get(rawUrl);
+  if (hit) return hit;
+  const result = await fetchPublicPageUncached(rawUrl, opts);
+  opts.cache?.set(rawUrl, result);
+  if (!("error" in result)) opts.cache?.set(result.url, result);
+  return result;
+}
+
+async function fetchPublicPageUncached(rawUrl: string, opts: { timeoutMs?: number }): Promise<PageResult> {
   let url: URL;
   try {
     url = new URL(/^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`);
@@ -73,6 +102,7 @@ export async function fetchPublicPage(rawUrl: string, opts: { timeoutMs?: number
     const disallow = await robotsDisallow(url.origin);
     if (disallow.some((p) => url.pathname.startsWith(p))) return { error: "robots.txt disallows automated access" };
     let res: Response;
+    await hostSlot(url.hostname);
     try {
       res = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "text/html" }, redirect: "manual", signal: AbortSignal.timeout(opts.timeoutMs ?? 10_000) });
     } catch (e) {

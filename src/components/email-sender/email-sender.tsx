@@ -21,10 +21,61 @@ type Status = { configured: boolean; provider: string; from: string; fromName: s
  * Owner-only Email Sender composer. Everything is rendered and sent by the server:
  * the preview shows the exact email, in a sandboxed iframe (no scripts, no same-origin).
  */
-export function EmailSender({ status, initialPreview, template }: { status: Status; initialPreview: Rendered; template: DefaultTemplate }) {
+export type TemplateOption = { id: string; label: string };
+export const LOCALE_OPTIONS = [
+  ["en", "English"],
+  ["no", "Norsk (bokmål)"],
+] as const;
+
+/** What each template is for — shown beside the template picker. */
+export const TEMPLATE_HINTS: Record<string, string> = {
+  general: "Short introduction to ExploreTechify's approach. Use when you know nothing specific about the business.",
+  "no-website": "Website offer: presentation website, Google setup, mobile-friendly, clear contact path, price and delivery.",
+  "has-website": "For a business that already has a website: visibility on Google and more enquiries.",
+  recruitment: "For a business that appears to be hiring: job ad, candidate sourcing and interview coordination.",
+  operations: "CRM, website connection and automation — for businesses with a lot of manual follow-up.",
+  reminder: "One short, polite follow-up after the first email. We never send more than one.",
+};
+
+export function TemplatePickers({ idPrefix, templateId, locale, options, onTemplate, onLocale }: { idPrefix: string; templateId: string; locale: string; options: TemplateOption[]; onTemplate: (v: string) => void; onLocale: (v: string) => void }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+      <div>
+        <label htmlFor={`${idPrefix}-template`} className="mb-1.5 block text-sm font-medium text-ink-800">
+          Template
+        </label>
+        <select id={`${idPrefix}-template`} value={templateId} onChange={(e) => onTemplate(e.target.value)} className="h-10 w-full rounded-lg border border-ink-200 bg-white px-3 text-sm text-ink-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100">
+          {options.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label htmlFor={`${idPrefix}-locale`} className="mb-1.5 block text-sm font-medium text-ink-800">
+          Language
+        </label>
+        <select id={`${idPrefix}-locale`} value={locale} onChange={(e) => onLocale(e.target.value)} className="h-10 w-full rounded-lg border border-ink-200 bg-white px-3 text-sm text-ink-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 sm:w-44">
+          {LOCALE_OPTIONS.map(([v, label]) => (
+            <option key={v} value={v}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+      {TEMPLATE_HINTS[templateId] && <p className="text-xs text-ink-500 sm:col-span-2">{TEMPLATE_HINTS[templateId]}</p>}
+    </div>
+  );
+}
+
+export function EmailSender({ status, initialPreview, template, templates, options }: { status: Status; initialPreview: Rendered; template: DefaultTemplate; templates: Record<string, DefaultTemplate>; options: TemplateOption[] }) {
   const router = useRouter();
   const toast = useToast();
   const [mode, setMode] = useState<Mode>("TEMPLATE");
+  const [templateId, setTemplateId] = useState("general");
+  const [locale, setLocale] = useState("en");
+  const selected = templates[`${templateId}:${locale}`] ?? template;
   const [to, setTo] = useState("");
   const [touchedTo, setTouchedTo] = useState(false);
   const [subject, setSubject] = useState("");
@@ -41,16 +92,16 @@ export function EmailSender({ status, initialPreview, template }: { status: Stat
   const toValid = EMAIL_RE.test(to.trim());
   const customValid = isDraftValid({ subject, body, includeCta });
   const canSend = status.configured && toValid && (mode === "TEMPLATE" || customValid) && !sending;
-  // Template mode without a recipient shows the server-rendered default; incomplete custom drafts show a hint.
-  const shown = mode === "TEMPLATE" && !to ? initialPreview : preview;
+  // Incomplete custom drafts show a hint; templates always preview (the recipient only changes the opt-out link).
+  const shown = preview;
   const draftHint = mode === "CUSTOM" && !customValid && (subject || body) ? "The preview updates when the subject has at least 3 characters and the message at least 10." : null;
   const notice = draftHint ?? previewError;
 
   // Live preview (debounced) from the same server renderer that sends the email.
   useEffect(() => {
-    if ((mode === "TEMPLATE" && !to) || (mode === "CUSTOM" && !customValid)) return;
+    if (mode === "CUSTOM" && !customValid) return;
     const t = setTimeout(() => {
-      const payload = mode === "TEMPLATE" ? { mode, to } : { mode, to, subject, body, includeCta };
+      const payload = mode === "TEMPLATE" ? { mode, to: to || undefined, templateId, locale } : { mode, to: to || undefined, subject, body, includeCta, locale };
       apiFetch<Rendered>("/api/email-sender/preview", { body: payload })
         .then((r) => {
           setPreview(r);
@@ -59,17 +110,17 @@ export function EmailSender({ status, initialPreview, template }: { status: Stat
         .catch((e) => setPreviewError(e instanceof ApiError ? e.message : "Preview unavailable"));
     }, 350);
     return () => clearTimeout(t);
-  }, [mode, to, subject, body, includeCta, customValid]);
+  }, [mode, to, subject, body, includeCta, customValid, templateId, locale]);
 
   // Any change to the email starts a new send request key.
   useEffect(() => {
     keyRef.current = newKey();
-  }, [mode, to, subject, body, includeCta]);
+  }, [mode, to, subject, body, includeCta, templateId, locale]);
 
   async function send() {
     setSending(true);
     setResult(null);
-    const payload = mode === "TEMPLATE" ? { mode, to: to.trim(), idempotencyKey: keyRef.current } : { mode, to: to.trim(), subject, body, includeCta, idempotencyKey: keyRef.current };
+    const payload = mode === "TEMPLATE" ? { mode, to: to.trim(), templateId, locale, idempotencyKey: keyRef.current } : { mode, to: to.trim(), subject, body, includeCta, locale, idempotencyKey: keyRef.current };
     try {
       const r = await apiFetch<{ provider: string; duplicate?: boolean }>("/api/email-sender/send", { body: payload });
       setResult({ ok: true, message: `${r.duplicate ? "Already sent — " : ""}Accepted by ${r.provider} for delivery to ${to.trim()}. Final delivery is not confirmed by the provider here.` });
@@ -138,11 +189,13 @@ export function EmailSender({ status, initialPreview, template }: { status: Stat
             </p>
           </div>
 
+          <TemplatePickers idPrefix="es" templateId={templateId} locale={locale} options={options} onTemplate={setTemplateId} onLocale={setLocale} />
+
           {mode === "TEMPLATE" ? (
             <div className="rounded-xl border border-ink-200 bg-ink-50/60 p-4 text-sm">
               <p className="text-xs font-medium uppercase tracking-wide text-ink-500">Subject</p>
-              <p className="mt-0.5 font-medium text-ink-900">{initialPreview.subject}</p>
-              <p className="mt-3 text-ink-600">An introduction to ExploreTechify’s approach (websites that turn visitors into customers) in the branded layout, with one “See How We Can Help” button, your sender name and contact details, and a one-line opt-out. Review it in the preview, enter the recipient and send.</p>
+              <p className="mt-0.5 font-medium text-ink-900">{selected.subject}</p>
+              <p className="mt-3 text-ink-600">Sent in the branded layout with your sender name, contact details and a one-line opt-out. Without a company, the email says nothing about the recipient. To personalise it with company data, send from Company Intelligence (Quick send).</p>
             </div>
           ) : (
             <MessageEditor
@@ -153,7 +206,7 @@ export function EmailSender({ status, initialPreview, template }: { status: Stat
                 setBody(d.body);
                 setIncludeCta(d.includeCta);
               }}
-              template={template}
+              template={selected}
             />
           )}
 
@@ -225,12 +278,12 @@ export function EmailSender({ status, initialPreview, template }: { status: Stat
           </div>
           <div>
             <dt className="text-xs text-ink-500">Subject</dt>
-            <dd className="text-ink-800">{mode === "TEMPLATE" ? initialPreview.subject : subject}</dd>
+            <dd className="text-ink-800">{mode === "TEMPLATE" ? shown.subject : subject}</dd>
           </div>
           <div>
             <dt className="text-xs text-ink-500">Type</dt>
             <dd className="flex items-center gap-1.5 text-ink-800">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden /> {mode === "TEMPLATE" ? "Fixed ExploreTechify template" : "Custom email"}
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden /> {mode === "TEMPLATE" ? `Template: ${options.find((o) => o.id === templateId)?.label ?? templateId}` : "Custom email"} · {locale === "no" ? "Norsk" : "English"}
             </dd>
           </div>
         </dl>

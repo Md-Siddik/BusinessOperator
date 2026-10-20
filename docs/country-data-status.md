@@ -1,128 +1,107 @@
-# Country business-data status — briefing for an AI assistant
+# Country business-data status
 
-_Snapshot taken 11 Oct 2026 from the live database (MongoDB Atlas, database `ExploreTechify`) and the source code._
+_Updated 18 Oct 2026 from the live database (MongoDB Atlas, database `ExploreTechify`), the source code and live checks against each official source. Per-jurisdiction detail (generated): [`docs/coverage/jurisdictions.md`](coverage/jurisdictions.md). Adapter docs: [`docs/providers/`](providers/README.md)._
 
-## 1. What I need help with
+Rules: official, documented sources only. No scraping that breaks terms, no CAPTCHA, login or block-page bypass, no invented endpoints, no dummy data. A country is **LIVE** only when a real sync has succeeded **and** registrations are stored. Registry adapters deliver registration facts; contacts come from the separate research step and never overwrite registry facts.
 
-I run **ExploreTechify**, a Next.js app that lists **newly registered companies** in every European country, so I can contact new businesses and offer them services (websites, email, IT support).
+## 1. Coverage — every configured country
 
-Right now only **3 of 56 countries** show any data. I want new registrations from as many countries as possible. Please help me:
+Access models ("free search" is not "free API"): **Free API** = documented API, no key · **Free API + registration** = free key / account / client credentials · **Free API + agreement** = free contract with the registry · **Free download** = open-data file · **Paid API** = subscription · **Commercial** = third-party paid service · **Search website only** = no automated access.
 
-1. For each country below, work out the **fastest legitimate way** to get its new company registrations. That means an official free API or open-data file first, then a free key, then paid or commercial sources.
-2. Tell me **exactly** how to get access: the sign-up URL, what to request, and roughly how long it takes.
-3. For countries with no adapter yet, help me **write a provider adapter** that fits the interface in section 6.
-4. Be honest when a country has **no usable source**, or when using one would be illegal or unwise (sanctions, privacy).
+The contact columns say what the **registry itself** publishes. Website research (section 3) can add email, phone, website and contact person for any country.
 
-Rules I must keep:
-- **Real, official, documented sources only.** No scraping that breaks a site's terms. No invented endpoints. No fake data.
-- Respect marketing restrictions (GDPR/ePrivacy/PECR, Denmark's *reklamebeskyttelse*, the Dutch KVK *non-mailing* flag, and so on).
-- The app only **retrieves** data. It never sends email or messages automatically.
+### LIVE — free, no credentials
 
----
+| Country | Registry / source (adapter) | Registration data | Update frequency | Registration date | Email | Phone | Website | Contact person | Access model | Credential | Paid | Status | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 🇳🇴 Norway | Brønnøysundregistrene (`brreg`) | Yes | Real-time search + change feed | Yes | Yes, when registered | Yes, when registered | Yes, when registered | Yes (roles) | Free API | No | No | **LIVE** (protected) | NLOD. Respect Reservasjonsregisteret |
+| 🇫🇮 Finland | PRH YTJ open data (`prh`) | Yes | Daily | Yes | No | No | Yes, when registered | No | Free API | No | No | **LIVE** (protected) | CC BY 4.0 |
+| 🇮🇪 Ireland | CRO open data (`cro`) | Yes | Daily | Yes | No | No | No | No | Free API (CKAN) | No | No | **LIVE** (protected) | CC BY 4.0 |
+| 🇱🇻 Latvia | UR open data `register.csv` (`ur-lv`) | Yes | Daily | Yes | No | No | No | No | Free download | No | No | **LIVE** (protected) | CC0. Commercial + enterprise registers only |
+| 🇪🇪 Estonia | RIK open-data basic file (`rik-open-data`) | Yes | Daily | Yes | No¹ | No¹ | No¹ | No | Free download | No | No | **LIVE** (protected) | ¹ Yes via the RIK-agreement adapter `rik` |
+| 🇨🇭 Switzerland | SHAB HR01 new entries (`shab`) | Yes | Daily (working days) | Yes (journal date) | No | No | No | No | Free API | No | No | **LIVE** (protected) | Published 1–5 working days after the journal date |
+| 🇫🇷 France | BODACC A "Créations", DILA open data (`bodacc`) | Yes | Daily (publication days) | Yes (date d'immatriculation)² | No | No | No | **Yes** (Président / Gérant …) | Free API | No | No | **LIVE (new)** | Licence Ouverte 2.0. ² ≈ 18 % of notices omit it and are skipped. Legal persons only by default |
+| 🇨🇿 Czechia | ARES notification batches, public register (`ares-cz`) | Yes | Daily (working days) | Yes (datum zápisu) | No | No | No | **Yes** (jednatel / board) | Free API | No | No | **LIVE (new)** | Business forms only by default; officers stored as name + role only |
 
-## 2. Summary
+### READY — adapter built, needs your free setup
 
-| Status | Countries | Why no data |
-|---|---|---|
-| ✅ **Working** | Norway, Finland, Ireland | — (Ireland lags; see section 3) |
-| 🔑 **Adapter built, missing credentials** | United Kingdom, France, Netherlands, Germany, Denmark, Estonia | Code is ready; the API key or login is not in `.env.local` |
-| 📝 **Needs approval, no adapter** | Sweden | Needs a client certificate from SCB, and the API schema is only visible after approval |
-| 🔍 **No adapter (under research)** | 45 others | No code exists, only a placeholder that fetches nothing |
-| ⛔ **Not applicable** | Vatican City | Has no commercial company register |
+| Country | Registry / source (adapter) | Registration date | Email | Phone | Website | Contact person | Access model | Credential required | Paid | Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 🇬🇧 United Kingdom | Companies House REST + Streaming (`companies-house`) | Yes | No | No | No | Yes (officers) | Free API + registration | `UK_COMPANIES_HOUSE_API_KEY` (+ `UK_COMPANIES_HOUSE_STREAMING_API_KEY`) | No | **READY** |
+| 🇩🇰 Denmark | CVR system-to-system (`cvr`) | Yes | Yes, when registered | Yes, when registered | Yes, when registered | No | Free API + registration | `DENMARK_CVR_USERNAME`, `DENMARK_CVR_PASSWORD` | No | **READY** |
+| 🇫🇷 France (alternative) | INSEE API Sirene 3.11 (`insee-sirene`) | Yes (creation date) | No | No | No | No | Free API + registration | `FRANCE_SIRENE_API_KEY` | No | Optional — BODACC is the default |
+| 🇪🇪 Estonia (alternative) | RIK XML services (`rik`) | Yes | Yes | Yes | Yes | No | Free API + agreement | `ESTONIA_RIK_USERNAME`, `ESTONIA_RIK_PASSWORD` | Free within limits | Optional — adds registry contacts |
 
-Database counts (all real registry data, no demo data):
+### PAID — adapter built, commercial access only
 
-| Country | Companies stored | Latest registration date | Source |
-|---|---|---|---|
-| 🇳🇴 Norway | 4,365 | 10 Oct 2026 | `brreg` |
-| 🇫🇮 Finland | 1,076 | 10 Oct 2026 | `prh` |
-| 🇮🇪 Ireland | 241 | **29 Sep 2026** | `cro` |
-| All other countries | **0** | — | — |
+| Country | Source (adapter) | Access model | Credential | Status | Notes |
+|---|---|---|---|---|---|
+| 🇳🇱 Netherlands | KVK Mutatieservice + Basisprofiel (`kvk`) | Paid API | `NL_KVK_API_KEY`, `NL_KVK_SUBSCRIPTION_ID` | **PAID** | No free official feed of new registrations |
+| 🇩🇪 Germany | OpenRegister (`openregister`) | Commercial | `OPENREGISTER_API_KEY` (currently empty) | **PAID** | The official Handelsregister has no free API or feed |
 
-Environment variables currently set: `MONGODB_URI`, `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL`, `REAL_DATA_MODE`, `DEMO_MODE`, `SEED_DEV_ACCOUNTS`, `DEMO_PASSWORD`, `EMAIL_PROVIDER`, `CRON_SECRET`. **No registry API keys are set.**
+### N/A — no verified automated source yet (checked 18 Oct 2026)
 
----
-
-## 3. Working countries
-
-| Country | API used | Access | Freshness | Notes |
+| Country | Candidate source | Access model | What was found | Status |
 |---|---|---|---|---|
-| 🇳🇴 Norway | **Brønnøysundregistrene (Enhetsregisteret)**. REST `https://data.brreg.no/enhetsregisteret/api`: `/enheter` (search by registration date), `/enheter/{orgnr}`, `/oppdateringer/enheter` (change feed, polled every 60 s) | Open, no key (NLOD licence) | Near real-time (batches of about 5 min) | Returns email, phone, mobile and website when the company registered them. Works well. |
-| 🇫🇮 Finland | **PRH YTJ open data v3**. REST `/companies?registrationDateStart=&registrationDateEnd=` | Open, no key (CC BY 4.0) | Daily | Website only. PRH does not publish email or phone. |
-| 🇮🇪 Ireland | **CRO open data (CKAN)**. `https://opendata.cro.ie/api/3/action/datastore_search_sql`, filtering on `company_reg_date` | Open, no key (CC BY 4.0) | Labelled "daily", but **actually lags** | **Problem:** the newest registration is 29 Sep 2026 and the dataset was last published 30 Sep 2026. The 10 Oct sync for 9–10 Oct returned **0 rows**. The sync works, but CRO hasn't republished the dataset for about 11 days. No email or phone. **Question:** is there a fresher official CRO source (for example the CORE API, which is paid, or the CRO Gazette)? |
+| 🇸🇪 Sweden | Bolagsverket "värdefulla datamängder" API / SCB Business Register | Free API + registration | Lookup by organisation number only; docs behind a CAPTCHA (not bypassed) | **N/A** |
+| 🇸🇰 Slovakia | RPO API `api.statistics.sk/rpo/v1` | Free API | Name / IČO lookups answer, but a date-only search did not answer within 90 s | **N/A** |
+| 🇵🇱 Poland | KRS API `api-krs.ms.gov.pl` (Biuletyn + OdpisAktualny) | Free API | Maintenance page ("Przerwa techniczna") all day — contract unverified | **N/A** (retry) |
+| 🇱🇹 Lithuania | Registrų centras open-data files | Free download | 403 to automated requests; get.data.gov.lt returned 500. Not bypassed | **N/A** |
+| 🇧🇪 Belgium | KBO Open Data (incl. `contact.csv` with phone / email / web) | Free download + account | Download behind a free login; cadence unverified | **N/A** — best next candidate |
+| 🇭🇷 Croatia | Sudski registar open API (`sudreg-data.gov.hr`) | Free API + registration (OAuth) | OpenAPI documentation reachable; needs your client registration | **N/A** — candidate |
+| 🇪🇸 Spain | BORME (BOE open-data API) | Free API | Incorporations only as PDF per province | **N/A** |
+| 🇦🇹 Austria | Firmenbuch | Paid (clearing agencies) | Free search website only | **N/A / paid** |
+| 🇮🇹 Italy | Registro delle Imprese (InfoCamere) | Paid | — | **N/A / paid** |
+| 🇧🇬 Bulgaria | Registry Agency portal | — | No documented date-window feed found | **N/A** |
+| 🇨🇾 Cyprus | data.gov.cy registered organisations | Free download (periodic) | CKAN search endpoint 404; dataset unverified | **N/A** |
+| All others | See [`docs/coverage/jurisdictions.md`](coverage/jurisdictions.md) | — | Not yet researched in depth | **N/A** |
 
----
+## 2. Sidebar and ordering
 
-## 4. Adapter built, only credentials missing
+The country list is **ordered by data, not alphabetically**. It is recomputed on every page load from source health and the daily snapshots of the last 30 days:
 
-For these countries the code already exists in `src/features/registry/providers/`. Each one starts syncing after I add its variables to `.env.local`, restart, and run `npm run registry:verify -- <CODE>`.
+1. **LIVE + useful contact coverage** (≥ 5 companies and ≥ 5 % with a usable direct email or phone)
+2. **LIVE** (registrations, little or no contact data yet)
+3. **Not synced / Error** (source connected, nothing stored yet)
+4. **READY**, then **PAID**
+5. **PARTIAL** (lookup only)
+6. **N/A**
 
-| Country | Adapter file | API used | Env variables needed | How to get access | Cost | Contact fields |
-|---|---|---|---|---|---|---|
-| 🇬🇧 United Kingdom | `companies-house.ts` + `companies-house-stream.ts` | **Companies House Public Data API**: `/advanced-search/companies?incorporated_from=&incorporated_to=`, `/company/{number}`. **Streaming API**: `https://stream.companieshouse.gov.uk/companies` | `UK_COMPANIES_HOUSE_API_KEY` (REST), `UK_COMPANIES_HOUSE_STREAMING_API_KEY` (stream, a separate application) | Register at https://developer.company-information.service.gov.uk/ and create a REST key, plus a separate Streaming key | Free | None (address only). Limit: 600 requests per 5 minutes. |
-| 🇫🇷 France | `insee-sirene.ts` | **INSEE API Sirene 3.11**: `/siret?q=dateCreationUniteLegale:[D TO D]` | `FRANCE_SIRENE_API_KEY` (optional: `FRANCE_SIRENE_API_URL`, `FRANCE_INCLUDE_SOLE_TRADERS`) | Account at https://portail-api.insee.fr/, then subscribe to API Sirene | Free | None. Units that are only partially public must be skipped. |
-| 🇳🇱 Netherlands | `kvk.ts` | **KVK Mutatieservice** (signal `SignaalNieuweInschrijving`) + **Basisprofiel API** | `NL_KVK_API_KEY`, `NL_KVK_SUBSCRIPTION_ID` (optional: `NL_KVK_API_URL`) | https://developers.kvk.nl (pricing: https://developers.kvk.nl/pricing) | **Paid** subscription | None. Must respect `indNonMailing`. Tested against KVK's test environment only. |
-| 🇩🇪 Germany | `openregister.ts` | **OpenRegister** (commercial; Germany has no official API): `POST https://api.openregister.de/v1/search/company` with an `incorporated_at` filter | `OPENREGISTER_API_KEY` | https://openregister.de | **Commercial** | Not provided. **Question:** is there a cheaper or official alternative (Handelsregister bulk data, the HVD regulation, OffeneRegister.de)? |
-| 🇩🇰 Denmark | `cvr.ts` | **CVR system-to-system** (Elasticsearch): `POST http://distribution.virk.dk/cvr-permanent/virksomhed/_search`, with a range on `livsforloeb.periode.gyldigFra` | `DENMARK_CVR_USERNAME`, `DENMARK_CVR_PASSWORD` | Email **cvrselvbetjening@erst.dk** and ask for system-to-system access (guide: https://erhvervsstyrelsen.dk/vejledning-adgang-til-cvr-data-system-til-system) | Free | Email, phone, website. Companies marked *reklamebeskyttet* must not get marketing. **Question:** is the newer Datafordeler CVR API a better choice? |
-| 🇪🇪 Estonia | `rik.ts` | **RIK e-Business Register XML/SOAP**: `https://ariregxmlv6.rik.ee/`, services `ettevotjaMuudatusedTasuline_v1` (changes by date) + `detailandmed_v2` | `ESTONIA_RIK_USERNAME`, `ESTONIA_RIK_PASSWORD` | Agreement at https://ariregister.rik.ee/eng/contract/step1 (reviewed within about 5 working days) | Free for API-only use (50,000 answers per day) | Email, phone, mobile, website. **Question:** could RIK's free daily open-data files (https://avaandmed.ariregister.rik.ee) serve as a no-agreement alternative? |
+Within a group the order is: recent registrations → latest successful sync (by day) → direct-contact rate → name. The badge shows today's count for LIVE countries (or `LIVE` before today's sync); otherwise it shows `Not synced`, `Error`, `READY`, `PAID`, `PARTIAL` or `N/A`. The tooltip carries the detail, for example "LIVE — 12 registered today · 598 new companies in 30 days · 7 with email · 1 with phone".
 
-Commercial fallback for **any** country: `opencorporates.ts`, env `OPENCORPORATES_API_TOKEN`, enabled per country in **Settings → Countries**. It needs a paid OpenCorporates licence, and the terms must be checked for each jurisdiction.
+## 3. Contact enrichment
 
----
+The registry provides company identity, registration date, industry, address and officers. Contact research then runs in the background job queue and never blocks the sync:
 
-## 5. No adapter yet
+1. Registry re-check, where the source has a lookup.
+2. **Official website**: the registry's website, or else **verified discovery**. Plausible own-domain candidates are fetched and accepted **only if the page shows the registration number** (confirmed) or the exact legal name (sent to review). A domain is never stored, and an address never generated, without that evidence.
+3. Contact / Kontakt / Impressum / About pages (≤ 5 pages per site): published `mailto:` / `tel:` values, labelled numbers, and schema.org structured data (Organization email / telephone, `Person` + `jobTitle`). Third-party blocks (publisher, author, brand, agency) are ignored.
+4. Optional paid providers (Hunter, Apollo, Brave Search). These stay off until you enable them with a budget.
+5. Verification: an MX check. No-reply, invoice and placeholder addresses and implausible numbers are kept but never count as direct contact. Values shared by ≥ 3 companies are treated as intermediaries.
 
-These use a placeholder provider (`not-connected.ts`) that fetches nothing. The "Candidate source" column holds earlier research, and **none of it has been verified**. Please check each one.
+Politeness rules: robots.txt is respected, only public hosts are fetched (SSRF guard), timeouts are 10 s, responses are capped at 1.5 MB, there is **≥ 1 s between requests to the same host**, each URL is fetched once per research run, and retries follow a 1 / 3 / 7 / 14 / 30-day schedule. A site that cannot be read safely is marked **Research unavailable**. A company researched without result shows **No public contact found**, never an invented value.
 
-**Hint:** under the EU High-Value Datasets regulation (Implementing Regulation (EU) 2023/138, applicable since June 2024), EU member states must publish basic company data free of charge through an API or bulk download. That is likely the best lead for every EU country below.
+Every value keeps its source (Registry · Company website · Public business source · Enrichment provider · Manual) and a verification state. Research never overwrites registry facts.
 
-### Higher priority (EU / EEA, large markets)
+**Fixed 18 Oct 2026:** scheduled research retries never ran. The retry was queued while its own job was still running, and that job was then marked done. A new sweep (`scheduleDueRetries`, every slow scheduler tick, ≤ 200 per tick) now queues due retries from `research.nextRetryAt`. Website research also gained support for Latvia, Switzerland and Czechia (domains, national phone formats, legal forms); before this, it had found no contacts at all for Latvia and Switzerland.
 
-| Country | Official register | Candidate source (unverified) | Known blocker |
-|---|---|---|---|
-| 🇸🇪 Sweden | SCB Företagsregistret / Bolagsverket | SCB Business Register API `https://privateapi.scb.se/nv0101/v1/sokpavar`, up to 2,000 rows per call, nightly | Needs a **client certificate** from SCB (scbforetag@scb.se), and the schema is only visible after approval. Bolagsverket's free "Värdefulla datamängder" API only looks up one organisation number at a time. Its bulk file is weekly. |
-| 🇪🇸 Spain | Registro Mercantil / BORME | BORME daily incorporations via BOE open data (`https://www.boe.es/datosabiertos/`) | Parsing format not verified |
-| 🇮🇹 Italy | Registro delle Imprese (InfoCamere) | — | Paid only (InfoCamere); HVD options unverified |
-| 🇵🇱 Poland | KRS / CEIDG | KRS open API (one company at a time); CEIDG API for sole traders (needs a token) | No date-based listing found yet |
-| 🇧🇪 Belgium | KBO/BCE (Crossroads Bank for Enterprises) | KBO Open Data files (free registration) | Update cadence not verified |
-| 🇦🇹 Austria | Firmenbuch | — | Paid through clearing agencies; HVD open data not verified |
-| 🇨🇭 Switzerland | Zefix / SHAB | Zefix REST API (free credentials) + SHAB daily publications | Not verified |
-| 🇨🇿 Czechia | Public Register / ARES | ARES REST API, justice.cz open-data files | Date filtering not verified |
-| 🇸🇰 Slovakia | RPO (Statistical Office) | RPO REST API `api.statistics.sk/rpo/v1` + incremental files | Production endpoint **timed out** in testing; date parameters unknown |
-| 🇵🇹 Portugal | Registo Comercial (IRN) | — | Not researched |
-| 🇷🇴 Romania | ONRC | — | Not researched |
-| 🇬🇷 Greece | GEMI (businessportal.gr) | — | Not researched |
-| 🇭🇺 Hungary | Céginformációs Szolgálat | — | Not researched |
+## 4. What needs you
 
-### Medium priority
-
-| Country | Official register | Candidate source (unverified) |
+| Country | What to do | Cost |
 |---|---|---|
-| 🇱🇻 Latvia | Uzņēmumu reģistrs | Open data on data.gov.lv |
-| 🇱🇹 Lithuania | Registrų centras | — |
-| 🇸🇮 Slovenia | AJPES | — |
-| 🇭🇷 Croatia | Sudski registar | — |
-| 🇧🇬 Bulgaria | Registry Agency | — |
-| 🇱🇺 Luxembourg | LBR / RCS | — |
-| 🇨🇾 Cyprus | Registrar of Companies | — |
-| 🇲🇹 Malta | Malta Business Registry | — |
-| 🇮🇸 Iceland | Skatturinn (Fyrirtækjaskrá) | — |
-| 🇱🇮 Liechtenstein | Handelsregister (oera.li) | — |
+| United Kingdom | Register at https://developer.company-information.service.gov.uk/ and create a REST key (plus a separate Streaming key) → `UK_COMPANIES_HOUSE_API_KEY` | Free |
+| Denmark | Ask cvrselvbetjening@erst.dk for system-to-system access → `DENMARK_CVR_USERNAME`, `DENMARK_CVR_PASSWORD` | Free |
+| Belgium | Create a KBO Open Data account (https://kbopub.economie.fgov.be/kbo-open-data) and share the download documentation, so an adapter can be built and verified | Free |
+| Croatia | Register an API client at https://sudreg-data.gov.hr and share how credentials are issued | Free |
+| Estonia (optional) | Sign the RIK agreement (https://ariregister.rik.ee/eng/contract/step1), then select provider `rik` for registry email / phone / website | Free within limits |
+| Contact discovery (optional) | Add a Brave Search API key (`BRAVE_SEARCH_API_KEY`) and a budget in Settings → Research, so research can find websites that are neither on the registry nor on an obvious domain | Paid per Brave's plan |
+| Netherlands / Germany | KVK subscription / OpenRegister key | Paid |
 
-### Lower priority or needs a legal decision first
+After adding variables to `.env.local` (or the server), restart and run `npm run registry:verify -- <CODE>`.
 
-| Country | Note |
-|---|---|
-| 🇯🇪 Jersey, 🇬🇬 Guernsey, 🇮🇲 Isle of Man, 🇬🇮 Gibraltar, 🇫🇴 Faroe Islands | Crown dependencies and territories. Small, not researched. |
-| 🇦🇱 Albania, 🇧🇦 Bosnia and Herzegovina, 🇲🇪 Montenegro, 🇲🇰 North Macedonia, 🇷🇸 Serbia, 🇽🇰 Kosovo | Western Balkans. Not researched. Bosnia splits registration across entity-level registers. |
-| 🇦🇩 Andorra, 🇲🇨 Monaco, 🇸🇲 San Marino | Microstates. Not researched. |
-| 🇲🇩 Moldova | Open data on date.gov.md (cadence not verified) |
-| 🇹🇷 Türkiye, 🇬🇪 Georgia, 🇦🇲 Armenia, 🇦🇿 Azerbaijan, 🇰🇿 Kazakhstan | Transcontinental. Not researched. |
-| 🇺🇦 Ukraine | Some register access is restricted under martial law. Needs a legal review. |
-| 🇧🇾 Belarus, 🇷🇺 Russia | **Sanctions**: legal review required before any use |
-| 🇻🇦 Vatican City | No commercial register exists. Skip it. |
+## 5. Deployment note
 
----
+Another running instance (the deployed site) uses the same database and still runs older code. Its startup check resets provider IDs it does not know: France goes back to `insee-sirene` and Czechia to its catalogue placeholder. Their imported companies stay. Once this code is deployed, both switch back automatically: Czechia because its placeholder no longer exists, and France through the one-way upgrade in `ensureCountries` (only while no INSEE key is set).
 
 ## 6. How the code works (for writing a new adapter)
 

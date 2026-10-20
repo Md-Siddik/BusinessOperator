@@ -47,6 +47,12 @@ const emailMessageSchema = new Schema(
     mode: { type: String, enum: ["TEMPLATE", "CUSTOM"] },
     /** Client-generated key per compose session: a repeated submission never sends twice. */
     idempotencyKey: { type: String },
+    /** Email Sender template used (TEMPLATE mode), e.g. "no-website-v1-no" — never the body. */
+    outreachTemplate: { type: String },
+    /** INITIAL first contact, or the single polite REMINDER (at most one per company). */
+    outreachStep: { type: String, enum: ["INITIAL", "REMINDER"] },
+    /** Language of the email layout. */
+    locale: { type: String },
     /** Retention: DIRECT history records are removed automatically after this date. */
     expiresAt: { type: Date },
   },

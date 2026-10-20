@@ -146,7 +146,11 @@ describe("Registry sync", () => {
     // Distinct, honest states — a country in the list is not an integration.
     expect((await getCountryView("GB"))?.state).toBe("NEEDS_CREDENTIALS");
     expect((await getCountryView("DE"))?.state).toBe("NEEDS_CREDENTIALS");
-    expect((await getCountryView("EE"))?.state).toBe("NEEDS_APPROVAL");
+    // The contract-based Estonian adapter still needs an agreement (selectable, not the default).
+    expect(getRegistryProvider("rik")).toMatchObject({ accessType: "AGREEMENT" });
+    expect(getRegistryProvider("rik")?.isConfigured()).toBe(false);
+    // Estonia now defaults to the credential-free open-data file: a live source, never "Connected" before a real sync.
+    expect((await getCountryView("EE"))?.state).toBe("NOT_SYNCED");
     expect((await getCountryView("AT"))?.state).toBe("UNDER_RESEARCH");
     expect((await getCountryView("VA"))?.state).toBe("NO_VERIFIED_FEED");
     await expectRejects(syncToday("GB", { trigger: "MANUAL", notify: false }), 400);

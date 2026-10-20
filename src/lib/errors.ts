@@ -17,6 +17,6 @@ export const Errors = {
   /** Also used for resources the actor may not see, so IDs never reveal existence. */
   notFound: (message = "Not found") => new AppError(404, "NOT_FOUND", message),
   badRequest: (message: string, details?: Record<string, unknown>) => new AppError(400, "BAD_REQUEST", message, details),
-  conflict: (message: string) => new AppError(409, "CONFLICT", message),
+  conflict: (message: string, details?: Record<string, unknown>) => new AppError(409, "CONFLICT", message, details),
   tooManyRequests: (message = "Too many requests. Please try again shortly.") => new AppError(429, "RATE_LIMITED", message),
 };

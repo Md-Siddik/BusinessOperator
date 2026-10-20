@@ -266,7 +266,7 @@ export function CompanyFilters({ industries, sorts }: { industries: { value: str
   const [q, setQ] = useState(search.get("q") ?? "");
   const [open, setOpen] = useState(() => ["industry", "industryCode", "minCompleteness", "relevance", "qualified", "minScore", "saved", "events", "research"].some((k) => search.get(k)));
   const contact = new Set((search.get("contact") ?? "").split(",").filter(Boolean));
-  const activeCount = ["industry", "industryCode", "minCompleteness", "relevance", "qualified", "notContacted", "minScore", "q", "contact", "fit", "followUpDue", "eligibility", "events", "research"].filter((k) => search.get(k)).length;
+  const activeCount = ["industry", "industryCode", "minCompleteness", "relevance", "qualified", "notContacted", "milestone", "minScore", "q", "contact", "fit", "followUpDue", "eligibility", "events", "research"].filter((k) => search.get(k)).length;
 
   function toggleContact(f: string) {
     const next = new Set(contact);
@@ -308,7 +308,7 @@ export function CompanyFilters({ industries, sorts }: { industries: { value: str
           <SlidersHorizontal className="h-4 w-4" aria-hidden /> Filters {activeCount > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[11px] text-white">{activeCount}</span>}
         </button>
         {activeCount > 0 && (
-          <button type="button" onClick={() => go({ q: null, contact: null, industry: null, industryCode: null, minCompleteness: null, relevance: null, qualified: null, notContacted: null, minScore: null, fit: null, followUpDue: null, eligibility: null, events: null, research: null })} className="inline-flex h-10 items-center gap-1 px-2 text-sm text-ink-500 hover:text-ink-800">
+          <button type="button" onClick={() => go({ q: null, contact: null, industry: null, industryCode: null, minCompleteness: null, relevance: null, qualified: null, notContacted: null, milestone: null, minScore: null, fit: null, followUpDue: null, eligibility: null, events: null, research: null })} className="inline-flex h-10 items-center gap-1 px-2 text-sm text-ink-500 hover:text-ink-800">
             <X className="h-4 w-4" aria-hidden /> Clear
           </button>
         )}
@@ -325,6 +325,7 @@ export function CompanyFilters({ industries, sorts }: { industries: { value: str
           [
             ["fit", "Service fit", "yes"],
             ["notContacted", "Not contacted", "yes"],
+            ["milestone", "Contacted", "contacted"],
             ["followUpDue", "Follow-up due", "yes"],
             ["eligibility", "Review cleared", "CLEARED"],
           ] as const

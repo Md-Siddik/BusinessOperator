@@ -20,6 +20,7 @@ export const PERMISSIONS = [
   "users.manage",
   "analytics.view",
   "content.manage",
+  "services.manage",
   "registry.sync",
   "chat.manage",
   "tickets.manage",
@@ -40,6 +41,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "users.manage": "Manage internal users",
   "analytics.view": "View analytics",
   "content.manage": "Manage website content & translations",
+  "services.manage": "Manage public services, pricing, discounts & landing pages",
   "registry.sync": "Run registry syncs",
   "chat.manage": "Access all client conversations",
   "tickets.manage": "Manage all requests & tickets",
@@ -56,7 +58,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
  *    permissions — `effectivePermissions` filters to this list whatever is stored.
  *  - CLIENT → the client portal (/portal).
  */
-export const STAFF_AREA_PERMISSIONS = ["clients.manage", "chat.manage", "tickets.manage", "projects.manage", "content.manage"] as const satisfies readonly Permission[];
+/** `services.manage` (public services, prices, discounts) is held by ADMIN by default, not STAFF; the Owner can grant it. */
+export const STAFF_AREA_PERMISSIONS = ["clients.manage", "chat.manage", "tickets.manage", "projects.manage", "content.manage", "services.manage"] as const satisfies readonly Permission[];
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
   OWNER: [...PERMISSIONS],

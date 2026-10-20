@@ -168,7 +168,7 @@ export default async function CompanyProfilePage({ params }: { params: Promise<{
             <ContactValue kind="phone" showLabel value={row.phone} sourceKind={row.sources.phone?.kind} source={row.sources.phone?.source} missing={missing(caps?.supportsPhone)} disabledActions={row.isDemo} />
             <ContactValue kind="mobile" showLabel value={row.mobile} sourceKind={row.sources.mobile?.kind} source={row.sources.mobile?.source} missing={missing(caps?.supportsMobile)} disabledActions={row.isDemo} />
             <ContactValue kind="website" showLabel value={row.website} sourceKind={row.sources.website?.kind} source={row.sources.website?.source} missing={missing(caps?.supportsWebsite)} disabledActions={row.isDemo} />
-            <ContactValue kind="person" showLabel value={row.contactPerson?.name} secondary={row.contactPerson?.role} sourceKind={row.sources.contactPerson?.kind} missing={caps?.supportsRoles ? "No contact role registered" : "Not published by this registry"} />
+            <ContactValue kind="person" showLabel value={row.contactPerson?.name} secondary={row.contactPerson?.role} sourceKind={row.sources.contactPerson?.kind} source={row.sources.contactPerson?.source} missing={caps?.supportsRoles ? "No contact role registered" : "Not published by this registry"} />
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-brand-100 pt-3">
             <div className="flex flex-wrap items-center gap-4">

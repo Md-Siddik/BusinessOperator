@@ -3,10 +3,14 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { getPublicContext } from "@/features/site/context";
 import { siteConfig } from "@/config/site";
+import { listPublicServices } from "@/features/service-catalog/service";
 
 export default async function MarketingLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const { t, enabledLanguages, general } = await getPublicContext(locale);
+  // Footer: featured services first, then the rest, at most six (the full list is one click away).
+  const services = await listPublicServices(locale);
+  const footerServices = [...services.filter((s) => s.featured), ...services.filter((s) => !s.featured)].slice(0, 6).map((s) => ({ slug: s.slug, name: s.shortTitle || s.name }));
   const labels = {
     home: t("nav.home"),
     services: t("nav.services"),
@@ -39,7 +43,7 @@ export default async function MarketingLayout({ children, params }: { children: 
       </a>
       <SiteHeader locale={locale} labels={labels} enabledLanguages={enabledLanguages} />
       <main id="main">{children}</main>
-      <SiteFooter locale={locale} t={t} general={general} />
+      <SiteFooter locale={locale} t={t} general={general} services={footerServices} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd).replace(/</g, "\\u003c") }} />
     </>
   );

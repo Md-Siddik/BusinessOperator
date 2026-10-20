@@ -1,4 +1,24 @@
-# 🇫🇷 France: INSEE API Sirene 3.11
+# 🇫🇷 France
+
+## Default: BODACC A "Créations" (`bodacc`, no key)
+
+| | |
+|---|---|
+| Provider id | `bodacc` (`src/features/registry/providers/bodacc.ts`) |
+| Official source | BODACC, published by the DILA (Direction de l'information légale et administrative) |
+| API | Opendatasoft Explore v2.1: `https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records` |
+| Authentication | None. Licence Ouverte / Etalab 2.0 |
+| Query | `where=familleavis="creation" and dateparution=date'D' and typeavis!="annulation" and listepersonnes like "*\"pm\"*"`, `order_by=id`, 100 per page |
+| Registration date | `acte.dateImmatriculation` (RCS registration date). Notices without it (≈ 18 % on 15–18 Oct 2026) are **skipped**; the publication date is never used in its place |
+| Window | By publication date (`windowBy: "publication"`); each company is stored under its real registration date, a few days earlier |
+| Entities | Legal persons (`typePersonne: "pm"`). Sole traders only with `FRANCE_INCLUDE_SOLE_TRADERS=true` |
+| Contact data | No email, phone or website. `administration` lists officers: natural persons become the registry contact person (name + role); corporate officers are kept in `people` only |
+| Volume (verified 18 Oct 2026) | ≈ 770 legal-person creation notices per publication day → ≈ 630 imported |
+| Record link | `url_complete` (bodacc.fr notice) |
+
+The INSEE adapter below stays selectable in Settings → Countries. `ensureCountries` moves France from `insee-sirene` to `bodacc` only while no INSEE key is configured.
+
+## Alternative: INSEE API Sirene 3.11
 
 | | |
 |---|---|

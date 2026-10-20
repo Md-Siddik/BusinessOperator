@@ -209,7 +209,13 @@ export interface CompanyRegistryProvider {
   /** Recommended scheduled sync interval, respecting the source's update cadence and limits. */
   recommendedSyncMinutes: number;
 
-  /** Companies registered between two local days (inclusive). */
+  /**
+   * What getRegistrations' day window selects. "registration" (default): companies
+   * registered in the window. "publication": entries the source PUBLISHED in the window,
+   * each carrying its real (earlier) registration day — for sources that publish with a lag.
+   */
+  windowBy?: "registration" | "publication";
+  /** Companies registered between two local days (inclusive), or published, see windowBy. */
   getRegistrations?(from: Day, to: Day, ctx: FetchContext): Promise<RegistrationBatch>;
   /** Fetch one company by registration number. */
   getCompany?(registrationNumber: string, ctx?: Pick<FetchContext, "signal">): Promise<NormalizedCompany | null>;

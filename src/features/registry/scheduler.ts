@@ -50,9 +50,11 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
   const syncs = await runDueSyncs(log);
   for (const r of syncs) log(`${r.country}: ${r.status}${r.imported !== undefined ? ` (${r.imported} new)` : ""}${r.error ? ` — ${r.error}` : ""}`);
   await checkLatestPublications();
-  const { scheduleBackfill } = await import("@/features/research/engine");
+  const { scheduleBackfill, scheduleDueRetries } = await import("@/features/research/engine");
   const queued = await scheduleBackfill();
   if (queued) log(`research backfill: ${queued} companies queued`);
+  const retries = await scheduleDueRetries();
+  if (retries) log(`research retries: ${retries} due companies queued`);
   const { dispatchDueFollowUpReminders } = await import("@/features/crm/service");
   await dispatchDueFollowUpReminders();
   if (process.env.OPPORTUNITY_SCHEDULER !== "off") {

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { COUNTRIES, COUNTRY_CODES, getCountry } from "@/config/countries";
 import { INDUSTRIES } from "@/config/industries";
 import { LEAD_STAGES, stagesFrom, type LeadStage } from "@/lib/constants";
-import { CONTACT_FILTERS, ELIGIBILITY_STATES, RELEVANCE_VALUES, RESEARCH_STATUSES, contactQuality, type ContactFilter } from "@/lib/company-fields";
+import { CONTACT_FILTERS, ELIGIBILITY_STATES, PENDING_RESEARCH_STATUSES, RELEVANCE_VALUES, RESEARCH_STATUSES, contactQuality, type ContactFilter } from "@/lib/company-fields";
 import { companyVisibilityFilter } from "@/lib/data-mode";
 import { DATE_PRESETS, isDay, localRangeUtc, resolveDayRange, type DayRange } from "@/lib/dates/country-time";
 import {
@@ -194,6 +194,9 @@ export function buildCompanyFilter(actor: Actor, q: CompanyQuery, now = new Date
     if (f === "form") and.push({ "directContact.formOnly": true });
     if (f === "nodirect") and.push({ "directContact.has": { $ne: true } });
     if (f === "pending") and.push({ $or: [{ "directContact.pendingVerification": true }, { "research.status": "VERIFICATION_PENDING" }] });
+    // Verified = deliverability-checked email or reachability-confirmed phone (never "published" alone).
+    if (f === "verified") and.push({ $or: [{ "directContact.emailVerification": "DELIVERABLE" }, { "directContact.phoneVerification": "REACHABILITY_CONFIRMED" }] });
+    if (f === "researching") and.push({ "directContact.has": { $ne: true }, $or: [{ "research.status": { $in: PENDING_RESEARCH_STATUSES } }, { "research.status": { $exists: false } }] });
   }
   if (q.fit === "yes") and.push({ "serviceFit.score": { $gte: 50 } });
   if (q.followUpDue === "yes") and.push({ "lead.nextFollowUpAt": { $lte: now } });

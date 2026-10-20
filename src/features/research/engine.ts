@@ -15,7 +15,7 @@ import { canSpend, getCached, recordUsage, setCached, type PaidProviderId } from
 import { flagSharedContacts, recomputeCompanyContacts, recordContact, type ContactInput } from "./contacts";
 import { addInboxItem, publishIntelUpdate } from "./inbox";
 import { domainCandidates, identityEvidence, researchWebsite } from "./website";
-import { fetchPublicPage } from "@/features/intelligence/safe-fetch";
+import { fetchPublicPage, type PageResult } from "@/features/intelligence/safe-fetch";
 import { hunterDomainFinder, hunterDomainSearch, hunterKey, hunterVerifyEmail, mapHunterStatus } from "./providers/hunter";
 import { apolloEnrichOrganization, apolloKey } from "./providers/apollo";
 import { braveKey, braveWebSearch } from "./providers/brave";
@@ -140,6 +140,21 @@ async function recordWebsiteFindings(ctx: Ctx, site: Awaited<ReturnType<typeof r
     await recordContact(c, { type: "PHONE", value: p.value, sourceKind: "WEBSITE", source: siteSource, sourceUrl: p.url, provider: "website", ownership: siteOwnership, evidence: [{ kind: "PUBLISHED_ON_SITE", detail: `Published on ${new URL(p.url).hostname} (${p.via})`, url: p.url }] });
     n++;
   }
+  // People the site names with a role in its own structured data (schema.org Person + jobTitle).
+  for (const p of site.people.slice(0, 3)) {
+    await recordContact(c, {
+      type: "CONTACT_PERSON",
+      value: p.name,
+      personName: p.name,
+      role: p.role,
+      sourceKind: "WEBSITE",
+      source: siteSource,
+      sourceUrl: p.url,
+      provider: "website",
+      ownership: siteOwnership,
+      evidence: [{ kind: "PUBLISHED_ON_SITE", detail: `Named as “${p.role}” in the structured data of ${new URL(p.url).hostname}`, url: p.url }],
+    });
+  }
   for (const f of site.forms.slice(0, 1)) {
     await recordContact(c, { type: "CONTACT_FORM", value: f, sourceKind: "WEBSITE", source: siteSource, sourceUrl: f, provider: "website", ownership: siteOwnership, evidence: [{ kind: "CONTACT_FORM", detail: "Business contact form (contact form only — never submitted automatically)", url: f }] });
   }
@@ -150,11 +165,13 @@ async function stepWebsite(ctx: Ctx) {
   const c = ctx.company;
   let website = c.website ?? undefined;
   let websiteFromRegistry = c.contactSources?.website?.kind === "REGISTRY" || c.contactSources?.website?.kind === "MANUAL";
+  // One research run never fetches the same URL twice (discovery + website research share pages).
+  const pages = new Map<string, PageResult>();
 
   // Discovery when no website is known: plausible own domains, verified by identity on the page.
   if (!website && ctx.settings.websiteDiscovery) {
     for (const domain of domainCandidates(c.companyName, c.countryCode)) {
-      const page = await fetchPublicPage(`https://${domain}`);
+      const page = await fetchPublicPage(`https://${domain}`, { cache: pages });
       if ("error" in page) continue;
       const identity = identityEvidence(page.html, c);
       if (identity) {
@@ -173,7 +190,7 @@ async function stepWebsite(ctx: Ctx) {
     if (r.result?.length) {
       let accepted = 0;
       for (const hit of r.result.slice(0, 5)) {
-        const page = await fetchPublicPage(hit.url);
+        const page = await fetchPublicPage(hit.url, { cache: pages });
         if ("error" in page) continue;
         if (identityEvidence(page.html, c) !== "REGISTRATION_NUMBER") continue;
         const host = domainOf(page.url) ?? "";
@@ -205,7 +222,7 @@ async function stepWebsite(ctx: Ctx) {
     return undefined;
   }
 
-  const site = await researchWebsite(website, { companyName: c.companyName, registrationNumber: c.registrationNumber, countryCode: c.countryCode }, ctx.settings.maxPagesPerWebsite);
+  const site = await researchWebsite(website, { companyName: c.companyName, registrationNumber: c.registrationNumber, countryCode: c.countryCode }, ctx.settings.maxPagesPerWebsite, pages);
   if (!site.reachable) {
     ctx.steps.push({ step: "website", status: "failed", detail: `Could not read ${website}: ${site.error}` });
     return website;
@@ -218,7 +235,7 @@ async function stepWebsite(ctx: Ctx) {
   ctx.steps.push({
     step: "website",
     status: n || site.forms.length ? "done" : "nothing",
-    detail: `${site.pagesChecked.length} page(s) checked on ${host}: ${site.emails.length} email(s), ${site.phones.length} phone(s)${site.forms.length ? ", contact form" : ""}${ownership === "GROUP_LEVEL" ? " — website shared with another company, recorded as group-level route" : ""}.`,
+    detail: `${site.pagesChecked.length} page(s) checked on ${host}: ${site.emails.length} email(s), ${site.phones.length} phone(s)${site.people.length ? `, ${site.people.length} named contact(s)` : ""}${site.forms.length ? ", contact form" : ""}${ownership === "GROUP_LEVEL" ? " — website shared with another company, recorded as group-level route" : ""}.`,
   });
   return website;
 }
@@ -349,6 +366,9 @@ export async function researchCompany(companyId: Types.ObjectId | string, opts: 
     status = next ? "RETRY_SCHEDULED" : "EXHAUSTED";
   }
   if (!dc?.has && status === "RETRY_SCHEDULED" && attempts === 1) status = "NO_CONTACT_YET";
+  // The company's own website exists but could not be read safely (robots.txt, not public,
+  // timeout, unreachable): say so instead of "no contact" — retries continue as scheduled.
+  if (!dc?.has && !ctx.budgetBlocked && ctx.steps.some((s) => s.step === "website" && s.status === "failed")) status = "RESEARCH_UNAVAILABLE";
 
   const checked = ctx.steps.map((s) => ({ source: s.step, at: new Date(), outcome: `${s.status}: ${s.detail}`.slice(0, 300) }));
   await Company.updateOne(
@@ -400,6 +420,27 @@ export async function scheduleBackfill(limit = 500) {
     if (++n >= limit) break;
   }
   return n;
+}
+
+/** Research states whose scheduled retry (research.nextRetryAt) should run again. */
+const RETRYABLE: ResearchStatus[] = ["RETRY_SCHEDULED", "NO_CONTACT_YET", "PARTIAL", "VERIFICATION_PENDING", "BUDGET_PAUSED", "PROVIDER_UNAVAILABLE", "RESEARCH_UNAVAILABLE"];
+
+/**
+ * Queue research whose retry is due. A retry scheduled from INSIDE a running research job
+ * cannot be queued under the same job key (the job is RUNNING and is marked DONE right after),
+ * so research.nextRetryAt on the company is the durable source of truth and this sweep
+ * (slow scheduler tick) turns due retries into jobs — newest registrations first, bounded per tick.
+ */
+export async function scheduleDueRetries(limit = 200, now = new Date()) {
+  const settings = await getSetting("research");
+  if (!settings.enabled) return 0;
+  const due = await Company.find({ isDemo: { $ne: true }, "research.status": { $in: RETRYABLE }, "research.nextRetryAt": { $lte: now } })
+    .select("_id registrationDay")
+    .sort({ "research.nextRetryAt": 1 })
+    .limit(limit)
+    .lean<{ _id: Types.ObjectId; registrationDay?: string }[]>();
+  for (const c of due) await enqueueJob("research", `research:${c._id}`, { companyId: String(c._id), reason: "retry" }, { priority: cohortPriority(c.registrationDay) });
+  return due.length;
 }
 
 registerJobHandler("research", async (payload) => {

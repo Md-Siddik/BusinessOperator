@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { INDUSTRY_PROFILES } from "@/config/industries";
+import { localizedPath } from "@/config/languages";
 import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext, type LocaleParams } from "@/features/site/context";
-import { CtaBand, GrowthJourney, HomeHero, MoreThanWebsite, SectionHeading, ServicePillars, SplitSection } from "@/components/site/sections";
+import { listPublicServices } from "@/features/service-catalog/service";
+import { CtaBand, GrowthJourney, HomeHero, MoreThanWebsite, SectionHeading, SplitSection } from "@/components/site/sections";
 import { IndustryProfiles } from "@/components/site/industry-profiles";
 import { EngagementModels } from "@/components/site/engagement-models";
+import { ServiceCardsGrid } from "@/components/site/service-landing";
+import { BuildFirstSection } from "@/components/site/build-first";
+
+/** Re-render periodically (and on every Service Management change) so featured services stay current. */
+export const revalidate = 600;
 
 export async function generateMetadata({ params }: LocaleParams): Promise<Metadata> {
   const { locale } = await params;
@@ -23,6 +32,9 @@ export default async function HomePage({ params }: LocaleParams) {
     items: p.items.map((i) => t(`serviceItems.${i}`)),
   }));
   const principles = list<{ title: string; text: string }>("home.principles.items");
+  const services = await listPublicServices(locale);
+  // The homepage stays focused: only the services the Owner marked "Featured".
+  const featured = services.filter((s) => s.featured);
 
   // Story: what we do (hero) → why it matters → how it works → what supports it → the long-term
   // relationship → who it fits → how we operate → how to work together → talk to us.
@@ -32,13 +44,29 @@ export default async function HomePage({ params }: LocaleParams) {
       <SplitSection t={t} list={list} />
       <GrowthJourney locale={locale} t={t} list={list} />
 
+      {/* Services: concise cards; each opens its focused landing page. */}
       <section className="py-20 sm:py-28">
         <div className="container-page">
-          <ServicePillars locale={locale} t={t} />
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHeading eyebrow={t("homeV2.services.eyebrow")} title={t("homeV2.services.title")} subtitle={t("homeV2.services.subtitle")} />
+            <Link href={localizedPath(locale, "/services")} className="group inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800">
+              {t("homeV2.services.all")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </Link>
+          </div>
+          <div className="mt-12">
+            <ServiceCardsGrid services={featured} locale={locale} t={t} />
+          </div>
         </div>
       </section>
 
       <MoreThanWebsite locale={locale} t={t} list={list} />
+
+      {/*
+        "Build before you commit" replaces the portfolio section for now: no portfolio is shown
+        until there are real, published client projects. It complements — never replaces — the
+        three engagement models further down.
+      */}
+      <BuildFirstSection locale={locale} t={t} list={list} />
 
       <section className="py-20 sm:py-28">
         <div className="container-page">

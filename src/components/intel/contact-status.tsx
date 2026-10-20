@@ -10,6 +10,8 @@ export function ContactStatus({ row, compact }: { row: CompanyRow; compact?: boo
   const d = row.direct;
   const channels = d.hasEmail && d.hasPhone ? "email + phone" : d.hasEmail ? "email" : d.hasPhone ? "phone" : "";
   const research = row.research.status as ResearchStatus;
+  // Honest wording: "not found" only after at least one completed research attempt.
+  const researched = row.research.attempts > 0 && research !== "SEARCHING" && research !== "NOT_STARTED";
   return (
     <div className="space-y-1 text-xs">
       {d.has ? (
@@ -20,9 +22,13 @@ export function ContactStatus({ row, compact }: { row: CompanyRow; compact?: boo
         <p className="inline-flex items-center gap-1 rounded-md bg-sky-50 px-1.5 py-0.5 font-medium text-sky-800">
           <FileText className="h-3.5 w-3.5" aria-hidden /> Contact form only
         </p>
+      ) : researched ? (
+        <p className="inline-flex items-center gap-1 rounded-md bg-ink-100 px-1.5 py-0.5 font-medium text-ink-600">
+          <MinusCircle className="h-3.5 w-3.5" aria-hidden /> No public contact found
+        </p>
       ) : (
         <p className="inline-flex items-center gap-1 rounded-md bg-ink-100 px-1.5 py-0.5 font-medium text-ink-600">
-          <MinusCircle className="h-3.5 w-3.5" aria-hidden /> No direct contact yet
+          <Search className="h-3.5 w-3.5" aria-hidden /> Research pending
         </p>
       )}
       {d.hasEmail && d.emailVerification && <p className={cn(d.emailVerification === "DELIVERABLE" ? "text-emerald-700" : "text-ink-500")}>Email: {EMAIL_VERIFICATION_LABELS[d.emailVerification as EmailVerification] ?? d.emailVerification}</p>}
@@ -31,7 +37,7 @@ export function ContactStatus({ row, compact }: { row: CompanyRow; compact?: boo
         <p className="flex items-center gap-1 text-ink-500">
           {research === "SEARCHING" ? <Search className="h-3 w-3" aria-hidden /> : <Clock className="h-3 w-3" aria-hidden />}
           {RESEARCH_STATUS_LABELS[research] ?? research}
-          {row.research.nextRetryAt && ["RETRY_SCHEDULED", "NO_CONTACT_YET", "PARTIAL", "BUDGET_PAUSED", "PROVIDER_UNAVAILABLE", "VERIFICATION_PENDING"].includes(research) && <span>· next {fmtDate(row.research.nextRetryAt)}</span>}
+          {row.research.nextRetryAt && ["RETRY_SCHEDULED", "NO_CONTACT_YET", "PARTIAL", "BUDGET_PAUSED", "PROVIDER_UNAVAILABLE", "RESEARCH_UNAVAILABLE", "VERIFICATION_PENDING"].includes(research) && <span>· next {fmtDate(row.research.nextRetryAt)}</span>}
         </p>
       )}
       {row.contactFormUrl && !d.has && (

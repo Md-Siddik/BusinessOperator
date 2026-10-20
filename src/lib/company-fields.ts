@@ -66,7 +66,7 @@ export function completenessStars(completeness: number) {
  * Contact availability filters on the daily view (server-side).
  * "direct" = at least one usable, source-supported business email OR phone.
  */
-export const CONTACT_FILTERS = ["email", "phone", "both", "direct", "form", "nodirect", "pending", "website", "person", "complete", "none"] as const;
+export const CONTACT_FILTERS = ["email", "phone", "both", "direct", "form", "nodirect", "pending", "website", "person", "complete", "none", "verified", "researching"] as const;
 export type ContactFilter = (typeof CONTACT_FILTERS)[number];
 export const CONTACT_FILTER_LABELS: Record<ContactFilter, string> = {
   email: "Has email",
@@ -80,9 +80,14 @@ export const CONTACT_FILTER_LABELS: Record<ContactFilter, string> = {
   person: "Has contact person",
   complete: "Email + phone + website",
   none: "No contact details",
+  verified: "Contact verified",
+  researching: "Research pending",
 };
 /** Chips shown on the daily view (the rest stay available via URL / saved views). */
-export const PRIMARY_CONTACT_FILTERS: ContactFilter[] = ["email", "phone", "both", "form", "nodirect", "pending"];
+export const PRIMARY_CONTACT_FILTERS: ContactFilter[] = ["email", "phone", "both", "website", "person", "nodirect", "researching", "verified", "form", "pending"];
+
+/** Research states that still count as "research pending" (no final answer yet). */
+export const PENDING_RESEARCH_STATUSES: ResearchStatus[] = ["NOT_STARTED", "SEARCHING", "NO_CONTACT_YET", "RETRY_SCHEDULED", "BUDGET_PAUSED", "PROVIDER_UNAVAILABLE", "RESEARCH_UNAVAILABLE"];
 
 /* ───────────── Contact verification vocabulary ───────────── */
 
@@ -136,6 +141,7 @@ export const RESEARCH_STATUSES = [
   "RETRY_SCHEDULED",
   "BUDGET_PAUSED",
   "PROVIDER_UNAVAILABLE",
+  "RESEARCH_UNAVAILABLE",
   "EXHAUSTED",
 ] as const;
 export type ResearchStatus = (typeof RESEARCH_STATUSES)[number];
@@ -149,6 +155,7 @@ export const RESEARCH_STATUS_LABELS: Record<ResearchStatus, string> = {
   RETRY_SCHEDULED: "Retry scheduled",
   BUDGET_PAUSED: "Budget paused",
   PROVIDER_UNAVAILABLE: "Provider unavailable",
+  RESEARCH_UNAVAILABLE: "Research unavailable (website could not be accessed safely)",
   EXHAUSTED: "Research exhausted",
 };
 

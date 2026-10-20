@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { ExternalLink } from "lucide-react";
 import { AppShell, type NavGroup } from "@/components/app/app-shell";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { CountrySwitcher } from "@/components/app/country-switcher";
@@ -8,7 +9,7 @@ import { LiveCountsProvider } from "@/components/app/live-counts";
 import { NotificationBell, UserMenu } from "@/components/app/topbar-widgets";
 import { requireInternalPage } from "@/lib/auth/session";
 import { isDemoModeEnabled } from "@/lib/data-mode";
-import { navHint } from "@/lib/integration-state";
+import { countryNavMeta } from "@/lib/integration-state";
 import { can, isOwner } from "@/lib/permissions";
 import { listCountryCards } from "@/features/companies/registrations";
 import { getEnabledCountries } from "@/features/countries/service";
@@ -37,6 +38,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const q = `?country=${ctx.code}`;
   const [inboxUnread, reviewPending] = canIntel ? await Promise.all([InboxItem.countDocuments({ readAt: null, archivedAt: null }), Contact.countDocuments({ review: "PENDING" })]) : [0, 0];
   const cardByCode = new Map(cards.map((c) => [c.code, c]));
+  const rank = new Map(cards.map((c, i) => [c.code, i]));
+  const orderedCountries = [...countries].sort((a, b) => (rank.get(a.code) ?? 1e9) - (rank.get(b.code) ?? 1e9));
   const todayTotal = cards.reduce<number | null>((sum, c) => (c.today === null ? sum : (sum ?? 0) + c.today), null);
 
   // Owner-only module: rendered only for the OWNER role (pages and APIs enforce the same rule server-side).
@@ -65,13 +68,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       defaultOpen: false,
       items: [
         { href: "/dashboard/today", label: "Today", icon: "today", prominent: true, meta: todayTotal !== null ? String(todayTotal) : undefined, metaTitle: "New registrations today (connected countries)" },
-        ...countries.map((c) => {
+        // Live countries with contactable companies first, then live, connected, ready/paid,
+        // partial and not available — computed from source health and snapshot statistics.
+        ...orderedCountries.map((c) => {
           const card = cardByCode.get(c.code);
-          const hasCount = card?.today !== null && card?.today !== undefined;
-          const hint = navHint(c.state);
-          const meta = hasCount ? String(card!.today) : hint.meta;
-          const metaTitle = hasCount ? "Registered today" : hint.title;
-          return { href: `/dashboard/companies/${c.slug}`, label: c.name, icon: "globe", flag: c.flag, demo: c.isDemo, meta, metaTitle };
+          const { meta, title } = card
+            ? countryNavMeta({ ...card, detail: c.stateMessage })
+            : countryNavMeta({ name: c.name, state: c.state, adapterReady: false, today: null, detail: c.stateMessage });
+          return { href: `/dashboard/companies/${c.slug}`, label: c.name, icon: "globe", flag: c.flag, demo: c.isDemo, meta, metaTitle: title };
         }),
         { href: "/dashboard/companies/all", label: "All Countries", icon: "globe", flag: "🌍" },
         { href: "/dashboard/sources", label: "Data Sources", icon: "sources" },
@@ -132,7 +136,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       { href: "/dashboard/messages", label: "Messages", icon: "messages", badge: "messages" },
       { href: "/dashboard/projects", label: "Projects", icon: "projects" },
       { href: "/dashboard/tickets", label: "Tickets", icon: "tickets" },
-      { href: "/dashboard/services", label: "Services", icon: "services" },
+      { href: "/dashboard/services", label: "Services", icon: "services", exact: true },
+      // Public services, prices, discounts and landing pages (published to the website).
+      { href: "/dashboard/service-management", label: "Service management", icon: "templates" },
     ],
   });
   // Every titled group is a dropdown, closed until opened; the group holding the current page opens itself.
@@ -152,6 +158,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </div>
       </div>
       <div className="flex items-center gap-1">
+        {/* The public website, in a new tab — the dashboard itself stays private. */}
+        <a href="/" target="_blank" rel="noopener" className="hidden items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-600 hover:bg-ink-100 hover:text-ink-900 sm:inline-flex">
+          View website <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        </a>
         <NotificationBell allHref="/dashboard/notifications" />
         <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/dashboard/settings/security" />
       </div>

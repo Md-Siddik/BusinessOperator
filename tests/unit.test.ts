@@ -33,7 +33,8 @@ describe("RBAC", () => {
     expect(can(actor("ADMIN"), "clients.manage")).toBe(true);
   });
   it("owner-dashboard permissions stored on an old ADMIN/STAFF account are never effective", () => {
-    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual(["chat.manage", "clients.manage", "content.manage", "projects.manage", "tickets.manage"]);
+    // Website maintenance (incl. public service management) only — never company intelligence, CRM, outreach, users or system settings.
+    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual(["chat.manage", "clients.manage", "content.manage", "projects.manage", "services.manage", "tickets.manage"]);
     expect(effectivePermissions("STAFF", ["companies.read", "outreach.manage"])).toEqual([]);
   });
   it("only the owner may assign roles", () => {

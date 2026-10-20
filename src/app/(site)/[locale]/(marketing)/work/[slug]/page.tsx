@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, Info } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Info } from "lucide-react";
+import { VideoPlayer } from "@/components/site/portfolio";
 import { localizedPath } from "@/config/languages";
 import { buildMetadata } from "@/lib/i18n/seo";
 import { getPublicContext } from "@/features/site/context";
@@ -45,6 +46,16 @@ export default async function CaseStudyPage({ params }: Params) {
             </p>
           )}
           {cs.summary && <p className="mt-8 text-lg leading-relaxed text-ink-700">{cs.summary}</p>}
+          {cs.projectUrl && (
+            <a href={cs.projectUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800">
+              {t("portfolio.viewProject")} <ExternalLink className="h-4 w-4" aria-hidden />
+            </a>
+          )}
+          {cs.videoUrl && (
+            <div className="mt-10">
+              <VideoPlayer url={cs.videoUrl} title={t("portfolio.video.videoOf", { title: cs.title })} />
+            </div>
+          )}
 
           <div className="mt-12 grid gap-8">
             {cs.challenge && (

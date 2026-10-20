@@ -12,7 +12,14 @@ import { unsubscribeApiUrl, unsubscribeUrl } from "@/lib/email/unsubscribe";
 import { checkSuppression } from "@/features/outreach/suppression";
 import { NOT_CONTACTED_STAGES } from "@/features/companies/service";
 import { Company, CrmActivity, EmailMessage, type CompanyDoc, type EmailMessageDoc } from "@/models";
-import { BUSINESS_EMAIL, DEFAULT_TEMPLATE, defaultTemplateContent, LIMITS, renderEmail, type EmailContent, type RenderedEmail } from "./template";
+import { stagesFrom } from "@/lib/constants";
+import { BUSINESS_EMAIL, DEFAULT_TEMPLATE, EMAIL_LOCALES, LIMITS, renderEmail, type EmailContent, type EmailLocale, type RenderedEmail } from "./template";
+import { buildOutreachEmail, OUTREACH_SERVICE, OUTREACH_TEMPLATE_IDS, OUTREACH_TEMPLATE_LABELS, outreachContext, suggestOutreach, type OutreachCompany, type OutreachOffer, type OutreachTemplateId } from "./outreach";
+import { localizedPath } from "@/config/languages";
+import { getBaseMessages } from "@/lib/i18n/dictionaries";
+import { createTranslator } from "@/lib/i18n/translator";
+import { priceDisplay, priceLabelsFrom } from "@/lib/service-pricing";
+import { getPublicService } from "@/features/service-catalog/service";
 
 /**
  * Email Sender — OWNER ONLY. Every exported function verifies the actor's server-side
@@ -52,31 +59,73 @@ function assertOwner(actor: Actor | null | undefined): asserts actor is Actor {
 
 /* ───────────── Validation ───────────── */
 
+const localeSchema = z.enum(EMAIL_LOCALES).optional();
+
 const customSchema = z.object({
   subject: z.string().trim().min(3, "Add a subject").max(LIMITS.subject, `Keep the subject under ${LIMITS.subject} characters`),
   body: z.string().trim().min(10, "Write a message (at least 10 characters)").max(LIMITS.body, `Keep the message under ${LIMITS.body.toLocaleString("en-GB")} characters`),
   includeCta: z.boolean().default(false),
+  locale: localeSchema,
 });
 
-export const previewSchema = z.discriminatedUnion("mode", [z.object({ mode: z.literal("TEMPLATE") }), z.object({ mode: z.literal("CUSTOM") }).merge(customSchema)]);
+/** TEMPLATE mode: optional template and language; with a company both default to the suggestion for it. */
+const templateFields = { templateId: z.enum(OUTREACH_TEMPLATE_IDS).optional(), locale: localeSchema };
+const companyIdSchema = z.string().regex(/^[a-f0-9]{24}$/i, "Invalid company").optional();
+
+export const previewSchema = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("TEMPLATE"), companyId: companyIdSchema, ...templateFields }),
+  z.object({ mode: z.literal("CUSTOM"), companyId: companyIdSchema }).merge(customSchema),
+]);
 
 const sendBase = {
   to: emailSchema,
   idempotencyKey: z.string().regex(/^[A-Za-z0-9-]{16,64}$/, "Invalid request key"),
   /** Set by Company Intelligence (Quick Send / Custom email): links the send to the company's contact tracking. */
-  companyId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid company").optional(),
+  companyId: companyIdSchema,
 };
 
-export const sendSchema = z.discriminatedUnion("mode", [z.object({ mode: z.literal("TEMPLATE"), ...sendBase }), z.object({ mode: z.literal("CUSTOM"), ...sendBase }).merge(customSchema)]);
+export const sendSchema = z.discriminatedUnion("mode", [z.object({ mode: z.literal("TEMPLATE"), ...sendBase, ...templateFields }), z.object({ mode: z.literal("CUSTOM"), ...sendBase }).merge(customSchema)]);
 
 /** Header/subject injection guard: no line breaks in a subject. */
 function cleanSubject(subject: string) {
   return subject.replace(/[\r\n\t]+/g, " ").trim();
 }
 
-function contentFor(input: z.infer<typeof previewSchema>): EmailContent {
-  if (input.mode === "TEMPLATE") return defaultTemplateContent();
-  return { subject: cleanSubject(input.subject), body: input.body, includeCta: input.includeCta };
+/** Minimum days between the first email and the single polite reminder. */
+const reminderMinDays = () => num(process.env.EMAIL_SENDER_REMINDER_MIN_DAYS, 7);
+
+type ResolvedContent = { content: EmailContent; templateId?: OutreachTemplateId; ref?: string; step?: "INITIAL" | "REMINDER" };
+
+/**
+ * TEMPLATE: the chosen (or, for a company, the suggested) template in the chosen language,
+ * personalised from the company record loaded on the server — never from browser input.
+ * CUSTOM: the Owner's own text.
+ */
+async function contentFor(input: z.infer<typeof previewSchema>, company: EmailCompany | null): Promise<ResolvedContent> {
+  if (input.mode === "CUSTOM") return { content: { subject: cleanSubject(input.subject), body: input.body, includeCta: input.includeCta, locale: input.locale } };
+  const suggestion = company ? suggestOutreach(company) : null;
+  const templateId = input.templateId ?? suggestion?.templateId ?? "general";
+  const locale = input.locale ?? suggestion?.locale ?? "en";
+  const offer = await offerFor(templateId, locale);
+  const built = buildOutreachEmail(templateId, locale, { ...(company ? outreachContext(company) : {}), offer });
+  return { content: built, templateId, ref: built.ref, step: templateId === "reminder" ? "REMINDER" : "INITIAL" };
+}
+
+/**
+ * The template's service from Service Management, in the email's language: its current price
+ * (with an active discount), delivery time and landing page. None when the service is not live —
+ * the email then says the price is agreed in writing and links to the homepage.
+ */
+async function offerFor(templateId: OutreachTemplateId, locale: EmailLocale): Promise<OutreachOffer | undefined> {
+  const slug = OUTREACH_SERVICE[templateId];
+  if (!slug) return undefined;
+  const service = await getPublicService(slug, locale).catch(() => null);
+  if (!service) return undefined;
+  const { t } = createTranslator(getBaseMessages(locale));
+  const p = priceDisplay(service.pricing, service.discount, priceLabelsFrom(t), locale);
+  const until = p.validUntil ? t("servicePages.ui.validUntil", { date: p.validUntil.toLocaleDateString(locale === "no" ? "nb-NO" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) }) : "";
+  const priceText = p.originalText ? `${p.text} (${[p.discountLabel, until].filter(Boolean).join(", ")})` : p.text;
+  return { name: service.name, priceText, deliveryText: service.landing.delivery, url: `https://${siteConfig.domain}${localizedPath(locale, `/services/${slug}`)}` };
 }
 
 /* ───────────── Status & preview ───────────── */
@@ -107,18 +156,61 @@ export function getSenderStatus(actor: Actor | null): SenderStatus {
   return { configured: problems.length === 0, provider: provider.id, from: s.from, fromName: s.fromName, replyTo: s.replyTo, problems, limits: { hourly: s.hourlyLimit, daily: s.dailyLimit, cooldownMinutes: s.cooldownMinutes } };
 }
 
-/** Exact rendering of what will be sent (same renderer as the send path). */
-export function previewEmail(actor: Actor | null, input: unknown, recipient?: string): RenderedEmail {
+/** Exact rendering of what will be sent (same renderer and same personalisation as the send path). */
+export async function previewEmail(actor: Actor | null, input: unknown, recipient?: string): Promise<RenderedEmail> {
   assertOwner(actor);
   const data = previewSchema.parse(input);
+  const company = data.companyId ? await loadCompany(data.companyId) : null;
   const unsub = recipient && emailSchema.safeParse(recipient).success ? unsubscribeUrl(recipient) : `${siteConfig.url}/unsubscribe`;
-  return renderEmail(contentFor(data), { unsubscribeUrl: unsub, signature: signatureFor(senderSettings()) });
+  return renderEmail((await contentFor(data, company)).content, { unsubscribeUrl: unsub, signature: signatureFor(senderSettings()) });
 }
 
 /** Read-only default template (for the composer's "Start from template"). Never modified by custom sends. */
 export function getDefaultTemplate(actor: Actor | null) {
   assertOwner(actor);
   return { subject: DEFAULT_TEMPLATE.subject, body: DEFAULT_TEMPLATE.body, includeCta: DEFAULT_TEMPLATE.includeCta };
+}
+
+export type TemplateOption = { id: OutreachTemplateId; label: string };
+export const TEMPLATE_OPTIONS: TemplateOption[] = OUTREACH_TEMPLATE_IDS.map((id) => ({ id, label: OUTREACH_TEMPLATE_LABELS[id] }));
+
+/** Every template in every language without company data — for the standalone Email Sender page. */
+export async function listTemplates(actor: Actor | null) {
+  assertOwner(actor);
+  const out: Record<string, { subject: string; body: string; includeCta: boolean }> = {};
+  for (const id of OUTREACH_TEMPLATE_IDS) {
+    for (const locale of EMAIL_LOCALES) {
+      const b = buildOutreachEmail(id, locale, { offer: await offerFor(id, locale) });
+      out[`${id}:${locale}`] = { subject: b.subject, body: b.body, includeCta: !!b.includeCta };
+    }
+  }
+  return out;
+}
+
+export type CompanyTemplate = {
+  templateId: OutreachTemplateId;
+  locale: EmailLocale;
+  subject: string;
+  body: string;
+  includeCta: boolean;
+  suggestion: { templateId: OutreachTemplateId; locale: EmailLocale; reason: string };
+  reminder: { allowed: boolean; reason: string };
+};
+
+/**
+ * The personalised template for one company (Company Intelligence Quick Send / Custom email):
+ * the suggestion, the selected template text, and whether the one reminder may be sent now.
+ */
+export async function getCompanyTemplate(actor: Actor | null, input: unknown): Promise<CompanyTemplate> {
+  assertOwner(actor);
+  const q = z.object({ companyId: z.string().regex(/^[a-f0-9]{24}$/i, "Invalid company"), ...templateFields }).parse(input);
+  const company = await loadCompany(q.companyId);
+  const suggestion = suggestOutreach(company);
+  const templateId = q.templateId ?? suggestion.templateId;
+  const locale = q.locale ?? suggestion.locale;
+  const built = buildOutreachEmail(templateId, locale, { ...outreachContext(company), offer: await offerFor(templateId, locale) });
+  const reminder = await reminderCheck(company);
+  return { templateId, locale, subject: built.subject, body: built.body, includeCta: !!built.includeCta, suggestion, reminder: reminder.ok ? { allowed: true, reason: "One polite reminder can be sent." } : { allowed: false, reason: reminder.message } };
 }
 
 /* ───────────── Sending ───────────── */
@@ -135,11 +227,37 @@ const REJECTION_HELP: Record<RejectionReason, string> = {
 export type SendResult = { id: string; status: "SENT"; accepted: true; provider: string; providerMessageId?: string; duplicate?: boolean; company?: { stage: string; lastContactedAt: string } };
 
 type SendCompany = Pick<CompanyDoc, "_id" | "countryCode" | "marketingProtected" | "isDemo" | "lead">;
+type EmailCompany = SendCompany & OutreachCompany;
+
+/** Fields used for sending checks and personalisation (registry / research data only). */
+const EMAIL_COMPANY_FIELDS = "companyName countryCode website city registrationDay contactPerson research.attempts signals.hiring auditSummary marketingProtected isDemo lead.stage";
+
+async function loadCompany(id: string) {
+  const company = await Company.findById(parseObjectId(id)).select(EMAIL_COMPANY_FIELDS).lean<EmailCompany>();
+  if (!company) throw Errors.notFound("Company not found.");
+  return company;
+}
+
+/**
+ * At most ONE polite reminder per company: only after a first email that the provider accepted,
+ * no sooner than EMAIL_SENDER_REMINDER_MIN_DAYS (default 7) later, and never after the company
+ * replied or once a reminder was sent. Then we stop.
+ */
+async function reminderCheck(company: EmailCompany): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
+  const sent = await EmailMessage.find({ kind: "DIRECT", companyId: company._id, status: "SENT" }).select("outreachStep sentAt createdAt").sort({ createdAt: 1 }).lean<EmailMessageDoc[]>();
+  if (sent.some((m) => m.outreachStep === "REMINDER")) return { ok: false, code: "REMINDER_ALREADY_SENT", message: "A reminder was already sent to this company. We send at most one reminder — no further follow-ups." };
+  const first = sent[0];
+  if (!first) return { ok: false, code: "NO_INITIAL_EMAIL", message: "No earlier email to this company was sent from the Email Sender. Send a first email instead of a reminder." };
+  if (stagesFrom("REPLIED").includes(company.lead?.stage ?? "NEW")) return { ok: false, code: "ALREADY_REPLIED", message: "This company has already replied — continue the conversation instead of sending a reminder." };
+  const minDays = reminderMinDays();
+  const days = (Date.now() - (first.sentAt ?? first.createdAt).getTime()) / 86_400_000;
+  if (days < minDays) return { ok: false, code: "REMINDER_TOO_EARLY", message: `The first email was sent ${Math.floor(days)} day${Math.floor(days) === 1 ? "" : "s"} ago. Wait at least ${minDays} days before the one polite reminder.` };
+  return { ok: true };
+}
 
 /** A company the Owner emails from Company Intelligence must exist, be real data and not be protected from marketing. */
 async function companyForSend(id: string) {
-  const company = await Company.findById(parseObjectId(id)).select("countryCode marketingProtected isDemo lead.stage").lean<SendCompany>();
-  if (!company) throw Errors.notFound("Company not found.");
+  const company = await loadCompany(id);
   if (company.isDemo) throw Errors.badRequest("This is a demo company — its contact details are not real, so no email was sent.", { code: "DEMO_COMPANY" });
   if (company.marketingProtected) throw Errors.badRequest("The registry marks this company as protected from marketing. The email was not sent.", { code: "MARKETING_PROTECTED" });
   if (company.lead?.stage === "DO_NOT_CONTACT") throw Errors.badRequest("This company is marked Do not contact. The email was not sent.", { code: "DO_NOT_CONTACT" });
@@ -151,7 +269,7 @@ async function companyForSend(id: string) {
  * early-stage lead moves to Contacted, and an EMAIL activity on the company timeline.
  * Runs after the provider accepted the email, so a tracking failure never invites a re-send.
  */
-async function recordCompanyContact(actor: Actor, company: SendCompany, mode: "TEMPLATE" | "CUSTOM", subject: string, messageId: string) {
+async function recordCompanyContact(actor: Actor, company: SendCompany, mode: "TEMPLATE" | "CUSTOM", label: string, subject: string, messageId: string) {
   const now = new Date();
   const stage = company.lead?.stage ?? "NEW";
   const early = NOT_CONTACTED_STAGES.includes(stage);
@@ -161,7 +279,7 @@ async function recordCompanyContact(actor: Actor, company: SendCompany, mode: "T
       companyId: company._id,
       countryCode: company.countryCode,
       type: "EMAIL",
-      body: `Email sent (${mode === "TEMPLATE" ? "default template" : "custom email"}): ${subject}`,
+      body: `Email sent (${label}): ${subject}`,
       meta: { emailMessageId: messageId, mode },
       actorId: actor.id,
     });
@@ -187,6 +305,14 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
   }
 
   const company = data.companyId ? await companyForSend(data.companyId) : null;
+  const resolved = await contentFor(data, company);
+
+  // The single polite reminder: only for a company, only once, only after the waiting period.
+  if (resolved.step === "REMINDER") {
+    if (!company) throw Errors.badRequest("A reminder can only be sent from Company Intelligence, to a company that was emailed before.", { code: "REMINDER_NEEDS_COMPANY" });
+    const check = await reminderCheck(company);
+    if (!check.ok) throw Errors.badRequest(check.message, { code: check.code });
+  }
 
   const status = getSenderStatus(actor);
   if (!status.configured) throw Errors.badRequest(`Email delivery is not set up: ${status.problems.join(" ")}`, { code: "NOT_CONFIGURED" });
@@ -212,7 +338,7 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
     }
   }
 
-  const content = contentFor(data);
+  const content = resolved.content;
   const rendered = renderEmail(content, { unsubscribeUrl: unsubscribeUrl(to), signature: signatureFor(settings) });
 
   // Lock first (unique idempotency key), then hand to the provider.
@@ -226,9 +352,12 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
       from: settings.from,
       subject: rendered.subject,
       // Bodies are not stored: only which template, or the size of a custom message.
-      body: data.mode === "TEMPLATE" ? `[template ${DEFAULT_TEMPLATE.id}]` : `[custom message, ${content.body.length} characters — content not stored]`,
+      body: data.mode === "TEMPLATE" ? `[template ${resolved.ref}]` : `[custom message, ${content.body.length} characters — content not stored]`,
       status: "SENDING",
       idempotencyKey: data.idempotencyKey,
+      ...(resolved.ref && { outreachTemplate: resolved.ref }),
+      outreachStep: resolved.step ?? "INITIAL",
+      locale: content.locale ?? "en",
       createdBy: new Types.ObjectId(actor.id),
       compliance: { checkedAt: new Date(), suppressed: false },
       expiresAt: new Date(Date.now() + settings.retentionDays * 86_400_000),
@@ -253,7 +382,8 @@ export async function sendEmail(actor: Actor | null, input: unknown): Promise<Se
     await EmailMessage.updateOne({ _id: record._id }, { $set: { status: "SENT", sentAt: new Date(), provider: provider.id, providerMessageId: result.id, simulated: !provider.isLive } });
     await audit(actor, "email_sender.sent", { entityType: "EmailMessage", entityId: String(record._id), metadata: { mode: data.mode, recipientDomain: to.split("@")[1], provider: provider.id, ...(company && { companyId: String(company._id) }) } });
     console.info(`[email-sender] accepted by ${provider.id} (record ${String(record._id)})`);
-    const tracked = company ? await recordCompanyContact(actor, company, data.mode, rendered.subject, String(record._id)) : undefined;
+    const label = data.mode === "CUSTOM" ? "custom email" : resolved.templateId === "general" ? "default template" : `${OUTREACH_TEMPLATE_LABELS[resolved.templateId!].toLowerCase()} template`;
+    const tracked = company ? await recordCompanyContact(actor, company, data.mode, label, rendered.subject, String(record._id)) : undefined;
     return { id: String(record._id), status: "SENT", accepted: true, provider: provider.id, providerMessageId: result.id, ...(tracked && { company: tracked }) };
   } catch (err) {
     const unknown = !(err instanceof EmailProviderError) || err.outcome === "unknown";
@@ -282,7 +412,7 @@ export async function listSentEmails(actor: Actor | null, opts: { page?: number 
   const page = Math.max(1, opts.page ?? 1);
   const filter = { kind: "DIRECT" as const };
   const [items, total] = await Promise.all([
-    EmailMessage.find(filter).sort({ createdAt: -1 }).skip((page - 1) * 25).limit(25).select("to mode subject status provider providerMessageId error createdBy createdAt sentAt").populate("createdBy", "name").lean<EmailMessageDoc[]>(),
+    EmailMessage.find(filter).sort({ createdAt: -1 }).skip((page - 1) * 25).limit(25).select("to mode outreachTemplate outreachStep locale subject status provider providerMessageId error createdBy createdAt sentAt").populate("createdBy", "name").lean<EmailMessageDoc[]>(),
     EmailMessage.countDocuments(filter),
   ]);
   return { items, total, page, pageCount: Math.max(1, Math.ceil(total / 25)) };

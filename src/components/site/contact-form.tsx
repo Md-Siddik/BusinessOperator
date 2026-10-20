@@ -26,10 +26,24 @@ function EngagementFromUrl({ onChange }: { onChange: (value: string) => void }) 
   return null;
 }
 
+/** Preselects "What do you need?" from ?need=… and remembers the landing page (?service=…). */
+function NeedFromUrl({ onChange, onService }: { onChange: (value: string) => void; onService: (slug: string) => void }) {
+  const params = useSearchParams();
+  const value = params.get("need");
+  const service = params.get("service");
+  useEffect(() => {
+    if (value && (NEEDS as readonly string[]).includes(value)) onChange(value);
+    if (service && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(service)) onService(service);
+  }, [value, service, onChange, onService]);
+  return null;
+}
+
 export function ContactForm({ locale, messages }: { locale: string; messages: Messages }) {
   const { t } = createTranslator(messages);
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [engagement, setEngagement] = useState("");
+  const [need, setNeed] = useState("");
+  const [service, setService] = useState("");
   const [error, setError] = useState<string>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const regionNames = typeof Intl !== "undefined" && "DisplayNames" in Intl ? new Intl.DisplayNames([locale === "no" ? "nb" : locale], { type: "region" }) : null;
@@ -111,7 +125,7 @@ export function ContactForm({ locale, messages }: { locale: string; messages: Me
         </Field>
         <Field label={t("contact.form.need")} error={fieldErrors.need}>
           {(p) => (
-            <Select {...p} name="need" defaultValue="">
+            <Select {...p} name="need" value={need} onChange={(e) => setNeed(e.target.value)}>
               <option value="">{t("contact.form.select")}</option>
               {NEEDS.map((n) => (
                 <option key={n} value={n}>
@@ -136,7 +150,9 @@ export function ContactForm({ locale, messages }: { locale: string; messages: Me
       </div>
       <Suspense fallback={null}>
         <EngagementFromUrl onChange={setEngagement} />
+        <NeedFromUrl onChange={setNeed} onService={setService} />
       </Suspense>
+      {service && <input type="hidden" name="service" value={service} />}
       <Field label={t("contact.form.message")} error={fieldErrors.message}>
         {(p) => <Textarea {...p} name="message" rows={5} required />}
       </Field>

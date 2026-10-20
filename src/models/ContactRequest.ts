@@ -20,6 +20,8 @@ const contactRequestSchema = new Schema(
     budget: String,
     ongoingSupport: String,
     interestedServices: { type: [String], default: [] },
+    /** Landing page the visitor came from (/services/<slug>), when known. */
+    serviceSlug: String,
     locale: String,
     status: { type: String, enum: CONTACT_REQUEST_STATUSES, default: "NEW" },
     assignedTo: { type: ObjectId, ref: "User" },

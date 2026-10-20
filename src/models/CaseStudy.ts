@@ -26,6 +26,12 @@ const caseStudySchema = new Schema(
     services: { type: [String], default: [] },
     technologies: { type: [String], default: [] },
     images: { type: [String], default: [] },
+    /** Public link to the live project (https). */
+    projectUrl: String,
+    /** Card / poster image (https). */
+    thumbnailUrl: String,
+    /** Walkthrough video: YouTube, Vimeo or a direct .mp4/.webm file (https). See src/lib/media.ts. */
+    videoUrl: String,
     testimonialAuthor: String,
     /** Base (English) content plus optional per-locale overrides. */
     content: { type: localizedCaseSchema, required: true },

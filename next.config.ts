@@ -6,8 +6,12 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // Portfolio thumbnails may be hosted elsewhere (https only).
+  "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
+  // Portfolio walkthrough videos: only the privacy-enhanced YouTube and Vimeo players (src/lib/media.ts).
+  "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
+  "media-src 'self' https:",
   "connect-src 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",

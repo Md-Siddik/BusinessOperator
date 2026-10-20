@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
 import { can, type Actor } from "@/lib/permissions";
 import { emailSchema, isoCountrySchema, optionalPhone, optionalUrl, paginate, parseObjectId } from "@/lib/validation";
+import { isHttpsUrl, videoEmbed } from "@/lib/media";
 import { connectToDatabase, isDatabaseConfigured } from "@/lib/db/connect";
 import { notifyInternal } from "@/features/notifications/service";
 
@@ -32,15 +33,21 @@ export const contactRequestSchema = z.object({
   budget: z.string().max(40).optional(),
   ongoingSupport: z.enum(["yes", "no", "maybe"]).optional().or(z.literal("").transform(() => undefined)),
   interestedServices: z.array(z.string().refine((s) => SERVICE_ITEM_KEYS.includes(s))).max(20).default([]),
+  /** Landing page slug (from ?service=…); kept only when it looks like a slug. */
+  service: z
+    .string()
+    .max(80)
+    .optional()
+    .transform((v) => (v && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v) ? v : undefined)),
   locale: z.enum(LANGUAGE_CODES as [string, ...string[]]).default("en"),
   /** Honeypot — bots fill it, humans never see it. */
   website2: z.string().max(0).optional(),
 });
 
 export async function submitContactRequest(input: unknown) {
-  const { country, website2: _hp, ...data } = contactRequestSchema.parse(input);
+  const { country, website2: _hp, service, ...data } = contactRequestSchema.parse(input);
   void _hp;
-  const doc = await ContactRequest.create({ ...data, countryCode: country });
+  const doc = await ContactRequest.create({ ...data, countryCode: country, serviceSlug: service });
   await notifyInternal("clients.manage", {
     type: "CLIENT_REQUEST",
     title: `New enquiry: ${data.company || data.name}`,
@@ -80,6 +87,15 @@ const localizedSchema = z.object({
   testimonial: z.string().trim().max(1000).optional(),
 });
 
+/** Optional https URL; an empty form field clears the value. */
+const httpsUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .optional()
+  .transform((v) => v || undefined)
+  .refine((v) => !v || isHttpsUrl(v), "Use a full https:// address");
+
 export const caseStudySchema = z.object({
   slug: z.string().trim().regex(/^[a-z0-9-]{3,80}$/, "Lowercase letters, numbers and dashes"),
   clientName: z.string().trim().min(2).max(120),
@@ -88,6 +104,9 @@ export const caseStudySchema = z.object({
   services: z.array(z.string()).max(20).default([]),
   technologies: z.array(z.string().max(60)).max(20).default([]),
   testimonialAuthor: z.string().max(120).optional(),
+  projectUrl: httpsUrl,
+  thumbnailUrl: httpsUrl,
+  videoUrl: httpsUrl.refine((v) => !v || !!videoEmbed(v), "Use a YouTube or Vimeo link, or a direct .mp4 / .webm file"),
   content: localizedSchema,
   isExample: z.boolean().default(false),
   published: z.boolean().default(false),
@@ -102,6 +121,9 @@ export type PublicCaseStudy = {
   technologies: string[];
   testimonialAuthor?: string | null;
   isExample: boolean;
+  projectUrl?: string | null;
+  thumbnailUrl?: string | null;
+  videoUrl?: string | null;
   title: string;
   summary?: string | null;
   challenge?: string | null;
@@ -122,6 +144,10 @@ function localize(cs: CaseStudyDoc, locale: string): PublicCaseStudy {
     technologies: cs.technologies,
     testimonialAuthor: cs.testimonialAuthor,
     isExample: cs.isExample,
+    // Only safe https URLs reach the public page (older records may predate validation).
+    projectUrl: isHttpsUrl(cs.projectUrl) ? cs.projectUrl : null,
+    thumbnailUrl: isHttpsUrl(cs.thumbnailUrl) ? cs.thumbnailUrl : null,
+    videoUrl: videoEmbed(cs.videoUrl) ? cs.videoUrl : null,
     title: tr?.title || base.title || cs.clientName,
     summary: tr?.summary || base.summary,
     challenge: tr?.challenge || base.challenge,
@@ -143,6 +169,12 @@ export async function listPublishedCaseStudies(locale: string): Promise<PublicCa
   }
 }
 
+/** Published case studies that used any of the given services (a landing page's examples). */
+export async function listCaseStudiesForServices(services: string[], locale: string, limit = 3) {
+  const all = await listPublishedCaseStudies(locale);
+  return all.filter((c) => c.services.some((s) => services.includes(s))).slice(0, limit);
+}
+
 export async function getPublishedCaseStudy(slug: string, locale: string) {
   if (!isDatabaseConfigured()) return null;
   await connectToDatabase();
@@ -158,8 +190,13 @@ export async function listCaseStudiesAdmin(actor: Actor) {
 export async function saveCaseStudy(actor: Actor, id: string | null, input: unknown) {
   if (!can(actor, "content.manage")) throw Errors.forbidden();
   const data = caseStudySchema.parse(input);
+  // An emptied media field removes the stored URL instead of silently keeping it.
+  const cleared = (["projectUrl", "thumbnailUrl", "videoUrl"] as const).filter((k) => !data[k]);
+  const unset = Object.fromEntries(cleared.map((k) => [k, 1]));
+  const set: Record<string, unknown> = { ...data };
+  for (const k of cleared) delete set[k];
   const doc = id
-    ? await CaseStudy.findByIdAndUpdate(parseObjectId(id), { $set: data }, { new: true }).lean<CaseStudyDoc>()
+    ? await CaseStudy.findByIdAndUpdate(parseObjectId(id), { $set: set, ...(cleared.length && { $unset: unset }) }, { new: true }).lean<CaseStudyDoc>()
     : (await CaseStudy.create({ ...data, createdBy: actor.id })).toObject();
   if (!doc) throw Errors.notFound();
   await audit(actor, id ? "content.case_study_updated" : "content.case_study_created", { entityType: "CaseStudy", entityId: String(doc._id) });
