@@ -138,7 +138,7 @@ export function startCompaniesHouseStream() {
         if (r === "gap") {
           // Timepoint too old: recover missed registrations via REST, then resume from live.
           state.lastError = "Stream timepoint too old (416) — gap recovered via REST advanced search";
-          await syncCountry("GB", { trigger: "SCHEDULED", notify: false }).catch((e) => (state.lastError = `Gap recovery failed: ${e instanceof Error ? e.message : String(e)}`));
+          await syncCountry("GB", { trigger: "SCHEDULED" }).catch((e) => (state.lastError = `Gap recovery failed: ${e instanceof Error ? e.message : String(e)}`));
           await Checkpoint.deleteOne({ key: CHECKPOINT });
         }
         if (r === "throttled") state.lastError = "Stream throttled (429) — waiting one minute";

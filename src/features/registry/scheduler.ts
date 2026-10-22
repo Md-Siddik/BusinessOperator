@@ -3,6 +3,7 @@ import "server-only";
 /**
  * In-process workers for single-instance deployments (and `npm run dev`):
  *   fast tick (default 30 s): live change feeds (each source's own interval, e.g. 60 s)
+ *                             + new-email check of the Zoho inbox (MAILBOX_POLL_MS, default 60 s)
  *                             + durable job queue (contact research, retries)
  *   slow tick (default 5 min): due day/backfill syncs, latest-publication checks,
  *                              research backfill scheduling, follow-up reminders
@@ -35,6 +36,13 @@ export async function fastTick(log: (m: string) => void = (m) => console.info(`[
   const { processDueJobs } = await import("@/features/jobs/queue");
   const jobs = await processDueJobs({ concurrency: Number(process.env.RESEARCH_CONCURRENCY || 2), budgetMs: Math.max(10_000, FAST_MS - 5_000) });
   if (jobs.processed || jobs.failed) log(`jobs: ${jobs.processed} done, ${jobs.failed} failed`);
+  // Owner's Zoho inbox → CLIENT_EMAIL notifications (throttled by MAILBOX_POLL_MS). Isolated from registry work.
+  try {
+    const { pollMailbox } = await import("@/features/mailbox/service");
+    await pollMailbox((m) => log(`mailbox: ${m}`));
+  } catch (err) {
+    log(`mailbox: check failed — ${err instanceof Error ? err.message : String(err)}`);
+  }
   return { feeds, jobs };
 }
 

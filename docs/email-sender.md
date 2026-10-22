@@ -177,3 +177,16 @@ Trade-off: a banner, hero and button are typical of marketing mail, so Gmail is 
 - One recipient per send. No bulk mailing or campaigns here; that's the reviewed Outreach workflow.
 - Delivery, bounce and open events aren't tracked, since no provider webhooks are integrated.
 - In-memory rate limits apply per server instance. On multi-instance hosting, the daily limit and cooldown, which are database-backed, remain global.
+
+## Client Mail (reading the inbox)
+
+`/dashboard/mailbox` (Owner only) shows the Zoho inbox of `ZOHO_SMTP_USER`, read live over IMAP —
+nothing is copied into the database. Opening an email marks it read in Zoho. Senders are matched to
+client accounts, registry companies and website enquiries by email address.
+
+- Turn on IMAP in Zoho Mail → Settings → Mail Accounts → IMAP Access.
+- The SMTP credentials are reused; set `ZOHO_IMAP_*` only if they differ. The host defaults to
+  `ZOHO_SMTP_HOST` with `smtp` replaced by `imap` (e.g. `imap.zoho.eu`, `imappro.zoho.com`).
+- The worker checks for new mail every `MAILBOX_POLL_MS` (default 60 s) and raises a
+  `CLIENT_EMAIL` notification for the Owner. The first check only records the position, so
+  existing mail does not produce notifications. `MAILBOX_POLL=off` disables the check.

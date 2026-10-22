@@ -208,13 +208,25 @@ describe("Fixed template", () => {
     expect(Object.keys(m.headers ?? {}).sort()).toEqual(["List-Unsubscribe", "List-Unsubscribe-Post"]);
     const rec = await EmailMessage.findById(res.id).lean<EmailMessageDoc>();
     expect(rec).toMatchObject({ kind: "DIRECT", mode: "TEMPLATE", status: "SENT", provider: "test-provider", providerMessageId: "msg-1" });
-    expect(rec?.body).toBe("[template default-v7]");
+    expect(rec?.body).toBe("[template default-v8]");
     expect(rec?.deliveredAt ?? null).toBeNull();
   });
 
   it("invalid recipients are rejected before anything is sent", async () => {
     for (const to of ["not-an-email", "a@b", "", "x@example.test\nBcc: victim@example.test"]) await expectRejects(service.sendEmail(t.owner.actor, { mode: "TEMPLATE", to, idempotencyKey: key() }), 400);
     expect(sent).toHaveLength(0);
+  });
+});
+
+describe("Website analytics link", () => {
+  it("tags the button link with the campaign (never the recipient) so Website Analytics can credit outreach", async () => {
+    const preview = await service.previewEmail(t.owner.actor, { mode: "TEMPLATE", templateId: "general", locale: "en" });
+    expect(preview.html).toContain("https://exploretechify.com/?utm_source=email&amp;utm_medium=outreach&amp;utm_campaign=outreach-general");
+    expect(preview.text).toContain("See How We Can Help: https://exploretechify.com/?utm_source=email&utm_medium=outreach&utm_campaign=outreach-general");
+    expect(preview.html).not.toMatch(/utm_[a-z]+=[^&"]*@/);
+    const custom = await service.previewEmail(t.owner.actor, { mode: "CUSTOM", subject: "Hello", body: "Hi,\n\nSee https://exploretechify.com/services", includeCta: true });
+    expect(custom.html).toContain("utm_campaign=outreach-custom");
+    expect(custom.html).toContain('<a href="https://exploretechify.com/services"');
   });
 });
 

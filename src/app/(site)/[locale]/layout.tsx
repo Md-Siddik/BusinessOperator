@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { getPublicContext } from "@/features/site/context";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { DEFAULT_CHAT_LABELS, type ChatWidgetLabels } from "@/components/chat/chat-widget-labels";
+import { SiteAnalytics } from "@/components/site/site-analytics";
 
 export const revalidate = 300;
 export const dynamicParams = false;
@@ -39,6 +40,8 @@ export default async function LocaleRootLayout({ children, params }: { children:
         {children}
         {/* Bottom-right live chat — messaging requires a client account (signup or login). */}
         <ChatWidget labels={chatLabels} signupHref={localizedPath(locale, "/signup")} loginHref={localizedPath(locale, "/login")} />
+        {/* Consent banner + page-view beacon (Owner-only Website Analytics). Never blocks rendering. */}
+        <SiteAnalytics labels={{ title: t("cookieConsent.title"), text: t("cookieConsent.text"), accept: t("cookieConsent.accept"), decline: t("cookieConsent.decline") }} />
       </body>
     </html>
   );

@@ -185,9 +185,9 @@ describe("Latvia — UR open data", () => {
   });
 
   it("persists real records under the country, and a repeated sync creates no duplicates", async () => {
-    const first = await syncDate("LV", LV_TODAY, { trigger: "MANUAL", notify: false });
+    const first = await syncDate("LV", LV_TODAY, { trigger: "MANUAL" });
     expect(first).toMatchObject({ status: "SUCCESS", fetched: 1, imported: 1 });
-    const again = await syncDate("LV", LV_TODAY, { trigger: "MANUAL", notify: false });
+    const again = await syncDate("LV", LV_TODAY, { trigger: "MANUAL" });
     expect(again.imported).toBe(0);
     const docs = await Company.find({ countryCode: "LV" }).lean<CompanyDoc[]>();
     expect(docs).toHaveLength(1);
@@ -245,10 +245,10 @@ describe("Estonia — RIK open data", () => {
   it("a failing Estonian source fails only the Estonian sync", async () => {
     await Company.create({ companyName: "Protected Norway AS", countryCode: "NO", source: "brreg", sourceId: "999000111", registrationDay: EE_TODAY });
     fx.eeFail = true;
-    const ee = await syncDate("EE", EE_TODAY, { trigger: "MANUAL", notify: false });
+    const ee = await syncDate("EE", EE_TODAY, { trigger: "MANUAL" });
     expect(ee.status).toBe("FAILED");
     fx.eeFail = false;
-    const lv = await syncDate("LV", LV_YESTERDAY, { trigger: "MANUAL", notify: false });
+    const lv = await syncDate("LV", LV_YESTERDAY, { trigger: "MANUAL" });
     expect(lv.status).toBe("SUCCESS");
     expect(await Company.countDocuments({ countryCode: "EE" })).toBe(0);
     expect(await Company.countDocuments({ countryCode: "NO", source: "brreg" })).toBe(1);
@@ -284,7 +284,7 @@ describe("Switzerland — SHAB HR01", () => {
   });
 
   it("rebuilds the daily count of the earlier registration day it filled", async () => {
-    const r = await syncDate("CH", CH_TODAY, { trigger: "MANUAL", notify: false });
+    const r = await syncDate("CH", CH_TODAY, { trigger: "MANUAL" });
     expect(r).toMatchObject({ status: "SUCCESS", imported: 2 });
     expect(await Company.countDocuments({ countryCode: "CH", registrationDay: CH_JOURNAL })).toBe(2);
     const snap = await DailyRegistrationSnapshot.findOne({ countryCode: "CH", date: CH_JOURNAL, isDemo: false }).lean<{ newCompanies: number }>();
@@ -292,6 +292,6 @@ describe("Switzerland — SHAB HR01", () => {
   });
 
   it("rejects future dates like every other provider", async () => {
-    await expectRejects(syncDate("CH", addDays(CH_TODAY, 2), { trigger: "MANUAL", notify: false }), 400);
+    await expectRejects(syncDate("CH", addDays(CH_TODAY, 2), { trigger: "MANUAL" }), 400);
   });
 });

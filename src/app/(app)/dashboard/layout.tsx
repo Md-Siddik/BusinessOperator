@@ -60,7 +60,15 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     };
   }
 
-  const groups: NavGroup[] = [{ items: [{ href: "/dashboard/overview", label: "Overview", icon: "overview" }] }];
+  const groups: NavGroup[] = [
+    {
+      items: [
+        { href: "/dashboard/overview", label: "Overview", icon: "overview" },
+        // Owner-only (proxy, page, API routes and service enforce OWNER server-side too).
+        ...(isOwner(actor) ? [{ href: "/dashboard/website-analytics", label: "Website Analytics", icon: "traffic" }] : []),
+      ],
+    },
+  ];
   if (canIntel) {
     groups.push({
       title: "Company Intelligence",
@@ -134,6 +142,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     items: [
       { href: "/dashboard/clients", label: "Clients", icon: "clients" },
       { href: "/dashboard/messages", label: "Messages", icon: "messages", badge: "messages" },
+      // Owner-only: the Zoho inbox (ZOHO_SMTP_USER) read over IMAP; page and service enforce OWNER too.
+      ...(isOwner(actor) ? [{ href: "/dashboard/mailbox", label: "Client Mail", icon: "mailbox" }] : []),
       { href: "/dashboard/projects", label: "Projects", icon: "projects" },
       { href: "/dashboard/tickets", label: "Tickets", icon: "tickets" },
       { href: "/dashboard/services", label: "Services", icon: "services", exact: true },

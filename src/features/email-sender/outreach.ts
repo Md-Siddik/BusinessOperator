@@ -110,6 +110,7 @@ const BUILDERS: Record<OutreachTemplateId, (locale: EmailLocale, ctx: OutreachCo
               "- **Få henvendelser**: Enkle veier til forespørsel, samtale eller bestilling.",
               "- **Vokse videre**: Løpende forbedringer etter hvert som bedriften utvikler seg.",
             ].join("\n"),
+            "Nettsiden er ofte starten. Ved behov kan vi også ta oss av mer av den digitale siden, som synlighet i søk, CRM, automatisering og teknisk støtte, slik at du kan konsentrere deg om å drive bedriften.",
             "Vi kan også bli med etter lanseringen – månedlig, som et avgrenset prosjekt eller, for utvalgte bedrifter, som et langsiktig samarbeid.",
             "Er dette relevant, kan du bare svare på denne e-posten. Vi hører gjerne om bedriften din.",
           ].join("\n\n"),

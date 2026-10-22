@@ -140,12 +140,15 @@ export const NOTIFICATION_TYPES = [
   "CLIENT_SIGNUP",
   "CLIENT_REQUEST",
   "CHAT_MESSAGE",
+  "CLIENT_EMAIL",
   "SYNC_COMPLETED",
   "SYNC_FAILED",
   "SYSTEM",
   "ACCOUNT",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+/** Routine background events — never raised as notifications and hidden from older stored ones. */
+export const QUIET_NOTIFICATION_TYPES: NotificationType[] = ["SYNC_COMPLETED", "SYNC_FAILED"];
 
 export const SYNC_STATUSES = ["RUNNING", "SUCCESS", "PARTIAL", "FAILED"] as const;
 export type SyncStatus = (typeof SYNC_STATUSES)[number];

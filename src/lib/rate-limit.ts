@@ -18,6 +18,8 @@ export const RATE_LIMITS = {
   message: { bucket: "message", limit: 60, windowMs: 60_000 },
   upload: { bucket: "upload", limit: 30, windowMs: 10 * 60_000 },
   audit: { bucket: "website-audit", limit: 30, windowMs: 60 * 60_000 },
+  /** Website analytics beacons (page views and pings) per IP. */
+  track: { bucket: "track", limit: 240, windowMs: 60_000 },
 } satisfies Record<string, RateLimitRule>;
 
 export function checkRateLimit(rule: RateLimitRule, key: string) {

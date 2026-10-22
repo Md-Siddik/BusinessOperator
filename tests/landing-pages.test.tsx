@@ -11,6 +11,7 @@ import { CaseStudy } from "@/models";
 import { deliveryText, ServiceCardsGrid, ServiceLanding, servicePrice } from "@/components/site/service-landing";
 import { VideoShowcase } from "@/components/site/portfolio";
 import { EngagementModels } from "@/components/site/engagement-models";
+import { DigitalSideSection } from "@/components/site/digital-side";
 import { expectRejects, makeTenants } from "./helpers";
 
 /**
@@ -99,6 +100,25 @@ describe("Service landing pages", () => {
     for (const p of SERVICE_PAGES) expect(html).toContain(`href="/services/${p.slug}"`);
     expect(html).toContain("You run the physical business. We help run the digital side.");
     expect(renderToStaticMarkup(<ServiceCardsGrid services={[]} locale="en" t={tr("en").t} />)).toBe("");
+  });
+});
+
+describe("Digital side section", () => {
+  it("keeps the exact headline, links to real pages and presents ONE offering, not a service list", () => {
+    const { t: en, list } = tr("en");
+    const html = renderToStaticMarkup(<DigitalSideSection locale="en" t={en} list={list} />);
+    expect(html).toContain("You run the business.</span> <span");
+    expect(html).toContain("We run the digital side.");
+    expect(html).toContain('href="/contact"');
+    expect(html).toContain('href="/services"');
+    expect(html).toContain("You stay in charge of your business and its decisions.");
+    expect(html.match(/<h3/g)).toHaveLength(1);
+    expect(html).toContain("Your digital department");
+    for (const s of ["SEO", "CRM", "Automation", "Recruitment", "Digital marketing"]) expect(html).not.toContain(s);
+    // An illustration of scope only: no promises, numbers or invented activity in the visible text.
+    expect(html.replace(/<[^>]+>|&[#\w]+;/g, " ")).not.toMatch(/guarantee|10x|%|\d/i);
+    const no = tr("no");
+    expect(renderToStaticMarkup(<DigitalSideSection locale="no" t={no.t} list={no.list} />)).toContain('href="/no/contact"');
   });
 });
 

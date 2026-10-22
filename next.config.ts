@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   agentRules: false,
   // Server-only packages kept out of the bundle.
-  serverExternalPackages: ["mongoose", "mongodb-memory-server", "bcryptjs"],
+  serverExternalPackages: ["mongoose", "mongodb-memory-server", "bcryptjs", "imapflow", "mailparser"],
   // Two root layouts (localized public site + app) → a global 404 for unmatched URLs.
   experimental: { globalNotFound: true },
   async headers() {

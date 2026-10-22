@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { Notification, User, type NotificationDoc } from "@/models";
-import type { NotificationType } from "@/lib/constants";
+import { QUIET_NOTIFICATION_TYPES, type NotificationType } from "@/lib/constants";
 import { channels, getRealtime } from "@/lib/realtime";
 import { effectivePermissions, type Actor, type Permission, type Role } from "@/lib/permissions";
 import { paginate } from "@/lib/validation";
@@ -15,8 +15,11 @@ export type NotifyInput = {
   groupKey?: string;
 };
 
+/** Excludes routine sync events stored before they stopped being raised. */
+const VISIBLE = { type: { $nin: QUIET_NOTIFICATION_TYPES } };
+
 export async function unreadNotificationCount(userId: string) {
-  return Notification.countDocuments({ userId, readAt: null });
+  return Notification.countDocuments({ userId, readAt: null, ...VISIBLE });
 }
 
 async function pushCount(userId: string, notification?: unknown) {
@@ -25,6 +28,7 @@ async function pushCount(userId: string, notification?: unknown) {
 }
 
 export async function notifyUsers(userIds: string[], input: NotifyInput) {
+  if (QUIET_NOTIFICATION_TYPES.includes(input.type)) return;
   const unique = [...new Set(userIds.filter(Boolean))];
   await Promise.all(
     unique.map(async (userId) => {
@@ -59,7 +63,7 @@ export async function notifyInternal(permission: Permission, input: NotifyInput,
 export async function listNotifications(actor: Actor, opts: { page?: number; pageSize?: number; unreadOnly?: boolean } = {}) {
   const page = opts.page ?? 1;
   const pageSize = opts.pageSize ?? 20;
-  const filter: Record<string, unknown> = { userId: actor.id };
+  const filter: Record<string, unknown> = { userId: actor.id, ...VISIBLE };
   if (opts.unreadOnly) filter.readAt = null;
   const [items, total, unread] = await Promise.all([
     Notification.find(filter).sort({ updatedAt: -1 }).skip((page - 1) * pageSize).limit(pageSize).lean<NotificationDoc[]>(),

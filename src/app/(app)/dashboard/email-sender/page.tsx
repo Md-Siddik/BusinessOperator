@@ -8,6 +8,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { PageHeader, Pagination } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback";
 import { EmailSender } from "@/components/email-sender/email-sender";
+import { DeleteSentEmail } from "@/components/email-sender/delete-sent-email";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = ownerMetadata("Email Sender");
@@ -54,6 +55,7 @@ export default async function EmailSenderPage({ searchParams }: { searchParams: 
                   <th className="px-4 py-2.5">Subject</th>
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Sent</th>
+                  <th className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-100">
@@ -77,6 +79,7 @@ export default async function EmailSenderPage({ searchParams }: { searchParams: 
                         {m.providerMessageId && <span className="mt-0.5 block font-mono text-[11px] text-ink-400">{m.provider} · {m.providerMessageId}</span>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-ink-600">{formatDateTime(m.createdAt)}</td>
+                      <td className="px-4 py-2.5 text-right">{m.status !== "SENDING" && <DeleteSentEmail id={String(m._id)} />}</td>
                     </tr>
                   );
                 })}

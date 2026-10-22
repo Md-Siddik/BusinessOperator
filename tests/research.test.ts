@@ -239,7 +239,7 @@ describe("Ingestion edge cases", () => {
   it("incomplete pagination is reported, never presented as a complete day", async () => {
     registerTestProvider({ ...provider, id: "fixture-partial", countryCode: "IE", async getRegistrations() { return { companies: [rec("990001", todayIn("Europe/Dublin"))], total: 3, complete: false }; } });
     await Country.updateOne({ code: "IE" }, { $set: { providerId: "fixture-partial" } });
-    const r = await syncToday("IE", { trigger: "MANUAL", notify: false });
+    const r = await syncToday("IE", { trigger: "MANUAL" });
     expect(r.status).toBe("PARTIAL");
     expect(r.complete).toBe(false);
     const o = await getRegistrationOverview(t.owner.actor, "IE", "today");

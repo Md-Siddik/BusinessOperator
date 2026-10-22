@@ -7,7 +7,6 @@ import { Errors } from "@/lib/errors";
 import { contactQuality } from "@/lib/company-fields";
 import { addDays, daysBetween, eachDay, todayIn, type Day } from "@/lib/dates/country-time";
 import type { Actor } from "@/lib/permissions";
-import { notifyInternal } from "@/features/notifications/service";
 import { rescoreCompanies } from "@/features/companies/service";
 import { getRegistryProvider } from "./providers";
 import { mapLimit } from "./http";
@@ -42,7 +41,6 @@ export type SyncRequest = {
   to?: Day;
   trigger: "MANUAL" | "SCHEDULED" | "SEED";
   actor?: Actor | null;
-  notify?: boolean;
 };
 
 export type SyncResult = {
@@ -229,21 +227,6 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
     countryCode: code,
     metadata: { provider: p.provider.id, trigger: req.trigger, kind: p.kind, from: p.from, to: p.to, fetched, imported, updated, skipped, failed, status },
   });
-
-  if (req.notify !== false) {
-    const name = getCountry(code)?.name ?? code;
-    if (status === "FAILED") {
-      await notifyInternal("registry.sync", { type: "SYNC_FAILED", title: `${name} registry sync failed`, body: errors[0], link: `/dashboard/sources`, groupKey: `sync-failed:${code}` });
-    } else if (imported > 0) {
-      await notifyInternal("companies.read", {
-        type: "SYNC_COMPLETED",
-        title: `${imported} new ${name} compan${imported === 1 ? "y" : "ies"} imported`,
-        body: `${p.provider.sourceName} · ${p.from === p.to ? p.from : `${p.from} → ${p.to}`}`,
-        link: `/dashboard/companies/${code.toLowerCase()}`,
-        groupKey: `sync:${code}`,
-      });
-    }
-  }
 
   return { id: syncId, status, countryCode: code, from: p.from, to: p.to, fetched, imported, updated, skipped, failed, peopleFetched, durationMs, complete, sourceTotal, errors };
 }
