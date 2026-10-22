@@ -9,10 +9,13 @@ import { defineModel, ObjectId, type Id } from "./_helpers";
  *   the contact form.
  * - WebSession: one visit (ends after 30 minutes of inactivity).
  * - WebPageView: one page view. Without consent it carries no visitor/session at all.
+ * Location is coarse (country, region, city); IP addresses are never stored.
  *
  * Every document carries `expireAt` (the retention period at write time) with a TTL index.
  */
 const utmSchema = new Schema({ source: String, medium: String, campaign: String, term: String, content: String }, { _id: false });
+/** Coarse location from hosting headers or a local GeoIP lookup — the IP address itself is never stored. */
+const geoSchema = new Schema({ country: String, region: String, city: String }, { _id: false });
 
 const webVisitorSchema = new Schema(
   {
@@ -28,6 +31,9 @@ const webVisitorSchema = new Schema(
     firstReferrerDomain: String,
     firstUtm: utmSchema,
     firstLandingPage: String,
+    /** Last known location and browser time zone. */
+    geo: geoSchema,
+    timeZone: String,
     /** Set only through login (CLIENT accounts; the internal team is never tracked). */
     userId: { type: ObjectId, ref: "User" },
     userRole: String,
@@ -55,6 +61,9 @@ const webSessionSchema = new Schema(
     referrer: String,
     referrerDomain: String,
     utm: utmSchema,
+    geo: geoSchema,
+    /** The visitor's browser time zone, to show the visit in their local time. */
+    timeZone: String,
     userId: { type: ObjectId, ref: "User" },
     enquiries: { type: Number, default: 0 },
     expireAt: { type: Date, required: true },
@@ -83,6 +92,8 @@ const webPageViewSchema = new Schema(
     channel: String,
     referrerDomain: String,
     utm: utmSchema,
+    geo: geoSchema,
+    timeZone: String,
     expireAt: { type: Date, required: true },
   },
   { timestamps: false },

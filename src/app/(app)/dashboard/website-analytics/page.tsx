@@ -7,12 +7,16 @@ import { ownerMetadata } from "@/features/opportunities/metadata";
 import {
   analyticsRange,
   getCampaigns,
+  getLocations,
   getOverview,
   getPages,
+  getRecentVisits,
   getServicePerformance,
   getSources,
   listVisitors,
+  type LocationRow,
   type PerformanceRow,
+  type RecentVisit,
 } from "@/features/website-analytics/service";
 import { SESSION_TIMEOUT_MS } from "@/features/website-analytics/classify";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -20,7 +24,7 @@ import { KpiCard, LinkTabs, PageHeader, Pagination, Table, TBody, TD, TH, THead,
 import { EmptyState } from "@/components/ui/feedback";
 import { ChartCard } from "@/components/charts/chart-card";
 import { LineChart } from "@/components/charts/charts";
-import { ANALYTICS_PATH, ExportLinks, fmtDateTime, fmtDuration, fmtRate, RangeBar, VisitorStatusBadge } from "@/components/website-analytics/parts";
+import { ANALYTICS_PATH, ExportLinks, fmtDateTime, fmtDuration, fmtLocalTime, fmtRate, Location, RangeBar, VisitorStatusBadge } from "@/components/website-analytics/parts";
 import { RetentionForm } from "@/components/website-analytics/retention-form";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +33,7 @@ export const generateMetadata = ownerMetadata("Website Analytics");
 const TABS = [
   ["overview", "Overview"],
   ["marketing", "Marketing"],
+  ["locations", "Locations"],
   ["pages", "Pages & services"],
   ["visitors", "Visitors"],
 ] as const;
@@ -64,9 +69,11 @@ export default async function WebsiteAnalyticsPage({ searchParams }: { searchPar
           />
         </Card>
       ) : tab === "overview" ? (
-        <OverviewTab overview={overview} sources={await getSources(actor, r)} multiDay={r.from !== r.to} />
+        <OverviewTab overview={overview} sources={await getSources(actor, r)} recent={await getRecentVisits(actor, r, 15)} multiDay={r.from !== r.to} />
       ) : tab === "marketing" ? (
         <MarketingTab sources={await getSources(actor, r)} campaigns={await getCampaigns(actor, r)} />
+      ) : tab === "locations" ? (
+        <LocationsTab locations={await getLocations(actor, r)} recent={await getRecentVisits(actor, r, 50)} />
       ) : tab === "pages" ? (
         <PagesTab services={await getServicePerformance(actor, r)} pages={await getPages(actor, r)} />
       ) : (
@@ -78,7 +85,7 @@ export default async function WebsiteAnalyticsPage({ searchParams }: { searchPar
   );
 }
 
-function OverviewTab({ overview: o, sources, multiDay }: { overview: Awaited<ReturnType<typeof getOverview>>; sources: PerformanceRow[]; multiDay: boolean }) {
+function OverviewTab({ overview: o, sources, recent, multiDay }: { overview: Awaited<ReturnType<typeof getOverview>>; sources: PerformanceRow[]; recent: RecentVisit[]; multiDay: boolean }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -95,7 +102,108 @@ function OverviewTab({ overview: o, sources, multiDay }: { overview: Awaited<Ret
           <LineChart data={o.daily} xKey="day" series={[{ key: "visits", label: "Visits" }, { key: "pageViews", label: "Page views" }]} />
         </ChartCard>
       )}
+      <RecentVisitsCard visits={recent} />
       <PerformanceTable title="Traffic sources" description="How visitors reached the website." rows={sources} kind="source" />
+    </>
+  );
+}
+
+/** When each visit happened, from where, how it arrived and where it landed — newest first. */
+function RecentVisitsCard({ visits, title = "Recent visits" }: { visits: RecentVisit[]; title?: string }) {
+  return (
+    <Card>
+      <CardHeader title={title} description="Newest first. Times in Norwegian time; the visitor's own local time is shown when it differs." />
+      {visits.length === 0 ? (
+        <p className="px-5 pb-5 text-sm text-ink-500">No visits in this period.</p>
+      ) : (
+        <Table>
+          <THead>
+            <TR>
+              <TH>Visited</TH>
+              <TH>Location</TH>
+              <TH>Visitor</TH>
+              <TH>Arrived via</TH>
+              <TH>Landing page</TH>
+              <TH className="text-right">Pages</TH>
+            </TR>
+          </THead>
+          <TBody>
+            {visits.map((v, i) => {
+              const local = fmtLocalTime(v.at, v.timeZone);
+              return (
+                <TR key={`${v.at}-${i}`}>
+                  <TD className="whitespace-nowrap">
+                    <span className="text-ink-900">{fmtDateTime(v.at)}</span>
+                    {local && <span className="block text-xs text-ink-500">{local}</span>}
+                  </TD>
+                  <TD className="max-w-[16rem]">
+                    <Location geo={v.geo} />
+                  </TD>
+                  <TD className="whitespace-nowrap">
+                    {v.kind === "tracked" && v.visitorId ? (
+                      <Link href={`${ANALYTICS_PATH}/visitors/${v.visitorId}`} className="font-medium text-brand-700 hover:underline">
+                        #{v.label} <span className="font-normal text-ink-500">· visit {v.sessionNo}</span>
+                      </Link>
+                    ) : (
+                      <span className="text-ink-500" title="This visitor did not accept analytics, so the visit is counted but not linked to a visitor.">Not tracked</span>
+                    )}
+                  </TD>
+                  <TD className="text-ink-600">{v.channel}</TD>
+                  <TD className="max-w-[14rem] truncate text-ink-700">{v.landingPage}</TD>
+                  <TD className="text-right tabular-nums text-ink-600">
+                    {v.pageViews ?? "—"}
+                    {v.durationSeconds ? <span className="block text-xs text-ink-400">{fmtDuration(v.durationSeconds)}</span> : null}
+                  </TD>
+                </TR>
+              );
+            })}
+          </TBody>
+        </Table>
+      )}
+    </Card>
+  );
+}
+
+function LocationsTab({ locations, recent }: { locations: { countries: LocationRow[]; areas: LocationRow[] }; recent: RecentVisit[] }) {
+  const table = (rows: LocationRow[], countryOnly: boolean) => (
+    <Table>
+      <THead>
+        <TR>
+          <TH>{countryOnly ? "Country" : "Area"}</TH>
+          <TH className="text-right">Visitors</TH>
+          <TH className="text-right">Sessions</TH>
+          <TH className="text-right" title="Visits from browsers that did not accept analytics">Other visits</TH>
+          <TH className="text-right">Page views</TH>
+        </TR>
+      </THead>
+      <TBody>
+        {rows.map((l) => (
+          <TR key={l.key}>
+            <TD className="max-w-[20rem] font-medium text-ink-900">
+              <Location geo={l} countryOnly={countryOnly} />
+            </TD>
+            <TD className="text-right tabular-nums">{formatNumber(l.visitors)}</TD>
+            <TD className="text-right tabular-nums">{formatNumber(l.sessions)}</TD>
+            <TD className="text-right tabular-nums text-ink-500">{formatNumber(l.cookielessVisits)}</TD>
+            <TD className="text-right tabular-nums">{formatNumber(l.pageViews)}</TD>
+          </TR>
+        ))}
+      </TBody>
+    </Table>
+  );
+  return (
+    <>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader title="Countries" description="Where visits came from. Coarse location only — no IP addresses are stored." />
+          {table(locations.countries, true)}
+        </Card>
+        <Card>
+          <CardHeader title="Areas" description="City and region where known (top 50)." />
+          {table(locations.areas, false)}
+        </Card>
+      </div>
+      <RecentVisitsCard visits={recent} title="Visits with location" />
     </>
   );
 }
@@ -227,6 +335,7 @@ function VisitorsTab({ sp, list }: { sp: SP; list: Awaited<ReturnType<typeof lis
             <THead>
               <TR>
                 <TH>Visitor</TH>
+                <TH>Location</TH>
                 <TH>First seen</TH>
                 <TH>Last seen</TH>
                 <TH className="text-right" title="Sessions in this period / in total">Sessions</TH>
@@ -243,6 +352,9 @@ function VisitorsTab({ sp, list }: { sp: SP; list: Awaited<ReturnType<typeof lis
                       {v.userName ?? `Anonymous #${v.label}`}
                     </Link>
                     {v.userName && <span className="block text-xs text-ink-500">#{v.label}</span>}
+                  </TD>
+                  <TD className="max-w-[14rem] text-ink-700">
+                    <Location geo={v.geo} />
                   </TD>
                   <TD className="whitespace-nowrap text-ink-600">{fmtDateTime(v.firstSeen)}</TD>
                   <TD className="whitespace-nowrap text-ink-600">{fmtDateTime(v.lastSeen)}</TD>
@@ -275,6 +387,13 @@ function PrivacyCard({ retentionDays }: { retentionDays: number }) {
           <li>Visitors choose in a banner on the website. Only after “Accept” does the browser get a random, anonymous visitor cookie, so return visits can be recognised.</li>
           <li>Without consent, page views are counted with no cookie or identifier, so they appear in totals and sources but not as visitors.</li>
           <li>No IP addresses, fingerprints or full referrer URLs are stored. A visitor is linked to a person only when they log in or send an enquiry themselves.</li>
+          <li>
+            Location is coarse (country, region, city), taken from the hosting platform or a local database at the moment of the visit; the IP address is used only for that lookup and then discarded. IP geolocation by{" "}
+            <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer" className="text-brand-700 hover:underline">
+              DB-IP
+            </a>
+            .
+          </li>
           <li>Crawlers, monitoring tools and automated browsers are filtered out. Your team&apos;s own visits are not counted.</li>
         </ul>
         <RetentionForm current={retentionDays} />

@@ -20,6 +20,7 @@ vi.mock("@/lib/auth/session", () => ({
 const classify = await import("@/features/website-analytics/classify");
 const { recordEvent, linkVisitorToUser } = await import("@/features/website-analytics/collect");
 const svc = await import("@/features/website-analytics/service");
+const geo = await import("@/features/website-analytics/geo");
 const { resetRateLimits } = await import("@/lib/rate-limit");
 const { POST: trackRoute } = await import("@/app/api/track/route");
 const { POST: consentRoute } = await import("@/app/api/track/consent/route");
@@ -445,6 +446,109 @@ describe("Access: OWNER only", () => {
     }
     const ownerToken = await signSession({ sub: String(new Types.ObjectId()), role: "OWNER", sv: 0 });
     expect((await proxy(req("/dashboard/website-analytics", { headers: { cookie: `${SESSION_COOKIE}=${ownerToken}` } }))).status).toBe(200);
+  });
+});
+
+/* ───────────── Location & visit time ───────────── */
+
+describe("Location and local time", () => {
+  const NO = { "x-vercel-ip-country": "NO", "x-vercel-ip-country-region": "Oslo", "x-vercel-ip-city": "Oslo" };
+  const geoPost = (body: unknown, cookie: string, headers: Record<string, string>) =>
+    req("/api/track", { method: "POST", body: JSON.stringify(body), headers: { "content-type": "application/json", "user-agent": CHROME, host: HOST, ...(cookie && { cookie }), ...headers } });
+
+  it("reads coarse location from hosting headers and ignores private addresses", async () => {
+    expect(geo.geoFromHeaders(new Headers(NO))).toEqual({ country: "NO", region: "Oslo", city: "Oslo" });
+    expect(geo.geoFromHeaders(new Headers({ "cf-ipcountry": "se", "cf-ipcity": "G%C3%B6teborg" }))).toEqual({ country: "SE", region: undefined, city: "Göteborg" });
+    expect(geo.geoFromHeaders(new Headers({ "cf-ipcountry": "XX" }))).toBeNull();
+    for (const ip of ["192.168.1.5", "10.0.0.1", "127.0.0.1", "::1", "local", ""]) expect(await geo.lookupGeo(new Headers(), ip), ip).toBeNull();
+    expect(geo.validTimeZone("Europe/Oslo")).toBe("Europe/Oslo");
+    expect(geo.validTimeZone("America/Argentina/Buenos_Aires")).toBe("America/Argentina/Buenos_Aires");
+    for (const tz of ["Not/AZone", "<script>", "x".repeat(80), 42]) expect(geo.validTimeZone(tz)).toBeUndefined();
+  });
+
+  it("stores country, region, city and time zone on the visit — never the IP address", async () => {
+    const ip = "84.208.20.110";
+    const res = await trackRoute(geoPost({ url: "/services", tz: "Europe/Oslo" }, "et_consent=granted", { ...NO, "x-forwarded-for": ip }), ctx);
+    expect(res.status).toBe(200);
+    const s = await WebSession.findOne().lean<WebSessionDoc>();
+    expect(s).toMatchObject({ geo: { country: "NO", region: "Oslo", city: "Oslo" }, timeZone: "Europe/Oslo" });
+    expect((await WebVisitor.findOne().lean<WebVisitorDoc>())?.geo).toMatchObject({ country: "NO", city: "Oslo" });
+    // Without consent the page view still carries the coarse location (and nothing identifying).
+    await trackRoute(geoPost({ url: "/", referrer: "https://www.google.com/", tz: "America/New_York" }, "", { "x-vercel-ip-country": "US", "x-vercel-ip-city": "New%20York", "x-forwarded-for": "8.8.8.8" }), ctx);
+    const anon = await WebPageView.findOne({ consented: false }).lean<{ geo?: unknown; timeZone?: string; visitorId?: unknown }>();
+    expect(anon).toMatchObject({ geo: { country: "US", city: "New York" }, timeZone: "America/New_York" });
+    expect(anon?.visitorId).toBeUndefined();
+    for (const model of [WebVisitor, WebSession, WebPageView] as const) {
+      const all = JSON.stringify(await (model as typeof WebPageView).find().lean());
+      expect(all).not.toContain(ip);
+      expect(all).not.toContain("8.8.8.8");
+    }
+  });
+
+  it("only looks up a location for page views that are recorded", async () => {
+    const lookups: string[] = [];
+    const resolveGeo = async () => (lookups.push("x"), { country: "NO" });
+    await recordEvent({ url: "/" }, { userAgent: "curl/8.0", host: HOST, consent: true, resolveGeo });
+    await recordEvent({ url: "/" }, { userAgent: CHROME, host: HOST, consent: true, actor: t.owner.actor, resolveGeo });
+    await recordEvent({ type: "ping", url: "/" }, { userAgent: CHROME, host: HOST, consent: true, vid: "abcdefghijklmnopqrstuvwx", resolveGeo });
+    expect(lookups).toHaveLength(0);
+    await recordEvent({ url: "/" }, { userAgent: CHROME, host: HOST, consent: false, resolveGeo });
+    expect(lookups).toHaveLength(1);
+    // A failing lookup never blocks the visit.
+    const r = await recordEvent({ url: "/about" }, { userAgent: CHROME, host: HOST, consent: false, resolveGeo: async () => Promise.reject(new Error("db")) });
+    expect(r.recorded).toBe(true);
+  });
+
+  it("reports countries, areas and the latest visits with their time and location", async () => {
+    const day = (h: number) => at(`2026-10-23T${String(h).padStart(2, "0")}:00:00Z`);
+    // A visitor from Oslo (two pages), one from Bergen, one without consent from New York, and one with no known location.
+    const oslo = await recordEvent({ url: "/", tz: "Europe/Oslo" }, { userAgent: CHROME, host: HOST, consent: true, now: day(8), resolveGeo: async () => ({ country: "NO", region: "Oslo", city: "Oslo" }) });
+    await recordEvent({ url: "/services", referrer: `https://${HOST}/` }, { userAgent: CHROME, host: HOST, consent: true, vid: oslo.newVid, now: at("2026-10-23T08:05:00Z"), resolveGeo: async () => ({ country: "NO", region: "Oslo", city: "Oslo" }) });
+    await recordEvent({ url: "/about" }, { userAgent: CHROME, host: HOST, consent: true, now: at("2026-10-23T07:00:00Z") });
+    const bergen = await recordEvent({ url: "/", tz: "Europe/Oslo" }, { userAgent: CHROME, host: HOST, consent: true, now: day(9), resolveGeo: async () => ({ country: "NO", region: "Vestland", city: "Bergen" }) });
+    expect(bergen.newVid).toBeTruthy();
+    await recordEvent({ url: "/", referrer: "https://www.google.com/", tz: "America/New_York" }, { userAgent: CHROME, host: HOST, consent: false, now: day(10), resolveGeo: async () => ({ country: "US", region: "New York", city: "New York" }) });
+
+    const { countries, areas } = await svc.getLocations(t.owner.actor, range("2026-10-23"));
+    expect(countries.map((c) => c.country)).toEqual(["NO", "US", undefined]);
+    expect(countries[0]).toMatchObject({ country: "NO", visitors: 2, sessions: 2 });
+    expect(countries[1]).toMatchObject({ country: "US", visitors: 0, sessions: 0, cookielessVisits: 1 });
+    expect(areas.map((a) => a.city)).toEqual(expect.arrayContaining(["Oslo", "Bergen", "New York"]));
+
+    const recent = await svc.getRecentVisits(t.owner.actor, range("2026-10-23"));
+    expect(recent.map((v) => [v.at.toISOString(), v.kind, v.geo?.city ?? null])).toEqual([
+      ["2026-10-23T10:00:00.000Z", "anonymous", "New York"],
+      ["2026-10-23T09:00:00.000Z", "tracked", "Bergen"],
+      ["2026-10-23T08:00:00.000Z", "tracked", "Oslo"],
+      ["2026-10-23T07:00:00.000Z", "tracked", null],
+    ]);
+    expect(recent[2]).toMatchObject({ pageViews: 2, durationSeconds: 300 });
+    expect(recent[0]).toMatchObject({ timeZone: "America/New_York", landingPage: "/", channel: "Google" });
+    expect(recent[1]!.label).toMatch(/^[A-Z2-9]{4}$/);
+
+    const visitors = await svc.listVisitors(t.owner.actor, range("2026-10-23"));
+    expect(visitors.items.map((v) => v.geo?.city)).toEqual(expect.arrayContaining(["Oslo", "Bergen"]));
+
+    as(t.owner);
+    const csv = await (await exportRoute(req("/api/website-analytics/export?kind=locations&range=custom&from=2026-10-23&to=2026-10-23"), ctx)).text();
+    expect(csv).toContain('"country","region","city"');
+    expect(csv).toContain('"NO","Vestland","Bergen"');
+    const sessionsCsv = await (await exportRoute(req("/api/website-analytics/export?kind=sessions&range=custom&from=2026-10-23&to=2026-10-23"), ctx)).text();
+    expect(sessionsCsv).toContain('"Oslo","Europe/Oslo"');
+  });
+
+  it("location data is Owner-only like the rest of analytics", async () => {
+    for (const user of [t.admin, t.staff, t.clientA]) {
+      await expectRejects(svc.getLocations(user.actor, range("2026-10-23")), 403);
+      await expectRejects(svc.getRecentVisits(user.actor, range("2026-10-23")), 403);
+      as(user);
+      expect((await statsRoute(req("/api/website-analytics?view=locations"), ctx)).status).toBe(403);
+      expect((await statsRoute(req("/api/website-analytics?view=recent"), ctx)).status).toBe(403);
+    }
+    as(null);
+    expect((await statsRoute(req("/api/website-analytics?view=locations"), ctx)).status).toBe(401);
+    as(t.owner);
+    expect((await statsRoute(req("/api/website-analytics?view=locations"), ctx)).status).toBe(200);
   });
 });
 

@@ -17,6 +17,7 @@
     "migrate": "tsx --conditions=react-server scripts/migrate.ts",
     "db:migrate-to-atlas": "tsx scripts/migrate-to-atlas.ts",
     "coverage:report": "tsx scripts/coverage-report.ts",
+    "geoip:update": "node scripts/geoip-update.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "engines": {
@@ -31,6 +32,7 @@
     "jose": "^6.2.12",
     "lucide-react": "^1.51.0",
     "mailparser": "^3.12.0",
+    "maxmind": "5.0.7",
     "mongoose": "^8.24.4",
     "next": "^16.3.8",
     "nodemailer": "^10.1.1",

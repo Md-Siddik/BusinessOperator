@@ -8,7 +8,7 @@ import { getVisitor } from "@/features/website-analytics/service";
 import { Card, CardHeader } from "@/components/ui/card";
 import { DescriptionList, PageHeader } from "@/components/ui/data";
 import { Badge } from "@/components/ui/badge";
-import { ANALYTICS_PATH, fmtDateTime, fmtDuration, fmtTime, VisitorStatusBadge } from "@/components/website-analytics/parts";
+import { ANALYTICS_PATH, fmtDateTime, fmtDuration, fmtLocalTime, fmtTime, Location, VisitorStatusBadge } from "@/components/website-analytics/parts";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = ownerMetadata("Website visitor");
@@ -36,6 +36,8 @@ export default async function WebsiteVisitorPage({ params }: { params: Promise<{
           <div className="px-5 pb-5">
             <DescriptionList
               items={[
+                { label: "Location", value: <Location geo={v.geo} /> },
+                ...(v.timeZone ? [{ label: "Visitor's time zone", value: v.timeZone.replace(/_/g, " ") }] : []),
                 { label: "First visit", value: fmtDateTime(v.firstSeen) },
                 { label: "Last visit", value: fmtDateTime(v.lastSeen) },
                 { label: "Total sessions", value: v.totalSessions },
@@ -83,9 +85,13 @@ export default async function WebsiteVisitorPage({ params }: { params: Promise<{
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-semibold text-ink-900">Visit {s.sessionNo}</span>
                 <span className="text-ink-500">
-                  {fmtDateTime(s.startedAt)} · {fmtDuration(s.durationSeconds)} · {s.pages.length} page{s.pages.length === 1 ? "" : "s"}
+                  {fmtDateTime(s.startedAt)}
+                  {fmtLocalTime(s.startedAt, s.timeZone) && <> ({fmtLocalTime(s.startedAt, s.timeZone)})</>} · {fmtDuration(s.durationSeconds)} · {s.pages.length} page{s.pages.length === 1 ? "" : "s"}
                 </span>
                 <Badge>{s.channel}</Badge>
+                <span className="text-sm text-ink-600">
+                  <Location geo={s.geo} />
+                </span>
                 {s.campaign && <Badge tone="violet">{s.campaign}</Badge>}
                 {s.enquiries > 0 && <Badge tone="success">Sent an enquiry</Badge>}
               </div>
