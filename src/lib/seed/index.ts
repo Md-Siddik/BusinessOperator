@@ -124,7 +124,7 @@ export async function seedDatabase({ reset = false, log = console.info as Log } 
       log(`Importing DEMO registrations for ${c.name}…`);
       await Country.updateOne({ code: c.code }, { $set: { providerId: `mock-${c.slug}` } });
       const today = todayIn(c.timezone);
-      await runSync({ countryCode: c.code, kind: "RANGE", from: addDays(today, -60), to: today, trigger: "SEED", notify: false, actor: ownerActor });
+      await runSync({ countryCode: c.code, kind: "RANGE", from: addDays(today, -60), to: today, trigger: "SEED", actor: ownerActor });
     }
   } else {
     log("Real data mode: no demo companies. Connected registries sync automatically after start-up.");

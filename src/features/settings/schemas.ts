@@ -174,8 +174,14 @@ export const researchSettingsSchema = z.object({
     .default({ newContactable: true, verificationChanges: true, serviceMatches: true, reviewNeeded: true, minServiceFitScore: 70, maxPerCountryPerDay: 50 }),
 });
 
+/** Website visitor analytics (Owner-only). Records expire after `retentionDays`. */
+export const analyticsSettingsSchema = z.object({
+  retentionDays: z.number().int().min(30).max(760).default(395),
+});
+
 export const SETTING_SCHEMAS = {
   general: generalSettingsSchema,
+  analytics: analyticsSettingsSchema,
   languages: languageSettingsSchema,
   leadScoring: leadScoringSettingsSchema,
   outreach: outreachSettingsSchema,

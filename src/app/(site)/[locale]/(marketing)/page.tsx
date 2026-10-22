@@ -11,6 +11,7 @@ import { IndustryProfiles } from "@/components/site/industry-profiles";
 import { EngagementModels } from "@/components/site/engagement-models";
 import { ServiceCardsGrid } from "@/components/site/service-landing";
 import { BuildFirstSection } from "@/components/site/build-first";
+import { DigitalSideSection } from "@/components/site/digital-side";
 
 /** Re-render periodically (and on every Service Management change) so featured services stay current. */
 export const revalidate = 600;
@@ -36,11 +37,13 @@ export default async function HomePage({ params }: LocaleParams) {
   // The homepage stays focused: only the services the Owner marked "Featured".
   const featured = services.filter((s) => s.featured);
 
-  // Story: what we do (hero) → why it matters → how it works → what supports it → the long-term
-  // relationship → who it fits → how we operate → how to work together → talk to us.
+  // Story: what we do (hero) → the partner idea (you run the business, we run the digital side) →
+  // why it matters → how it works → what supports it → the long-term relationship → who it fits →
+  // how we operate → how to work together → talk to us.
   return (
     <>
       <HomeHero locale={locale} t={t} />
+      <DigitalSideSection locale={locale} t={t} list={list} />
       <SplitSection t={t} list={list} />
       <GrowthJourney locale={locale} t={t} list={list} />
 

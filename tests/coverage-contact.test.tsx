@@ -216,7 +216,7 @@ describe("France — BODACC creations (free, no key)", () => {
       contact: {},
     });
 
-    const r = await syncDate("FR", FR_TODAY, { trigger: "MANUAL", notify: false });
+    const r = await syncDate("FR", FR_TODAY, { trigger: "MANUAL" });
     expect(r.status).toBe("SUCCESS");
     const stored = await Company.findOne({ countryCode: "FR", registrationNumber: "900000001" }).lean<CompanyDoc>();
     expect(stored).toMatchObject({ registrationDay: FR_REG, source: "bodacc", sourceType: "OFFICIAL_OPEN_DATA", eventType: "NEW_ENTITY" });
@@ -244,7 +244,7 @@ describe("Czechia — ARES notification batches (free, no key)", () => {
     expect(batch.companies.map((c) => c.identity.sourceId)).toEqual(["30000001"]); // not the association, not the 2011 re-insert, not batch 899
     expect(batch.companies[0]!.source.publishedAt?.toISOString().slice(0, 10)).toBe(CZ_TODAY);
 
-    const r = await syncDate("CZ", CZ_TODAY, { trigger: "MANUAL", notify: false });
+    const r = await syncDate("CZ", CZ_TODAY, { trigger: "MANUAL" });
     expect(r.status).toBe("SUCCESS");
     expect(await Company.findOne({ countryCode: "CZ", registrationNumber: "30000001" }).lean<CompanyDoc>()).toMatchObject({ registrationDay: CZ_REG, source: "ares-cz", contactPerson: { name: "Ivana Nováková" } });
     const snap = await DailyRegistrationSnapshot.findOne({ countryCode: "CZ", date: CZ_REG, isDemo: false }).lean<{ newCompanies: number }>();

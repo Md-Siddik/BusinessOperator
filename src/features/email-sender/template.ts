@@ -64,7 +64,7 @@ const STYLE = {
  * about them is known. No promises of results.
  */
 export const DEFAULT_TEMPLATE = {
-  id: "default-v7",
+  id: "default-v8",
   subject: "A website built to turn visitors into customers",
   body: [
     "Hello,",
@@ -79,8 +79,8 @@ export const DEFAULT_TEMPLATE = {
       "- **Grow**: Keep improving the digital presence as the business develops.",
     ].join("\n"),
     "## Beyond the website",
-    "Depending on what the business needs, we can also support areas such as SEO and digital visibility, social media, automation, CRM and operational systems, and ongoing technical support.",
-    "We don't necessarily disappear after the website goes live. For businesses that need it, we're open to ongoing collaboration: on a monthly basis, for a clearly defined project, or, for suitable businesses, as a longer-term growth partnership.",
+    "The website is often the start. We can also take care of the wider digital side, such as SEO and digital visibility, social media, automation, CRM and operational systems, and ongoing technical support, so you can focus on running the business.",
+    "Our work doesn't have to end at launch. For businesses that need it, we're open to ongoing collaboration: monthly, as a clearly defined project, or, for suitable businesses, as a longer-term growth partnership.",
     "For website projects, we can build an agreed first version for you to review before you commit.",
     "If this sounds relevant, just reply to this email. We'd be glad to hear about your business.",
   ].join("\n\n"),

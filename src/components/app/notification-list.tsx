@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 
 export function NotificationList({ items }: { items: NotificationDoc[] }) {
-  if (!items.length) return <EmptyState icon={Bell} title="No notifications" description="You'll be notified about new client messages, requests, qualified leads, follow-ups and syncs." />;
+  if (!items.length) return <EmptyState icon={Bell} title="No notifications" description="You'll be notified about new client messages, client emails, requests, qualified leads and follow-ups." />;
   return (
     <ul className="divide-y divide-ink-100">
       {items.map((n) => {

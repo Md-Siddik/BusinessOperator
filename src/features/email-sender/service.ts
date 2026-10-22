@@ -20,6 +20,7 @@ import { getBaseMessages } from "@/lib/i18n/dictionaries";
 import { createTranslator } from "@/lib/i18n/translator";
 import { priceDisplay, priceLabelsFrom } from "@/lib/service-pricing";
 import { getPublicService } from "@/features/service-catalog/service";
+import { withCampaign } from "@/features/website-analytics/classify";
 
 /**
  * Email Sender — OWNER ONLY. Every exported function verifies the actor's server-side
@@ -102,13 +103,23 @@ type ResolvedContent = { content: EmailContent; templateId?: OutreachTemplateId;
  * CUSTOM: the Owner's own text.
  */
 async function contentFor(input: z.infer<typeof previewSchema>, company: EmailCompany | null): Promise<ResolvedContent> {
-  if (input.mode === "CUSTOM") return { content: { subject: cleanSubject(input.subject), body: input.body, includeCta: input.includeCta, locale: input.locale } };
+  if (input.mode === "CUSTOM") return { content: trackedCta({ subject: cleanSubject(input.subject), body: input.body, includeCta: input.includeCta, locale: input.locale }, "outreach-custom") };
   const suggestion = company ? suggestOutreach(company) : null;
   const templateId = input.templateId ?? suggestion?.templateId ?? "general";
   const locale = input.locale ?? suggestion?.locale ?? "en";
   const offer = await offerFor(templateId, locale);
   const built = buildOutreachEmail(templateId, locale, { ...(company ? outreachContext(company) : {}), offer });
-  return { content: built, templateId, ref: built.ref, step: templateId === "reminder" ? "REMINDER" : "INITIAL" };
+  return { content: trackedCta(built, `outreach-${templateId}`), templateId, ref: built.ref, step: templateId === "reminder" ? "REMINDER" : "INITIAL" };
+}
+
+/**
+ * The button link carries UTM tags (source email, medium outreach, campaign = template), so
+ * Website Analytics shows which emails bring visits. No per-recipient id; links typed in the body are untouched.
+ */
+function trackedCta<C extends EmailContent>(content: C, campaign: string): C {
+  if (!content.includeCta) return content;
+  const cta = content.cta ?? DEFAULT_TEMPLATE.cta;
+  return { ...content, cta: { ...cta, url: withCampaign(cta.url, siteConfig.domain, { source: "email", medium: "outreach", campaign }) } };
 }
 
 /**
@@ -416,4 +427,15 @@ export async function listSentEmails(actor: Actor | null, opts: { page?: number 
     EmailMessage.countDocuments(filter),
   ]);
   return { items, total, page, pageCount: Math.max(1, Math.ceil(total / 25)) };
+}
+
+/** Removes one sent-email record from the history. A message still SENDING cannot be removed. */
+export async function deleteSentEmail(actor: Actor | null, id: string) {
+  assertOwner(actor);
+  const record = await EmailMessage.findOne({ _id: parseObjectId(id), kind: "DIRECT" }).select("status").lean<EmailMessageDoc>();
+  if (!record) throw Errors.notFound("Email not found.");
+  if (record.status === "SENDING") throw Errors.conflict("This email is still being sent. Try again in a moment.");
+  await EmailMessage.deleteOne({ _id: record._id });
+  await audit(actor, "email_sender.deleted", { entityType: "EmailMessage", entityId: id });
+  return { ok: true };
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsButton } from "./site-analytics";
 import { Mail, Phone } from "lucide-react";
 import { localizedPath } from "@/config/languages";
 import { siteConfig } from "@/config/site";
@@ -87,9 +88,12 @@ export function SiteFooter({ locale, t, general, services = [] }: { locale: stri
           <p>
             © {year} {general.companyName || siteConfig.legalName}. {t("footer.rights")}
           </p>
-          <a href={`https://${siteConfig.domain}/`} className="hover:text-white">
-            {siteConfig.domain}
-          </a>
+          <span className="flex items-center gap-4">
+            <CookieSettingsButton label={t("cookieConsent.settings")} />
+            <a href={`https://${siteConfig.domain}/`} className="hover:text-white">
+              {siteConfig.domain}
+            </a>
+          </span>
         </div>
       </div>
     </footer>

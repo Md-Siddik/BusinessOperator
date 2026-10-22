@@ -81,9 +81,9 @@ beforeAll(async () => {
   await ensureCountries();
   await Country.updateOne({ code: "NO" }, { $set: { providerId: "test-no" } });
   await Country.updateOne({ code: "SE" }, { $set: { providerId: "test-se" } });
-  await syncDate("NO", noYesterday, { trigger: "MANUAL", notify: false });
-  await syncToday("NO", { trigger: "MANUAL", notify: false });
-  await syncToday("SE", { trigger: "MANUAL", notify: false });
+  await syncDate("NO", noYesterday, { trigger: "MANUAL" });
+  await syncToday("NO", { trigger: "MANUAL" });
+  await syncToday("SE", { trigger: "MANUAL" });
 });
 
 describe("Country-local dates", () => {
@@ -117,7 +117,7 @@ describe("Registry sync", () => {
   });
 
   it("re-syncing the same day skips unchanged records instead of duplicating", async () => {
-    const r = await syncToday("NO", { trigger: "MANUAL", notify: false });
+    const r = await syncToday("NO", { trigger: "MANUAL" });
     expect(r.imported).toBe(0);
     expect(r.skipped).toBe(3);
     expect(await Company.countDocuments({ countryCode: "NO" })).toBe(4);
@@ -132,13 +132,13 @@ describe("Registry sync", () => {
   it("a failing registry is reported as unavailable — stored data is kept and nothing is substituted", async () => {
     failNorway = true;
     const before = await Company.countDocuments({ countryCode: "NO" });
-    const r = await syncToday("NO", { trigger: "MANUAL", notify: false });
+    const r = await syncToday("NO", { trigger: "MANUAL" });
     failNorway = false;
     expect(r.status).toBe("FAILED");
     expect(r.errors[0]).toContain("503");
     expect(await Company.countDocuments({ countryCode: "NO" })).toBe(before);
     expect((await getCountryView("NO"))?.state).toBe("PROVIDER_ERROR");
-    await syncToday("NO", { trigger: "MANUAL", notify: false });
+    await syncToday("NO", { trigger: "MANUAL" });
     expect((await getCountryView("NO"))?.state).toBe("CONNECTED");
   });
 
@@ -153,8 +153,8 @@ describe("Registry sync", () => {
     expect((await getCountryView("EE"))?.state).toBe("NOT_SYNCED");
     expect((await getCountryView("AT"))?.state).toBe("UNDER_RESEARCH");
     expect((await getCountryView("VA"))?.state).toBe("NO_VERIFIED_FEED");
-    await expectRejects(syncToday("GB", { trigger: "MANUAL", notify: false }), 400);
-    await expectRejects(syncToday("DE", { trigger: "MANUAL", notify: false }), 400);
+    await expectRejects(syncToday("GB", { trigger: "MANUAL" }), 400);
+    await expectRejects(syncToday("DE", { trigger: "MANUAL" }), 400);
     expect(await Company.countDocuments({ countryCode: { $in: ["DE", "GB", "EE", "AT"] } })).toBe(0);
   });
 
@@ -225,7 +225,7 @@ describe("Contact provenance", () => {
     const tom = await Company.findOne({ countryCode: "NO", companyName: "Tom Holding AS" }).lean<CompanyDoc>();
     await updateCompany(t.owner.actor, String(tom!._id), { email: "daglig.leder@tom.example" });
     norway.get(noToday)![2] = company("900000003", "Tom Holding AS", noToday, { email: "registry@tom.example" });
-    await syncToday("NO", { trigger: "MANUAL", notify: false });
+    await syncToday("NO", { trigger: "MANUAL" });
     const after = await Company.findById(tom!._id).lean<CompanyDoc>();
     expect(after?.email).toBe("daglig.leder@tom.example");
     expect(after?.contactSources?.email?.kind).toBe("MANUAL");
@@ -235,7 +235,7 @@ describe("Contact provenance", () => {
 
   it("registry-sourced values disappear when the registry removes them", async () => {
     norway.get(noToday)![1] = company("900000002", "Kaffebar Oslo AS", noToday, {});
-    await syncToday("NO", { trigger: "MANUAL", notify: false });
+    await syncToday("NO", { trigger: "MANUAL" });
     const k = await Company.findOne({ countryCode: "NO", companyName: "Kaffebar Oslo AS" }).lean<CompanyDoc>();
     expect(k?.mobile).toBeUndefined();
     expect(k?.contactFlags?.mobile).toBe(false);

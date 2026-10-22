@@ -33,3 +33,4 @@ export * from "./Quotation";
 export * from "./Opportunity";
 export * from "./OpportunityFeed";
 export * from "./Service";
+export * from "./WebAnalytics";

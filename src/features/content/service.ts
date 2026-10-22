@@ -44,10 +44,12 @@ export const contactRequestSchema = z.object({
   website2: z.string().max(0).optional(),
 });
 
-export async function submitContactRequest(input: unknown) {
+export async function submitContactRequest(input: unknown, opts: { onCreated?: (id: string) => Promise<unknown> } = {}) {
   const { country, website2: _hp, service, ...data } = contactRequestSchema.parse(input);
   void _hp;
   const doc = await ContactRequest.create({ ...data, countryCode: country, serviceSlug: service });
+  // Optional follow-up (website analytics); never allowed to fail the enquiry.
+  await opts.onCreated?.(String(doc._id)).catch((err) => console.error("[contact] post-submit hook failed", err));
   await notifyInternal("clients.manage", {
     type: "CLIENT_REQUEST",
     title: `New enquiry: ${data.company || data.name}`,

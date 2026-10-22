@@ -16,6 +16,9 @@ const NON_LOCALIZED = ["/api", "/_next", "/dashboard", "/staff", "/portal", "/fa
 /** Owner-dashboard sections that also exist in the staff workspace (client data, website maintenance). */
 const STAFF_SECTIONS = ["clients", "messages", "tickets", "projects", "services", "notifications", "settings"];
 
+/** Owner-only modules (also enforced by their pages, APIs and services). */
+const OWNER_ONLY_SECTIONS = ["/dashboard/opportunities", "/dashboard/website-analytics"];
+
 function homeFor(role: string) {
   return role === "OWNER" ? "/dashboard" : role === "CLIENT" ? "/portal" : "/staff";
 }
@@ -32,8 +35,8 @@ export async function proxy(request: NextRequest) {
     }
     const area = pathname.split("/")[1];
     if (area === "dashboard" && session.role !== "OWNER") {
-      // Owner-only module: other roles get a plain 404 before any rendering.
-      if (pathname === "/dashboard/opportunities" || pathname.startsWith("/dashboard/opportunities/")) {
+      // Owner-only modules: other roles get a plain 404 before any rendering.
+      if (OWNER_ONLY_SECTIONS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
         return new NextResponse("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
       }
       if (session.role === "CLIENT") return NextResponse.redirect(new URL("/portal", request.url));

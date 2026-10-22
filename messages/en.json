@@ -101,6 +101,33 @@
         "engagement": "Engagement"
       }
     },
+    "digitalSide": {
+      "eyebrow": "One digital partner",
+      "titleBusiness": "You run the business.",
+      "titleDigital": "We run the digital side.",
+      "subtitle": "You focus on your products, your customers and the day-to-day running of your company. We take care of the website, systems and technical work behind it — as your external digital team, for as much or as little as you need.",
+      "responsibility": "You stay in charge of your business and its decisions. We take responsibility for the digital work we agree on together.",
+      "youLabel": "Your side",
+      "youTitle": "Your business",
+      "youItems": [
+        "Products & services",
+        "Customers",
+        "Sales",
+        "Day-to-day operations",
+        "Core business decisions"
+      ],
+      "handoff": "One point of contact",
+      "usLabel": "Our side",
+      "serviceTitle": "Your digital department",
+      "serviceText": "We take responsibility for the digital side of your business — from how customers find you online to the systems that keep things running behind the scenes.",
+      "servicePoints": [
+        "Shaped around what your business needs",
+        "One contact who knows your business",
+        "Looked after over time, not just delivered"
+      ],
+      "serviceFooter": "Tell us what the business needs. We work out the right way to handle it.",
+      "scopeNote": "What we take on is agreed with each business — and can grow with it."
+    },
     "split": {
       "eyebrow": "Why it matters",
       "title": "A website shouldn't just be an online brochure.",
@@ -613,6 +640,13 @@
     "realEstate": "Real estate",
     "localServices": "Local services",
     "other": "Other"
+  },
+  "cookieConsent": {
+    "title": "Analytics cookies",
+    "text": "May we use an anonymous analytics cookie to see how our website is used? It helps us improve the site. We never use it to find out who you are, and you can change your choice at any time.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "settings": "Cookie settings"
   },
   "footer": {
     "tagline": "One long-term partner for the digital side of your business.",
