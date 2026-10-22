@@ -144,7 +144,7 @@ export default async function EngagementModelPage({ params }: Params) {
       </section>
 
       {/* What it means, scope, terms — the existing, detailed explanation. */}
-      <section className="border-y border-ink-100 bg-[#f5f7fb] py-16 sm:py-20">
+      <section className="border-y border-ink-100 bg-mist py-16 sm:py-20">
         <div className="container-page grid gap-4 lg:grid-cols-2">
           {textSections.map((b) => (
             <div key={b.title} className="rounded-2xl border border-ink-200 bg-white p-6 shadow-soft sm:p-7">

@@ -102,7 +102,7 @@
       }
     },
     "digitalSide": {
-      "eyebrow": "One digital partner",
+      "eyebrow": "How the partnership works",
       "titleBusiness": "You run the business.",
       "titleDigital": "We run the digital side.",
       "subtitle": "You focus on your products, your customers and the day-to-day running of your company. We take care of the website, systems and technical work behind it — as your external digital team, for as much or as little as you need.",
@@ -118,15 +118,45 @@
       ],
       "handoff": "One point of contact",
       "usLabel": "Our side",
-      "serviceTitle": "Your digital department",
-      "serviceText": "We take responsibility for the digital side of your business — from how customers find you online to the systems that keep things running behind the scenes.",
+      "usTitle": "The digital side",
+      "usItems": [
+        "Website and online presence",
+        "Visibility and the path to enquiries",
+        "CRM and business systems, where relevant",
+        "Automation of routine work",
+        "Ongoing technical support"
+      ],
       "servicePoints": [
         "Shaped around what your business needs",
         "One contact who knows your business",
         "Looked after over time, not just delivered"
+      ]
+    },
+    "infrastructure": {
+      "eyebrow": "One outcome",
+      "title": "Your digital business infrastructure",
+      "subtitle": "Not a menu of separate services. One connected setup, shaped around what your business needs now — whether that starts with a website, a CRM, an automation or someone to look after it all.",
+      "closing": "Tell us what the business needs. We work out the right way to handle it.",
+      "layers": [
+        {
+          "title": "Presence",
+          "text": "Your website and how you appear online — clear, credible and easy to find."
+        },
+        {
+          "title": "Enquiries",
+          "text": "The path from interested visitor to real conversation: contact flows, bookings and follow-up."
+        },
+        {
+          "title": "Systems",
+          "text": "CRM, automation and the tools behind the scenes, where they make sense for your business."
+        },
+        {
+          "title": "Care",
+          "text": "Updates, maintenance, improvements and technical support — month after month."
+        }
       ],
-      "serviceFooter": "Tell us what the business needs. We work out the right way to handle it.",
-      "scopeNote": "What we take on is agreed with each business — and can grow with it."
+      "startTitle": "Common starting points",
+      "startText": "Most businesses begin with one of these. Each has its own page with what is included and how pricing works."
     },
     "split": {
       "eyebrow": "Why it matters",
@@ -647,6 +677,12 @@
     "accept": "Accept",
     "decline": "Decline",
     "settings": "Cookie settings"
+  },
+  "theme": {
+    "label": "Appearance",
+    "dark": "Dark",
+    "light": "Light",
+    "mixed": "Mixed"
   },
   "footer": {
     "tagline": "One long-term partner for the digital side of your business.",
@@ -1606,6 +1642,7 @@
   "buildFirst": {
     "eyebrow": "Build before you commit",
     "title": "See what we can build before you make the final commitment",
+    "lead": "We would rather show you what we propose than ask you to buy an idea you haven't seen.",
     "subtitle": "For website projects, we can build the agreed first version so you can review the real result — not a promise. The scope and terms are agreed before we start.",
     "steps": [
       {

@@ -387,7 +387,7 @@ export function ServiceLanding({ service, related, locale, t, cases, preview, ed
       )}
 
       {l.steps.length > 0 && (
-        <section className="border-y border-ink-100 bg-[#f5f7fb] py-16 sm:py-24">
+        <section className="border-y border-ink-100 bg-mist py-16 sm:py-24">
           <div className="container-page">
             <SectionHeading title={t(`${ui}.howTitle`)} />
             <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -466,7 +466,7 @@ export function ServiceLanding({ service, related, locale, t, cases, preview, ed
 
       {/* Real, published examples only — the section is not shown until there are some. */}
       {cases.length > 0 && (
-        <section id="examples" className="scroll-mt-24 border-y border-ink-100 bg-[#f5f7fb] py-16 sm:py-24">
+        <section id="examples" className="scroll-mt-24 border-y border-ink-100 bg-mist py-16 sm:py-24">
           <div className="container-page">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <SectionHeading title={t(`${ui}.examplesTitle`)} subtitle={t(`${ui}.examplesSubtitle`)} />

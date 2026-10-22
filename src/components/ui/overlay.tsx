@@ -76,7 +76,7 @@ export function Dropdown({ trigger, children, align = "right", className, label 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        const items = Array.from(ref.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? []);
+        const items = Array.from(ref.current?.querySelectorAll<HTMLElement>("[role=menuitem], [role=menuitemradio]") ?? []);
         const i = items.indexOf(document.activeElement as HTMLElement);
         const next = e.key === "ArrowDown" ? items[(i + 1) % items.length] : items[(i - 1 + items.length) % items.length];
         next?.focus();

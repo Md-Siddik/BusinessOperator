@@ -1,0 +1,201 @@
+/* ═══════════════════════════ Public site appearance ═══════════════════════════
+ *
+ * Imported by the public layout only (app/(site)/[locale]/layout.tsx). Its <html>
+ * carries data-site-theme; the dashboard has its own root layout and never loads this.
+ *
+ *   dark             the whole site dark
+ *   light            the whole site light, on a warm off-white canvas
+ *   mixed  (default) light base and header; sections marked data-tone="dark",
+ *                    the hero, the call-to-action band and the footer dark
+ *
+ * Components are written once with the regular palette. Two remaps adapt them:
+ *   T1  light-designed content inside a dark region            -> dark
+ *   T2  dark-designed "islands" (navy blocks) in the light theme -> light
+ * Islands: [data-design="dark"], .bg-night-*, .bg-brand-950, .bg-ink-900.
+ * They keep their own palette inside dark regions.
+ */
+
+/* ── Base canvas, typography and colour scheme ── */
+html[data-site-theme] {
+  color-scheme: light;
+  --color-mist: #f0eee8;
+}
+html[data-site-theme] body {
+  background: #f7f6f2;
+}
+html[data-site-theme="dark"] {
+  color-scheme: dark;
+}
+html[data-site-theme="dark"] body {
+  background: #0a0f1f;
+}
+
+html[data-site-theme] :is(h1, h2) {
+  font-family: var(--font-display);
+}
+
+/* Smooth theme changes, only while switching (hover transitions keep their own timing). */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, fill 0.3s ease !important;
+}
+
+/* ── T1: light-designed content in a dark region ── */
+html[data-site-theme="dark"] body,
+html[data-site-theme="mixed"] [data-tone="dark"]:not([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) {
+  color-scheme: dark;
+  --color-ink-50: #111a31;
+  --color-ink-100: #172240;
+  --color-ink-200: #24304f;
+  --color-ink-300: #34415f;
+  --color-ink-400: #7d89a3;
+  --color-ink-500: #95a0b6;
+  --color-ink-600: #aab3c6;
+  --color-ink-700: #c2c9d6;
+  --color-ink-800: #d9dee7;
+  --color-ink-900: #eef1f6;
+  --color-ink-950: #f8f9fb;
+  --color-mist: #0d1428;
+  --color-brand-50: #131f45;
+  --color-brand-100: #1a2a5c;
+  --color-brand-200: #2a3f86;
+  --color-brand-700: #9db8ff;
+  --color-brand-800: #c0d1ff;
+  --color-emerald-50: #0d2a21;
+  --color-emerald-200: #1d5a45;
+  --color-emerald-300: #2f7a5f;
+  --color-emerald-600: #2fc48e;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #86efc4;
+  --color-emerald-900: #a7f3d0;
+  --color-amber-50: #2b210c;
+  --color-amber-100: #3a2c0e;
+  --color-amber-200: #5c4615;
+  --color-amber-300: #7a5d1c;
+  --color-amber-600: #f5b83d;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-red-50: #2c1215;
+  --color-red-100: #3d171b;
+  --color-red-200: #5e2329;
+  --color-red-700: #fca5a5;
+  --color-red-900: #fecaca;
+  --color-sky-50: #0b2333;
+  --color-sky-200: #164e63;
+  --color-sky-700: #7dd3fc;
+  --color-sky-900: #bae6fd;
+  --color-violet-50: #1e1838;
+  --color-violet-200: #3b2f6b;
+  --color-violet-700: #c4b5fd;
+  --logo-mark: #2849dc;
+}
+html[data-site-theme="mixed"] [data-tone="dark"]:not([class*="bg-"]) {
+  background-color: #0a0f1f;
+}
+
+/* Colours that play two roles (a surface vs. text on an accent) are adjusted per class, outside islands. */
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .bg-white:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-color: #111a31;
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .bg-white\/85:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-color: rgb(10 15 31 / 0.85);
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .bg-white\/70:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-color: rgb(17 26 49 / 0.7);
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .ring-white:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  --tw-ring-color: #111a31;
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .text-brand-600:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  color: #84a4ff;
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  :is(.bg-brand-700, .hover\:bg-brand-700:hover):not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-color: #3557e8;
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  :is(.bg-brand-800, .active\:bg-brand-800:active):not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-color: #2849dc;
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .bg-ink-950\/40:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-color: rgb(2 4 10 / 0.6);
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  .bg-grid:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.06) 1px, transparent 0);
+}
+:is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
+  :is(.shadow-soft, .shadow-card, .shadow-lifted):not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+}
+
+/* Islands keep their own, dark-designed palette inside dark regions. */
+:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) {
+  --color-ink-50: #f7f8fa;
+  --color-ink-100: #eef0f4;
+  --color-ink-200: #dfe3ea;
+  --color-ink-300: #c4cbd6;
+  --color-ink-400: #98a2b3;
+  --color-ink-500: #6b7588;
+  --color-ink-600: #4c5566;
+  --color-ink-700: #374050;
+  --color-ink-800: #222936;
+  --color-ink-900: #121722;
+  --color-ink-950: #0a0e17;
+  --color-brand-50: #eef3ff;
+  --color-brand-100: #dce6ff;
+  --color-brand-200: #c0d1ff;
+  --color-brand-700: #2139b5;
+  --color-brand-800: #203392;
+}
+
+/* ── T2: islands in the light theme become light ── */
+html[data-site-theme="light"] :is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) {
+  color-scheme: light;
+  --color-white: #131a2b;
+  --color-night-950: #f4f2ed;
+  --color-night-900: #ffffff;
+  --color-night-800: #eceae4;
+  --color-brand-950: #eaeffb;
+  --color-ink-50: #121722;
+  --color-ink-100: #222936;
+  --color-ink-200: #374050;
+  --color-ink-300: #4c5566;
+  --color-ink-400: #6b7588;
+  --color-ink-500: #7c8597;
+  --color-ink-600: #98a2b3;
+  --color-ink-700: #c4cbd6;
+  --color-ink-800: #dfe3ea;
+  --color-ink-900: #eef0f4;
+  --color-ink-950: #f7f8fa;
+  --color-brand-50: #1f2f74;
+  --color-brand-100: #203392;
+  --color-brand-200: #2849dc;
+  --color-brand-300: #2849dc;
+  --color-signal-200: #0e7490;
+  --color-signal-300: #0e7490;
+  --color-signal-400: #0891b2;
+  --color-signal-500: #0e7490;
+}
+/* Navy cards become white cards with a hairline and soft depth. */
+html[data-site-theme="light"] :is(.bg-night-800, .bg-night-900, .bg-brand-950)[class*="rounded"] {
+  box-shadow: 0 0 0 1px rgb(19 26 43 / 0.08), 0 16px 40px -20px rgb(19 26 43 / 0.25);
+}
+/* The decorative blue glows of navy blocks stay a faint hint on light backgrounds. */
+html[data-site-theme="light"] :is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) .blur-3xl {
+  opacity: 0.35;
+}
+/* Text on blue buttons stays white. */
+html[data-site-theme="light"] :is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) :is(.bg-brand-400, .bg-brand-500, .bg-brand-600) {
+  color: #fff;
+}
+html[data-site-theme="light"] :is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) .bg-grid-dark {
+  background-image: radial-gradient(circle at 1px 1px, rgb(19 26 43 / 0.08) 1px, transparent 0);
+}

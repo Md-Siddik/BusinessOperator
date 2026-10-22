@@ -109,7 +109,7 @@ export function SiteAnalytics({ labels }: { labels: CookieConsentLabels }) {
         <button type="button" onClick={() => choose("denied")} className="h-10 rounded-lg border border-ink-200 bg-white px-4 text-sm font-medium text-ink-800 hover:bg-ink-50">
           {labels.decline}
         </button>
-        <button type="button" onClick={() => choose("granted")} className="h-10 rounded-lg border border-ink-900 bg-ink-900 px-4 text-sm font-medium text-white hover:bg-ink-800">
+        <button type="button" onClick={() => choose("granted")} className="h-10 rounded-lg bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700">
           {labels.accept}
         </button>
       </div>

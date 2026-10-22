@@ -148,11 +148,24 @@ export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; 
           </ul>
         </Card>
         <Card>
-          <CardHeader title="Conversations" action={<Link href={`${base}/messages`} className="text-sm text-brand-700">Inbox</Link>} />
+          <CardHeader
+            title="Conversations"
+            action={
+              <span className="flex items-center gap-3 text-sm">
+                {/* Only this client's conversations, and a new message already addressed to them. */}
+                <Link href={`${base}/messages?client=${org._id}`} className="text-brand-700 hover:underline">
+                  Inbox
+                </Link>
+                <Link href={`${base}/messages?client=${org._id}&new=1`} className="font-medium text-brand-700 hover:underline">
+                  New message
+                </Link>
+              </span>
+            }
+          />
           <ul className="divide-y divide-ink-100">
             {conversations.map((c) => (
               <li key={String(c._id)} className="px-5 py-3 text-sm">
-                <Link href={`${base}/messages?c=${c._id}`} className="font-medium hover:text-brand-700">
+                <Link href={`${base}/messages?client=${org._id}&c=${c._id}`} className="font-medium hover:text-brand-700">
                   {c.subject}
                 </Link>
                 <p className="text-xs text-ink-500">

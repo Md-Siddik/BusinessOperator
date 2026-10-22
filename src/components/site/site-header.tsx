@@ -11,13 +11,13 @@ import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { LanguageSwitcher } from "./language-switcher";
 import { AuthButton } from "./auth-button";
+import { ThemeSegmented, ThemeSwitcher, type ThemeLabels } from "./theme-switcher";
 
 export type HeaderLabels = {
   home: string;
   services: string;
   howWeWork: string;
   about: string;
-  work: string;
   contact: string;
   clientLogin: string;
   signup: string;
@@ -26,6 +26,7 @@ export type HeaderLabels = {
   openMenu: string;
   closeMenu: string;
   mainNavigation: string;
+  theme: ThemeLabels;
 };
 
 export function SiteHeader({ locale, labels, enabledLanguages }: { locale: string; labels: HeaderLabels; enabledLanguages: string[] }) {
@@ -38,7 +39,6 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
     { href: home, label: labels.home },
     { href: lp("/services"), label: labels.services },
     { href: lp("/how-we-work"), label: labels.howWeWork },
-    { href: lp("/work"), label: labels.work },
     { href: lp("/about"), label: labels.about },
     { href: lp("/contact"), label: labels.contact },
   ];
@@ -52,7 +52,8 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
   const isActive = (href: string) => (href === home ? pathname === home : pathname === href || pathname.startsWith(`${href}/`));
 
   return (
-    <header className={cn("sticky top-0 z-40 border-b transition-colors duration-200", scrolled ? "border-ink-200/70 bg-white/85 backdrop-blur-md" : "border-transparent bg-white")}>
+    // Light in Mixed mode; a translucent bar over whatever canvas the active theme has.
+    <header data-tone="light" className={cn("sticky top-0 z-40 border-b bg-white/85 backdrop-blur-md transition-colors duration-200", scrolled ? "border-ink-200/70" : "border-transparent")}>
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <Logo href={lp("/")} />
         <nav aria-label={labels.mainNavigation} className="hidden items-center gap-1 lg:flex">
@@ -63,8 +64,9 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
           ))}
         </nav>
         <div className="flex items-center gap-1.5">
-          <div className="hidden sm:block">
+          <div className="hidden items-center sm:flex">
             <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} compact />
+            <ThemeSwitcher labels={labels.theme} />
           </div>
           {/* One auth button: "Login" for signed-in / returning visitors (opens their own area), "Sign up" for new visitors. */}
           <AuthButton loginHref={lp("/login")} signupHref={lp("/signup")} loginLabel={labels.clientLogin} signupLabel={labels.signup} className="hidden md:inline-flex" />
@@ -93,6 +95,7 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
         </nav>
         <div className="space-y-3 border-t border-ink-100 p-4">
           <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} />
+          <ThemeSegmented labels={labels.theme} />
           <AuthButton loginHref={lp("/login")} signupHref={lp("/signup")} loginLabel={labels.clientLogin} signupLabel={labels.signup} className="h-11 w-full" onNavigate={() => setOpen(false)} />
           <ButtonLink href={lp("/contact")} className="w-full" onClick={() => setOpen(false)}>
             {labels.cta} <ArrowRight className="h-4 w-4" />

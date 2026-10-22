@@ -106,7 +106,7 @@ function GrowthPartnershipCard({ model, locale, t, list }: CardProps) {
 export function EngagementModels({ locale, t, list }: { locale: string; t: Translator["t"]; list: Translator["list"] }) {
   const byKey = (key: Model["key"]) => ENGAGEMENT_MODELS.find((m) => m.key === key)!;
   return (
-    <section id="engagement" className="scroll-mt-20 py-20 sm:py-28">
+    <section id="engagement" data-tone="light" className="scroll-mt-20 bg-mist py-24 sm:py-28">
       <div className="container-page">
         <SectionHeading eyebrow={t("home.engagement.eyebrow")} title={t("home.engagement.title")} subtitle={t("home.engagement.subtitle")} align="center" />
         <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-2 md:gap-6">

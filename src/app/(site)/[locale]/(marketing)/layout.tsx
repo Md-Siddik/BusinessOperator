@@ -16,7 +16,6 @@ export default async function MarketingLayout({ children, params }: { children: 
     services: t("nav.services"),
     howWeWork: t("nav.howWeWork"),
     about: t("nav.about"),
-    work: t("nav.work"),
     contact: t("nav.contact"),
     clientLogin: t("nav.clientLogin"),
     signup: t("nav.signup"),
@@ -25,6 +24,7 @@ export default async function MarketingLayout({ children, params }: { children: 
     openMenu: t("nav.openMenu"),
     closeMenu: t("nav.closeMenu"),
     mainNavigation: t("nav.mainNavigation"),
+    theme: { label: t("theme.label"), dark: t("theme.dark"), light: t("theme.light"), mixed: t("theme.mixed") },
   };
   const orgJsonLd = {
     "@context": "https://schema.org",
