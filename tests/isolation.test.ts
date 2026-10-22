@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { ClientDocument, Conversation, Message, type ConversationDoc } from "@/models";
+import { ClientDocument, Conversation, Message, Notification, Organization, type ConversationDoc } from "@/models";
 import { getStorage } from "@/lib/storage";
 import { createTicket, getTicket, listTickets, updateTicket, addTicketComment } from "@/features/tickets/service";
 import { getProject, listProjects, saveProject } from "@/features/projects/service";
@@ -15,7 +15,7 @@ import {
   unreadConversationCount,
   updateConversation,
 } from "@/features/chat/service";
-import { expectRejects, makeTenants, makeUser } from "./helpers";
+import { expectRejects, makeOrg, makeTenants, makeUser } from "./helpers";
 
 let t: Awaited<ReturnType<typeof makeTenants>>;
 
@@ -151,5 +151,58 @@ describe("Chat security & behaviour", () => {
     await expectRejects(sendMessage(t.clientB.actor, convB, { body: "" }), 400);
     const six = Array.from({ length: 6 }, (_, i) => ({ name: `f${i}.txt`, mimeType: "text/plain", size: 1, data: Buffer.from("x") }));
     await expectRejects(sendMessage(t.clientB.actor, convB, { body: "files" }, six), 400);
+  });
+});
+
+describe("Messaging individual clients", () => {
+  /** The organization of a listed conversation (populated with its name). */
+  const orgOf = (c: unknown) => String((c as { organizationId: { _id: unknown } }).organizationId._id);
+  const notified = async (userId: string, conversationId: string) => Notification.countDocuments({ userId, type: "CHAT_MESSAGE", groupKey: `conv:${conversationId}` });
+
+  it("the Owner messages one client: only that client sees it and is notified, and their reply reaches the Owner", async () => {
+    const { conversationId } = await startConversation(t.owner.actor, { subject: "Your new website", topic: "WEBSITE", body: "Here is the first draft.", organizationId: String(t.orgA._id) });
+    expect((await listConversations(t.clientA.actor, {})).map((c) => String(c._id))).toContain(conversationId);
+    expect((await listConversations(t.clientB.actor, {})).map((c) => String(c._id))).not.toContain(conversationId);
+    expect(await notified(t.clientA.actor.id, conversationId)).toBe(1);
+    expect(await notified(t.clientB.actor.id, conversationId)).toBe(0);
+    expect(await unreadConversationCount(t.clientA.actor)).toBeGreaterThanOrEqual(1);
+
+    await sendMessage(t.clientA.actor, conversationId, { body: "Looks great, thanks!" });
+    // Started by the Owner, so assigned to the Owner: the reply notifies them.
+    expect(await notified(t.owner.actor.id, conversationId)).toBe(1);
+    const thread = await getConversation(t.owner.actor, conversationId);
+    expect(thread.messages.map((m) => m.body)).toEqual(["Here is the first draft.", "Looks great, thanks!"]);
+  });
+
+  it("the inbox can be filtered to one client — never widening anyone's access", async () => {
+    const onlyA = await listConversations(t.owner.actor, { organizationId: String(t.orgA._id) });
+    expect(onlyA.length).toBeGreaterThan(0);
+    expect(onlyA.every((c) => orgOf(c) === String(t.orgA._id))).toBe(true);
+    // A client cannot use the filter to reach another organization.
+    const tried = await listConversations(t.clientA.actor, { organizationId: String(t.orgB._id) });
+    expect(tried.every((c) => orgOf(c) === String(t.orgA._id))).toBe(true);
+    // Staff without chat.manage still see only what is assigned to them.
+    const limited = await makeUser("STAFF", { permissions: ["tickets.manage"] });
+    expect(await listConversations(limited.actor, { organizationId: String(t.orgA._id) })).toEqual([]);
+  });
+
+  it("clients awaiting approval can be messaged and are notified of replies", async () => {
+    const org = await makeOrg("Pending Client AS", "PENDING_APPROVAL");
+    const pending = await makeUser("CLIENT", { organizationId: org._id, permissions: [], status: "PENDING_APPROVAL" });
+    const { conversationId } = await startConversation(pending.actor, { subject: "Question", body: "Can you build a booking page?" });
+    await sendMessage(t.owner.actor, conversationId, { body: "Yes — happy to help." });
+    expect(await notified(pending.actor.id, conversationId)).toBe(1);
+    // The Owner can also start a conversation with them.
+    await expect(startConversation(t.owner.actor, { subject: "Welcome", body: "Hello!", organizationId: String(org._id) })).resolves.toBeTruthy();
+  });
+
+  it("suspended clients cannot be messaged or notified", async () => {
+    const org = await makeOrg("Suspended Client AS", "ACTIVE");
+    const user = await makeUser("CLIENT", { organizationId: org._id, permissions: [] });
+    const { conversationId } = await startConversation(user.actor, { subject: "Old thread", body: "Hello" });
+    await Organization.updateOne({ _id: org._id }, { $set: { status: "SUSPENDED" } });
+    await expectRejects(startConversation(t.owner.actor, { subject: "Hi", body: "Hello", organizationId: String(org._id) }), 400);
+    await sendMessage(t.owner.actor, conversationId, { body: "A reply" });
+    expect(await notified(user.actor.id, conversationId)).toBe(0);
   });
 });

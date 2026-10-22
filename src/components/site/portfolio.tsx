@@ -94,7 +94,7 @@ export function VideoPlayer({ url, title }: { url: string; title: string }) {
 export function VideoShowcase({ cases, t }: { cases: PublicCaseStudy[]; t: T }) {
   const videos = cases.filter((c) => c.videoUrl).slice(0, 4);
   return (
-    <section className="border-y border-ink-100 bg-[#f5f7fb] py-16 sm:py-24" aria-labelledby="video-showcase">
+    <section className="border-y border-ink-100 bg-mist py-16 sm:py-24" aria-labelledby="video-showcase">
       <div className="container-page">
         <SectionHeading eyebrow={t("portfolio.video.eyebrow")} title={<span id="video-showcase">{t("portfolio.video.title")}</span>} subtitle={t("portfolio.video.subtitle")} />
         {videos.length ? (

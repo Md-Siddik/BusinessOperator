@@ -4,6 +4,11 @@
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  /* Public-site headings (loaded by the public layout only; the dashboard keeps Inter). */
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Quiet alternate section background (public site). */
+  --color-mist: #f5f7fb;
 
   --color-brand-50: #eef3ff;
   --color-brand-100: #dce6ff;

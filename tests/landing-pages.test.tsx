@@ -12,6 +12,9 @@ import { deliveryText, ServiceCardsGrid, ServiceLanding, servicePrice } from "@/
 import { VideoShowcase } from "@/components/site/portfolio";
 import { EngagementModels } from "@/components/site/engagement-models";
 import { DigitalSideSection } from "@/components/site/digital-side";
+import { InfrastructureSection } from "@/components/site/infrastructure";
+import { BuildFirstModel } from "@/components/site/build-first";
+import { LANGUAGE_CODES } from "@/config/languages";
 import { expectRejects, makeTenants } from "./helpers";
 
 /**
@@ -104,21 +107,68 @@ describe("Service landing pages", () => {
 });
 
 describe("Digital side section", () => {
-  it("keeps the exact headline, links to real pages and presents ONE offering, not a service list", () => {
+  it("keeps the exact headline as an operating model — your side and our side — with no buttons (not a second hero)", () => {
     const { t: en, list } = tr("en");
-    const html = renderToStaticMarkup(<DigitalSideSection locale="en" t={en} list={list} />);
+    const html = renderToStaticMarkup(<DigitalSideSection t={en} list={list} />);
     expect(html).toContain("You run the business.</span> <span");
     expect(html).toContain("We run the digital side.");
-    expect(html).toContain('href="/contact"');
-    expect(html).toContain('href="/services"');
     expect(html).toContain("You stay in charge of your business and its decisions.");
-    expect(html.match(/<h3/g)).toHaveLength(1);
-    expect(html).toContain("Your digital department");
-    for (const s of ["SEO", "CRM", "Automation", "Recruitment", "Digital marketing"]) expect(html).not.toContain(s);
-    // An illustration of scope only: no promises, numbers or invented activity in the visible text.
+    for (const s of ["Your side", "Your business", "Our side", "The digital side", "Products &amp; services", "Website and online presence", "One point of contact"]) expect(html).toContain(s);
+    expect(html).not.toMatch(/<a |<button/);
+    expect(html.match(/<h2/g)).toHaveLength(1);
+    // A model of who does what: no promises, numbers or invented activity in the visible text.
     expect(html.replace(/<[^>]+>|&[#\w]+;/g, " ")).not.toMatch(/guarantee|10x|%|\d/i);
-    const no = tr("no");
-    expect(renderToStaticMarkup(<DigitalSideSection locale="no" t={no.t} list={no.list} />)).toContain('href="/no/contact"');
+    for (const code of LANGUAGE_CODES) {
+      const { t, list: l } = tr(code);
+      expect(renderToStaticMarkup(<DigitalSideSection t={t} list={l} />), code).toContain(t("home.digitalSide.titleDigital"));
+    }
+  });
+});
+
+describe("Digital business infrastructure", () => {
+  it("presents one outcome in four layers, and only the Owner's featured services as starting points", () => {
+    const { t: en, list } = tr("en");
+    const all = views("en");
+    const featured = all.slice(0, 2);
+    const html = renderToStaticMarkup(<InfrastructureSection locale="en" t={en} list={list} featured={featured} />);
+    expect(html).toContain("Your digital business infrastructure");
+    for (const layer of ["Presence", "Enquiries", "Systems", "Care"]) expect(html).toContain(layer);
+    for (const s of featured) expect(html).toContain(`href="/services/${s.slug}"`);
+    for (const s of all.slice(2)) expect(html).not.toContain(`href="/services/${s.slug}"`);
+    expect(html).toContain('href="/services"');
+    expect(renderToStaticMarkup(<InfrastructureSection locale="en" t={en} list={list} featured={[]} />)).not.toContain("Common starting points");
+  });
+});
+
+describe("Build-first working model", () => {
+  it("shows the low-risk model with its terms, without a portfolio", () => {
+    const { t: en, list } = tr("en");
+    const html = renderToStaticMarkup(<BuildFirstModel locale="en" t={en} list={list} />);
+    expect(html).toContain("We would rather show you what we propose than ask you to buy an idea you haven&#x27;t seen.");
+    expect(html).toContain("Not free development");
+    expect(html).toContain("Prefer a classic arrangement?");
+    expect(html).toContain('href="/how-we-work/build-first"');
+    expect(html).not.toMatch(/See what we build|Our work/i);
+  });
+});
+
+describe("Site appearance", () => {
+  it("defaults to mixed and only accepts the three known modes from storage", async () => {
+    const { SITE_THEMES, DEFAULT_SITE_THEME, SITE_THEME_SCRIPT } = await import("@/components/site/theme");
+    expect(SITE_THEMES).toEqual(["dark", "light", "mixed"]);
+    expect(DEFAULT_SITE_THEME).toBe("mixed");
+    const run = (stored: string | null) => {
+      const attrs: Record<string, string> = { "data-site-theme": DEFAULT_SITE_THEME };
+      const doc = { documentElement: { setAttribute: (k: string, v: string) => (attrs[k] = v) } };
+      new Function("localStorage", "document", SITE_THEME_SCRIPT)({ getItem: () => stored }, doc);
+      return attrs["data-site-theme"];
+    };
+    expect(run(null)).toBe("mixed");
+    expect(run("dark")).toBe("dark");
+    expect(run("light")).toBe("light");
+    expect(run("mixed")).toBe("mixed");
+    expect(run("<script>")).toBe("mixed");
+    for (const code of LANGUAGE_CODES) for (const k of ["label", "dark", "light", "mixed"]) expect(tr(code).t(`theme.${k}`), `${code} theme.${k}`).not.toBe(`theme.${k}`);
   });
 });
 

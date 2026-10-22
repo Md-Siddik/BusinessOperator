@@ -63,6 +63,8 @@ export function ChatWorkspace({
   organizations = [],
   availability,
   canAssign = false,
+  client,
+  composeForClient = false,
 }: {
   mode: ChatMode;
   me: { id: string; name: string };
@@ -71,6 +73,10 @@ export function ChatWorkspace({
   organizations?: { id: string; name: string }[];
   availability?: string;
   canAssign?: boolean;
+  /** Internal inbox filtered to one client organization (?client=). */
+  client?: { id: string; name: string };
+  /** Open "New conversation" for that client right away (&new=1). */
+  composeForClient?: boolean;
 }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -81,20 +87,30 @@ export function ChatWorkspace({
   const [loadingThread, setLoadingThread] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [composerOpen, setComposerOpen] = useState(false);
+  const [clientFilter, setClientFilter] = useState(client ?? null);
+  const [composerOpen, setComposerOpen] = useState(composeForClient);
   const workspaceBase = useWorkspaceBase();
   const basePath = mode === "client" ? "/portal/messages" : `${workspaceBase}/messages`;
+  /** Inbox URL, keeping the client filter so a reload shows the same view. */
+  const urlFor = useCallback((conversationId?: string) => {
+    const params = new URLSearchParams();
+    if (clientFilter) params.set("client", clientFilter.id);
+    if (conversationId) params.set("c", conversationId);
+    const qs = params.toString();
+    return qs ? `${basePath}?${qs}` : basePath;
+  }, [basePath, clientFilter]);
 
   const refreshList = useCallback(async (q = query, status = statusFilter) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status) params.set("status", status);
+    if (clientFilter) params.set("organizationId", clientFilter.id);
     try {
       setConversations(await apiFetch<ConversationSummary[]>(`/api/conversations?${params.toString()}`));
     } catch {
       /* keep the current list */
     }
-  }, [query, statusFilter]);
+  }, [query, statusFilter, clientFilter]);
 
   // Debounced search
   useEffect(() => {
@@ -106,7 +122,7 @@ export function ChatWorkspace({
     async (id: string) => {
       setSelectedId(id);
       setLoadingThread(true);
-      router.replace(`${basePath}?c=${id}`, { scroll: false });
+      router.replace(urlFor(id), { scroll: false });
       try {
         const t = await apiFetch<Thread>(`/api/conversations/${id}`);
         setThread(t);
@@ -118,7 +134,7 @@ export function ChatWorkspace({
         setLoadingThread(false);
       }
     },
-    [basePath, router, toast],
+    [urlFor, router, toast],
   );
 
   useEffect(() => {
@@ -193,6 +209,25 @@ export function ChatWorkspace({
               ))}
             </Select>
           )}
+          {clientFilter && (
+            <p className="flex items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs text-brand-800">
+              <span className="min-w-0 truncate">
+                Client: <span className="font-semibold">{clientFilter.name}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setClientFilter(null);
+                  router.replace(selectedId ? `${basePath}?c=${selectedId}` : basePath, { scroll: false });
+                }}
+                className="shrink-0 rounded p-0.5 hover:bg-brand-100"
+                aria-label="Show all clients"
+                title="Show all clients"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </p>
+          )}
         </div>
         <ul className="scroll-thin flex-1 overflow-y-auto">
           {conversations.length === 0 && <li className="px-4 py-10 text-center text-sm text-ink-500">No conversations yet.</li>}
@@ -253,7 +288,7 @@ export function ChatWorkspace({
             onBack={() => {
               setSelectedId(null);
               setThread(null);
-              router.replace(basePath, { scroll: false });
+              router.replace(urlFor(), { scroll: false });
             }}
             onSent={(msg) => setThread((t) => (t && !t.messages.some((m) => m._id === msg._id) ? { ...t, messages: [...t.messages, msg] } : t))}
             onUpdated={(patch) => {
@@ -269,6 +304,7 @@ export function ChatWorkspace({
         onClose={() => setComposerOpen(false)}
         mode={mode}
         organizations={organizations}
+        defaultOrganizationId={clientFilter?.id}
         onCreated={(id) => {
           setComposerOpen(false);
           void refreshList().then(() => openConversation(id));
@@ -501,7 +537,7 @@ function ThreadView({
   );
 }
 
-function NewConversationModal({ open, onClose, mode, organizations, onCreated }: { open: boolean; onClose: () => void; mode: ChatMode; organizations: { id: string; name: string }[]; onCreated: (id: string) => void }) {
+function NewConversationModal({ open, onClose, mode, organizations, defaultOrganizationId, onCreated }: { open: boolean; onClose: () => void; mode: ChatMode; organizations: { id: string; name: string }[]; defaultOrganizationId?: string; onCreated: (id: string) => void }) {
   const toast = useToast();
   const [pending, setPending] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -528,7 +564,7 @@ function NewConversationModal({ open, onClose, mode, organizations, onCreated }:
         {mode === "internal" && (
           <Field label="Client" error={errors.organizationId}>
             {(p) => (
-              <Select {...p} name="organizationId" required>
+              <Select {...p} key={defaultOrganizationId ?? "any"} name="organizationId" required defaultValue={defaultOrganizationId}>
                 {organizations.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}

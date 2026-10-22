@@ -124,7 +124,7 @@ export default async function BuildFirstPage({ params }: LocaleParams) {
       </section>
 
       {/* Agreed before we start / what it is not */}
-      <section className="border-y border-ink-100 bg-[#f5f7fb] py-16 sm:py-20">
+      <section className="border-y border-ink-100 bg-mist py-16 sm:py-20">
         <div className="container-page grid gap-5 lg:grid-cols-2">
           <div className="rounded-2xl border border-emerald-200 bg-white p-6 shadow-soft sm:p-7">
             <h2 className="text-lg font-semibold tracking-tight text-ink-900">{t(`${pk}.agreedTitle`)}</h2>
@@ -171,7 +171,7 @@ export default async function BuildFirstPage({ params }: LocaleParams) {
       )}
 
       {/* Build-first is an approach; the way of working is still one of the three models. */}
-      <div className="border-t border-ink-100 bg-[#f5f7fb]">
+      <div className="border-t border-ink-100 bg-mist">
         <EngagementModels locale={locale} t={t} list={list} />
       </div>
 

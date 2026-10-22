@@ -132,13 +132,14 @@ export function HomeHero({ locale, t }: { locale: string; t: T }) {
             {t("home.hero.titleStart")} <span className="bg-gradient-to-r from-brand-300 to-signal-300 bg-clip-text text-transparent">{t("home.hero.titleEnd")}</span>
           </h1>
           <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-ink-300">{t("home.hero.subtitle")}</p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          {/* One primary goal; services stay one quiet click away. */}
+          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
             <ButtonLink href={localizedPath(locale, "/contact")} size="lg" className="bg-brand-500 shadow-[0_10px_30px_-10px_rgb(61_102_240/0.8)] hover:bg-brand-400 active:bg-brand-600">
               {t("cta.letsWorkTogether")} <ArrowRight className="h-4 w-4" aria-hidden />
             </ButtonLink>
-            <ButtonLink href={localizedPath(locale, "/services")} size="lg" variant="outline" className="border-white/20 bg-white/5 text-white shadow-none hover:border-white/30 hover:bg-white/10">
-              {t("cta.exploreServices")}
-            </ButtonLink>
+            <Link href={localizedPath(locale, "/services")} className="group inline-flex items-center gap-1.5 text-[15px] font-semibold text-ink-200 transition-colors hover:text-white">
+              {t("cta.exploreServices")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </Link>
           </div>
           <p className="mt-6 flex items-start gap-2 text-sm text-ink-400">
             <Repeat className="mt-0.5 h-4 w-4 shrink-0 text-signal-400" aria-hidden />
@@ -204,7 +205,7 @@ const JOURNEY_ICONS: LucideIcon[] = [LayoutTemplate, Magnet, MousePointerClick, 
 export function GrowthJourney({ locale, t, list }: { locale: string; t: T; list: Translator["list"] }) {
   const steps = list<{ title: string; text: string }>("home.journey.steps");
   return (
-    <section className="border-y border-ink-100 bg-[#f5f7fb] py-20 sm:py-28">
+    <section className="border-y border-ink-100 bg-mist py-20 sm:py-28">
       <div className="container-page">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <SectionHeading eyebrow={t("home.journey.eyebrow")} title={t("home.journey.title")} subtitle={t("home.journey.subtitle")} />
@@ -225,7 +226,7 @@ export function GrowthJourney({ locale, t, list }: { locale: string; t: T; list:
                 key={step.title}
                 className="group relative flex gap-4 pb-5 last:pb-0 lg:block lg:rounded-2xl lg:border lg:border-ink-200 lg:bg-white lg:p-6 lg:shadow-soft lg:transition-all lg:duration-200 lg:hover:-translate-y-1 lg:hover:border-brand-200 lg:hover:shadow-lifted"
               >
-                <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-night-900 text-signal-300 ring-4 ring-[#f5f7fb] transition-colors duration-200 group-hover:bg-brand-600 group-hover:text-white lg:ring-white">
+                <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-night-900 text-signal-300 ring-4 ring-mist transition-colors duration-200 group-hover:bg-brand-600 group-hover:text-white lg:ring-white">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1 rounded-2xl border border-ink-200 bg-white p-5 shadow-soft lg:mt-5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
@@ -377,11 +378,39 @@ export function MoreThanWebsite({ locale, t, list }: { locale: string; t: T; lis
   );
 }
 
+/* ───────────── How we operate (homepage trust row) ───────────── */
+
+/** Three principles as an open, typographic row — dividers instead of cards. */
+export function Principles({ t, list }: { t: T; list: Translator["list"] }) {
+  const items = list<{ title: string; text: string }>("home.principles.items");
+  return (
+    <section data-tone="dark" className="py-24 sm:py-28" aria-labelledby="principles-title">
+      <div className="container-page">
+        <div className="max-w-2xl">
+          <Eyebrow>{t("home.principles.eyebrow")}</Eyebrow>
+          <h2 id="principles-title" className="mt-4 text-balance text-[1.75rem] font-semibold leading-tight tracking-[-0.025em] text-ink-900 sm:text-[2.125rem]">
+            {t("home.principles.title")}
+          </h2>
+        </div>
+        <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-12">
+          {items.map((p, i) => (
+            <li key={p.title} className="border-t border-ink-200 pt-6">
+              <span className="font-display text-sm font-semibold tabular-nums text-brand-600">0{i + 1}</span>
+              <h3 className="mt-3 text-lg font-semibold tracking-tight text-ink-900">{p.title}</h3>
+              <p className="mt-2 text-pretty text-[15px] leading-relaxed text-ink-600">{p.text}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
 /* ───────────── Closing call to action (all public pages) ───────────── */
 
 export function CtaBand({ locale, t, title, subtitle }: { locale: string; t: T; title?: string; subtitle?: string }) {
   return (
-    <section className="py-16 sm:py-24">
+    <section data-tone="light" className="py-16 sm:py-24">
       <div className="container-page">
         <div className="relative isolate overflow-hidden rounded-3xl bg-night-900 px-6 py-14 text-center shadow-lifted sm:px-12 sm:py-20">
           <div className="bg-grid-dark pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />

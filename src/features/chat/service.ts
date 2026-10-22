@@ -174,7 +174,9 @@ export async function startConversation(actor: Actor, input: unknown, files: Val
     if (!data.organizationId) throw Errors.badRequest("Choose a client");
     organizationId = data.organizationId;
   }
-  if (!(await Organization.exists({ _id: organizationId }))) throw Errors.notFound();
+  const org = await Organization.findById(organizationId).select("status").lean<{ status: string }>();
+  if (!org) throw Errors.notFound();
+  if (org.status === "SUSPENDED") throw Errors.badRequest("This client account is suspended, so a conversation can't be started.");
 
   const defaultAssignee = isClient(actor) ? await resolveDefaultAssignee(settings) : actor.id;
   const conv = await Conversation.create({
@@ -277,7 +279,7 @@ function shouldEmail(userId: string, conversationId: string) {
 
 async function notifyAboutMessage(actor: Actor, conv: ConversationDoc, body: string) {
   const settings = await getSetting("chat");
-  const org = await Organization.findById(conv.organizationId).select("name").lean<{ name: string }>();
+  const org = await Organization.findById(conv.organizationId).select("name status").lean<{ name: string; status: string }>();
   const groupKey = `conv:${conv._id}`;
   if (isClient(actor)) {
     let recipients: string[];
@@ -293,7 +295,10 @@ async function notifyAboutMessage(actor: Actor, conv: ConversationDoc, body: str
       }
     }
   } else {
-    const clients = await User.find({ organizationId: conv.organizationId, role: "CLIENT", status: "ACTIVE" }).lean<UserDoc[]>();
+    // Everyone in the client organization who can read the reply: active users, and — while the
+    // organization awaits approval — the signed-up users who are allowed to chat already.
+    const statuses = org?.status === "ACTIVE" ? ["ACTIVE"] : org?.status === "PENDING_APPROVAL" ? ["ACTIVE", "PENDING_APPROVAL"] : [];
+    const clients = statuses.length ? await User.find({ organizationId: conv.organizationId, role: "CLIENT", status: { $in: statuses } }).lean<UserDoc[]>() : [];
     await notifyUsers(clients.map((u) => String(u._id)), { type: "CHAT_MESSAGE", title: `New reply from ${actor.name}`, body: truncate(body, 140), link: `/portal/messages?c=${conv._id}`, groupKey });
     if (settings.emailNotifications) {
       for (const u of clients) {
