@@ -5,6 +5,7 @@ import { WebPageView, WebSession, WebVisitor, type WebSessionDoc, type WebVisito
 import { isInternal, type Actor } from "@/lib/permissions";
 import { getSetting } from "@/features/settings/service";
 import { channelFor, hashVisitorId, isBot, parsePath, parseReferrer, parseUtm, SESSION_TIMEOUT_MS, VISITOR_ID_RE, visitorLabel } from "./classify";
+import { validTimeZone, type Geo } from "./geo";
 
 /**
  * Collection side of website analytics (public tracker → /api/track). Never throws to the
@@ -24,6 +25,8 @@ const trackSchema = z.object({
   replaces: z.string().max(40).optional(),
   /** After "Accept": how this tab arrived on the site, so the visit keeps its source/campaign. */
   landing: landingSchema.optional(),
+  /** The browser's IANA time zone, to show the visit in the visitor's local time. */
+  tz: z.string().max(64).optional(),
 });
 
 export type TrackContext = {
@@ -36,6 +39,8 @@ export type TrackContext = {
   vid?: string | null;
   actor?: Actor | null;
   now?: Date;
+  /** Coarse location for this request; only called for page views that are recorded. */
+  resolveGeo?: () => Promise<Geo | null>;
 };
 export type TrackResult = { recorded: boolean; reason?: string; /** A newly issued visitor id to set as cookie. */ newVid?: string; id?: string };
 
@@ -66,7 +71,9 @@ export async function recordEvent(input: unknown, ctx: TrackContext): Promise<Tr
   const ref = parseReferrer(data.referrer, ctx.host);
   const utm = parseUtm(loc.search);
   const expireAt = await expiry(now);
-  const base = { at: now, path: loc.path, page: loc.page, locale: loc.locale, serviceSlug: loc.serviceSlug, expireAt };
+  const geo = (await ctx.resolveGeo?.().catch(() => null)) ?? undefined;
+  const timeZone = validTimeZone(data.tz);
+  const base = { at: now, path: loc.path, page: loc.page, locale: loc.locale, serviceSlug: loc.serviceSlug, geo, timeZone, expireAt };
 
   if (!ctx.consent) {
     // Arrival from outside the site (or typed/bookmarked): counts as a visit for sources and landing pages.
@@ -95,7 +102,7 @@ export async function recordEvent(input: unknown, ctx: TrackContext): Promise<Tr
     { vidHash },
     {
       $setOnInsert: { vidHash, label: visitorLabel(vidHash), firstSeen: now, firstChannel: channel, firstReferrerDomain: aRef.referrerDomain, firstUtm: aUtm, firstLandingPage: aPage },
-      $set: { lastSeen: now, expireAt, ...(userId && { userId, userRole: "CLIENT" }) },
+      $set: { lastSeen: now, expireAt, ...(geo && { geo }), ...(timeZone && { timeZone }), ...(userId && { userId, userRole: "CLIENT" }) },
       $inc: { pageViews: 1 },
     },
     { upsert: true, new: true },
@@ -126,6 +133,8 @@ export async function recordEvent(input: unknown, ctx: TrackContext): Promise<Tr
         referrer: aRef.referrer,
         referrerDomain: aRef.referrerDomain,
         utm: external ? aUtm : undefined,
+        geo,
+        timeZone,
         userId,
         expireAt,
       })

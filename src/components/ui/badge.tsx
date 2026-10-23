@@ -31,7 +31,7 @@ export function DemoBadge({ className, label = "Demo data" }: { className?: stri
     </Badge>
   );
 }
-
+ 
 const STATUS_TONES: Record<string, BadgeTone> = {
   ACTIVE: "success",
   PENDING_APPROVAL: "warning",

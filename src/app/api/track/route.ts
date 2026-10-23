@@ -3,6 +3,7 @@ import { readJson, route } from "@/lib/api/handler";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 import { CONSENT_COOKIE, VISITOR_COOKIE, VISITOR_COOKIE_MAX_AGE } from "@/features/website-analytics/classify";
 import { recordEvent } from "@/features/website-analytics/collect";
+import { lookupGeo } from "@/features/website-analytics/geo";
 
 /**
  * Public analytics beacon. Always answers 200: analytics must never affect the website, so
@@ -11,7 +12,7 @@ import { recordEvent } from "@/features/website-analytics/collect";
  * The anonymous visitor cookie is only ever set when the browser has accepted analytics
  * (et_consent=granted), and is cleared again when it has not.
  */
-export const POST = route({ auth: "optional", rateLimit: RATE_LIMITS.track }, async ({ req, actor }) => {
+export const POST = route({ auth: "optional", rateLimit: RATE_LIMITS.track }, async ({ req, actor, ip }) => {
   const consent = req.cookies.get(CONSENT_COOKIE)?.value === "granted";
   const vid = req.cookies.get(VISITOR_COOKIE)?.value;
   let body: Record<string, unknown> = { ok: true };
@@ -23,6 +24,8 @@ export const POST = route({ auth: "optional", rateLimit: RATE_LIMITS.track }, as
       consent,
       vid,
       actor,
+      // Country/region/city only; the IP is used in memory for the lookup and never stored.
+      resolveGeo: () => lookupGeo(req.headers, ip),
     });
     newVid = result.newVid;
     if (result.id) body = { ok: true, id: result.id };

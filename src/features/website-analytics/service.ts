@@ -5,6 +5,7 @@ import { isOwner, type Actor } from "@/lib/permissions";
 import { localRangeUtc, resolveDayRange, type DayRange } from "@/lib/dates/country-time";
 import { csvCell } from "@/features/companies/registrations";
 import { CHANNEL_LABELS, CHANNELS, type Channel } from "./classify";
+import type { Geo } from "./geo";
 
 /**
  * Website analytics — OWNER ONLY. Every exported function checks the role itself (pages and
@@ -221,6 +222,9 @@ export type VisitorRow = {
   source: string;
   status: VisitorStatus;
   userName?: string;
+  /** Last known location (coarse) and browser time zone. */
+  geo?: Geo;
+  timeZone?: string;
 };
 
 function statusOf(v: Pick<WebVisitorDoc, "contactRequestIds" | "userId" | "sessions">): VisitorStatus {
@@ -261,6 +265,8 @@ export async function listVisitors(actor: Actor, r: AnalyticsRange, opts: { page
       pageViewsInRange: i.pageViews,
       source: channelLabel(v.firstChannel),
       status: statusOf(v),
+      geo: (v.geo as Geo | null) ?? undefined,
+      timeZone: v.timeZone ?? undefined,
       userName: v.userId ? userName.get(String(v.userId)) : undefined,
     }];
   });
@@ -280,6 +286,8 @@ export type VisitorDetail = {
   firstReferrerDomain?: string;
   firstUtm?: { source?: string; medium?: string; campaign?: string; term?: string; content?: string };
   firstLandingPage?: string;
+  geo?: Geo;
+  timeZone?: string;
   user?: { id: string; name: string; email: string; role: string };
   enquiries: { id: string; name: string; company?: string; email: string; createdAt: Date; serviceSlug?: string; status: string }[];
   sessions: {
@@ -291,6 +299,8 @@ export type VisitorDetail = {
     channel: string;
     referrerDomain?: string;
     campaign?: string;
+    geo?: Geo;
+    timeZone?: string;
     enquiries: number;
     pages: { at: Date; page: string; path: string }[];
   }[];
@@ -325,6 +335,8 @@ export async function getVisitor(actor: Actor, id: string): Promise<VisitorDetai
     firstReferrerDomain: v.firstReferrerDomain ?? undefined,
     firstUtm: (v.firstUtm as VisitorDetail["firstUtm"]) ?? undefined,
     firstLandingPage: v.firstLandingPage ?? undefined,
+    geo: (v.geo as Geo | null) ?? undefined,
+    timeZone: v.timeZone ?? undefined,
     user: user ? { id: String(user._id), name: user.name, email: user.email, role: user.role } : undefined,
     enquiries: enquiries.map((e) => ({ id: String(e._id), name: e.name, company: e.company ?? undefined, email: e.email, createdAt: e.createdAt, serviceSlug: e.serviceSlug ?? undefined, status: e.status })),
     sessions: sessions.map((s) => ({
@@ -336,15 +348,131 @@ export async function getVisitor(actor: Actor, id: string): Promise<VisitorDetai
       channel: channelLabel(s.channel),
       referrerDomain: s.referrerDomain ?? undefined,
       campaign: s.utm?.campaign ?? undefined,
+      geo: (s.geo as Geo | null) ?? undefined,
+      timeZone: s.timeZone ?? undefined,
       enquiries: s.enquiries ?? 0,
       pages: bySession.get(String(s._id)) ?? [],
     })),
   };
 }
 
+/* ───────────── Locations & recent visits ───────────── */
+
+export type LocationRow = { key: string; country?: string; region?: string; city?: string; visitors: number; sessions: number; cookielessVisits: number; pageViews: number };
+
+const areaKeyOf = (g: Geo) => [g.country ?? "", g.region ?? "", g.city ?? ""].join("|");
+const emptyRow = (key: string, g: Geo): LocationRow => ({ key, country: g.country, region: g.region, city: g.city, visitors: 0, sessions: 0, cookielessVisits: 0, pageViews: 0 });
+
+/**
+ * Where visits came from: per country, and per area (country + region + city). Tracked
+ * sessions carry their visitor; visits without consent are counted, never identified.
+ */
+export async function getLocations(actor: Actor, r: AnalyticsRange): Promise<{ countries: LocationRow[]; areas: LocationRow[] }> {
+  requireOwner(actor);
+  const areaKey = { country: "$geo.country", region: "$geo.region", city: "$geo.city" };
+  const [sess, cookieless] = await Promise.all([
+    WebSession.aggregate<{ _id: Geo | null; visitors: unknown[]; sessions: number; pageViews: number }>([
+      { $match: inRange("startedAt", r) },
+      { $group: { _id: areaKey, visitors: { $addToSet: "$visitorId" }, sessions: { $sum: 1 }, pageViews: { $sum: "$pageViews" } } },
+    ]),
+    WebPageView.aggregate<{ _id: Geo | null; visits: number; pageViews: number }>([
+      { $match: { ...inRange("at", r), consented: false } },
+      { $group: { _id: areaKey, visits: { $sum: { $cond: ["$entry", 1, 0] } }, pageViews: { $sum: 1 } } },
+    ]),
+  ]);
+  const areas = new Map<string, LocationRow>();
+  const countries = new Map<string, LocationRow>();
+  const countryVisitors = new Map<string, Set<string>>();
+  const areaRow = (g: Geo) => {
+    const key = areaKeyOf(g);
+    if (!areas.has(key)) areas.set(key, emptyRow(key, g));
+    return areas.get(key)!;
+  };
+  const countryRow = (g: Geo) => {
+    const key = g.country ?? "";
+    if (!countries.has(key)) countries.set(key, emptyRow(key, { country: g.country }));
+    return countries.get(key)!;
+  };
+  for (const s of sess) {
+    const g = s._id ?? {};
+    const a = areaRow(g);
+    a.visitors += s.visitors.length;
+    a.sessions += s.sessions;
+    a.pageViews += s.pageViews;
+    const c = countryRow(g);
+    c.sessions += s.sessions;
+    c.pageViews += s.pageViews;
+    const set = countryVisitors.get(c.key) ?? new Set<string>();
+    for (const v of s.visitors) set.add(String(v));
+    countryVisitors.set(c.key, set);
+  }
+  for (const p of cookieless) {
+    const g = p._id ?? {};
+    const a = areaRow(g);
+    a.cookielessVisits += p.visits;
+    a.pageViews += p.pageViews;
+    const c = countryRow(g);
+    c.cookielessVisits += p.visits;
+    c.pageViews += p.pageViews;
+  }
+  for (const c of countries.values()) c.visitors = countryVisitors.get(c.key)?.size ?? 0;
+  const visits = (x: LocationRow) => x.sessions + x.cookielessVisits;
+  // Most visits first; visits with an unknown location always last.
+  const byVisits = (a: LocationRow, b: LocationRow) => Number(!a.country) - Number(!b.country) || visits(b) - visits(a) || b.pageViews - a.pageViews;
+  return { countries: [...countries.values()].sort(byVisits), areas: [...areas.values()].sort(byVisits).slice(0, 50) };
+}
+
+export type RecentVisit = {
+  at: Date;
+  /** "tracked": a visitor who accepted analytics (opens their timeline); "anonymous": a visit without consent. */
+  kind: "tracked" | "anonymous";
+  visitorId?: string;
+  label?: string;
+  sessionNo?: number;
+  geo?: Geo;
+  timeZone?: string;
+  landingPage: string;
+  channel: string;
+  pageViews?: number;
+  durationSeconds?: number;
+};
+
+/** The latest visits, newest first: when, from where, how they arrived and where they landed. */
+export async function getRecentVisits(actor: Actor, r: AnalyticsRange, limit = 25): Promise<RecentVisit[]> {
+  requireOwner(actor);
+  const [sessions, anonymous] = await Promise.all([
+    WebSession.find(inRange("startedAt", r)).sort({ startedAt: -1 }).limit(limit).lean<WebSessionDoc[]>(),
+    WebPageView.find({ ...inRange("at", r), consented: false, entry: true })
+      .sort({ at: -1 })
+      .limit(limit)
+      .select("at page channel geo timeZone")
+      .lean<{ at: Date; page: string; channel?: string; geo?: Geo; timeZone?: string }[]>(),
+  ]);
+  const labels = new Map(
+    (await WebVisitor.find({ _id: { $in: sessions.map((s) => s.visitorId) } }).select("label").lean<{ _id: Types.ObjectId; label: string }[]>()).map((v) => [String(v._id), v.label]),
+  );
+  const visits: RecentVisit[] = [
+    ...sessions.map((s) => ({
+      at: s.startedAt,
+      kind: "tracked" as const,
+      visitorId: String(s.visitorId),
+      label: labels.get(String(s.visitorId)),
+      sessionNo: s.sessionNo,
+      geo: (s.geo as Geo | null) ?? undefined,
+      timeZone: s.timeZone ?? undefined,
+      landingPage: s.landingPage ?? "/",
+      channel: channelLabel(s.channel),
+      pageViews: s.pageViews,
+      durationSeconds: Math.round((s.lastSeen.getTime() - s.startedAt.getTime()) / 1000),
+    })),
+    ...anonymous.map((p) => ({ at: p.at, kind: "anonymous" as const, geo: p.geo ?? undefined, timeZone: p.timeZone ?? undefined, landingPage: p.page, channel: channelLabel(p.channel) })),
+  ];
+  return visits.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, limit);
+}
+
 /* ───────────── CSV export ───────────── */
 
-export const EXPORT_KINDS = ["visitors", "sessions", "pageviews", "sources", "campaigns"] as const;
+export const EXPORT_KINDS = ["visitors", "sessions", "pageviews", "sources", "campaigns", "locations"] as const;
 export type ExportKind = (typeof EXPORT_KINDS)[number];
 const EXPORT_MAX = 50_000;
 
@@ -356,18 +484,22 @@ export async function exportAnalyticsCsv(actor: Actor, kind: string, r: Analytic
   let rows: unknown[][] = [];
   if (kind === "visitors") {
     const { items } = await listVisitors(actor, r, { limit: EXPORT_MAX });
-    header = ["visitor", "first_seen", "last_seen", "sessions_total", "sessions_in_range", "page_views_in_range", "first_source", "status"];
-    rows = items.map((v) => [`#${v.label}`, v.firstSeen, v.lastSeen, v.totalSessions, v.sessionsInRange, v.pageViewsInRange, v.source, v.status]);
+    header = ["visitor", "first_seen", "last_seen", "sessions_total", "sessions_in_range", "page_views_in_range", "first_source", "status", "country", "region", "city", "time_zone"];
+    rows = items.map((v) => [`#${v.label}`, v.firstSeen, v.lastSeen, v.totalSessions, v.sessionsInRange, v.pageViewsInRange, v.source, v.status, v.geo?.country, v.geo?.region, v.geo?.city, v.timeZone]);
   } else if (kind === "sessions") {
     const sessions = await WebSession.find(inRange("startedAt", r)).sort({ startedAt: -1 }).limit(EXPORT_MAX).lean<WebSessionDoc[]>();
     const labels = new Map((await WebVisitor.find({ _id: { $in: sessions.map((s) => s.visitorId) } }).select("label").lean<{ _id: Types.ObjectId; label: string }[]>()).map((v) => [String(v._id), v.label]));
-    header = ["visitor", "session_no", "started_at", "last_activity_at", "duration_seconds", "page_views", "landing_page", "exit_page", "channel", "referrer_domain", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "enquiries"];
-    rows = sessions.map((s) => [`#${labels.get(String(s.visitorId)) ?? "?"}`, s.sessionNo, s.startedAt, s.lastSeen, Math.round((s.lastSeen.getTime() - s.startedAt.getTime()) / 1000), s.pageViews, s.landingPage, s.exitPage, channelLabel(s.channel), s.referrerDomain, s.utm?.source, s.utm?.medium, s.utm?.campaign, s.utm?.term, s.utm?.content, s.enquiries]);
+    header = ["visitor", "session_no", "started_at", "last_activity_at", "duration_seconds", "page_views", "landing_page", "exit_page", "channel", "referrer_domain", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "enquiries", "country", "region", "city", "time_zone"];
+    rows = sessions.map((s) => [`#${labels.get(String(s.visitorId)) ?? "?"}`, s.sessionNo, s.startedAt, s.lastSeen, Math.round((s.lastSeen.getTime() - s.startedAt.getTime()) / 1000), s.pageViews, s.landingPage, s.exitPage, channelLabel(s.channel), s.referrerDomain, s.utm?.source, s.utm?.medium, s.utm?.campaign, s.utm?.term, s.utm?.content, s.enquiries, s.geo?.country, s.geo?.region, s.geo?.city, s.timeZone]);
   } else if (kind === "pageviews") {
-    const views = await WebPageView.find(inRange("at", r)).sort({ at: -1 }).limit(EXPORT_MAX).select("at page path locale consented visitorId entry channel referrerDomain utm").lean<{ at: Date; page: string; path: string; locale?: string; consented: boolean; visitorId?: Types.ObjectId; entry?: boolean; channel?: string; referrerDomain?: string; utm?: { source?: string; medium?: string; campaign?: string } }[]>();
+    const views = await WebPageView.find(inRange("at", r)).sort({ at: -1 }).limit(EXPORT_MAX).select("at page path locale consented visitorId entry channel referrerDomain utm geo timeZone").lean<{ at: Date; page: string; path: string; locale?: string; consented: boolean; visitorId?: Types.ObjectId; entry?: boolean; channel?: string; referrerDomain?: string; utm?: { source?: string; medium?: string; campaign?: string }; geo?: Geo; timeZone?: string }[]>();
     const labels = new Map((await WebVisitor.find({ _id: { $in: views.map((v) => v.visitorId).filter(Boolean) } }).select("label").lean<{ _id: Types.ObjectId; label: string }[]>()).map((v) => [String(v._id), v.label]));
-    header = ["viewed_at", "page", "path", "language", "visitor", "analytics_consent", "visit_entry", "channel", "referrer_domain", "utm_source", "utm_medium", "utm_campaign"];
-    rows = views.map((v) => [v.at, v.page, v.path, v.locale, v.visitorId ? `#${labels.get(String(v.visitorId)) ?? "?"}` : "", v.consented ? "yes" : "no", v.entry ? "yes" : "no", v.channel ? channelLabel(v.channel) : "", v.referrerDomain, v.utm?.source, v.utm?.medium, v.utm?.campaign]);
+    header = ["viewed_at", "page", "path", "language", "visitor", "analytics_consent", "visit_entry", "channel", "referrer_domain", "utm_source", "utm_medium", "utm_campaign", "country", "region", "city", "time_zone"];
+    rows = views.map((v) => [v.at, v.page, v.path, v.locale, v.visitorId ? `#${labels.get(String(v.visitorId)) ?? "?"}` : "", v.consented ? "yes" : "no", v.entry ? "yes" : "no", v.channel ? channelLabel(v.channel) : "", v.referrerDomain, v.utm?.source, v.utm?.medium, v.utm?.campaign, v.geo?.country, v.geo?.region, v.geo?.city, v.timeZone]);
+  } else if (kind === "locations") {
+    const { areas } = await getLocations(actor, r);
+    header = ["country", "region", "city", "visitors", "sessions", "visits_without_consent", "page_views"];
+    rows = areas.map((a) => [a.country, a.region, a.city, a.visitors, a.sessions, a.cookielessVisits, a.pageViews]);
   } else {
     const perf = kind === "sources" ? await getSources(actor, r) : await getCampaigns(actor, r);
     header = [kind === "sources" ? "source" : "campaign", "utm_source", "utm_medium", "visitors", "sessions", "visits_without_consent", "page_views", "enquiries", "conversion_rate"];

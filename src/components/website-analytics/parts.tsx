@@ -4,6 +4,7 @@ import { buttonClasses } from "@/components/ui/button";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { DATE_PRESET_LABELS } from "@/lib/dates/country-time";
 import { ANALYTICS_PRESETS, ANALYTICS_TIME_ZONE, type VisitorStatus } from "@/features/website-analytics/service";
+import type { Geo } from "@/features/website-analytics/geo";
 
 export const ANALYTICS_PATH = "/dashboard/website-analytics";
 type SP = Record<string, string | undefined>;
@@ -23,6 +24,51 @@ export function fmtDuration(seconds: number) {
 }
 
 export const fmtRate = (r: number | null) => (r === null ? "—" : `${(r * 100).toFixed(r > 0 && r < 0.1 ? 1 : 0)}%`);
+
+/* ── Location and local time ── */
+
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+export function countryName(code?: string) {
+  if (!code) return "Unknown location";
+  try {
+    return regionNames.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+/** The country's flag emoji (decorative). */
+export const flagOf = (code?: string) => (code && /^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...[...code].map((c) => 0x1f1a5 + c.charCodeAt(0))) : "🌐");
+
+/** "Oslo, Oslo County, Norway" — the most specific parts known, without repeating a city that is also the region. */
+export function fmtLocation(geo?: Geo, opts: { countryOnly?: boolean } = {}) {
+  if (!geo?.country) return "Unknown location";
+  const country = countryName(geo.country);
+  if (opts.countryOnly) return country;
+  const parts = [geo.city, geo.region && geo.region !== geo.city ? geo.region : undefined, country].filter(Boolean);
+  return parts.join(", ");
+}
+
+export function Location({ geo, countryOnly }: { geo?: Geo; countryOnly?: boolean }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <span aria-hidden>{flagOf(geo?.country)}</span>
+      <span className={geo?.country ? "truncate" : "truncate text-ink-400"}>{fmtLocation(geo, { countryOnly })}</span>
+    </span>
+  );
+}
+
+/** The visitor's own local time, when their browser is not on Norwegian time: "03:42 (New York)". */
+export function fmtLocalTime(at: Date | string, timeZone?: string) {
+  if (!timeZone || timeZone === ANALYTICS_TIME_ZONE) return null;
+  try {
+    const t = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit" }).format(new Date(at));
+    const sameDay = new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric" }).format(new Date(at)) === new Intl.DateTimeFormat("en-GB", { timeZone: ANALYTICS_TIME_ZONE, day: "numeric" }).format(new Date(at));
+    const place = timeZone.split("/").pop()!.replace(/_/g, " ");
+    return `${t}${sameDay ? "" : ` (${new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short" }).format(new Date(at))})`} local · ${place}`;
+  } catch {
+    return null;
+  }
+}
 
 const STATUS_TONE: Record<VisitorStatus, BadgeTone> = { Lead: "success", Authenticated: "brand", Returning: "info", New: "neutral" };
 export function VisitorStatusBadge({ status }: { status: VisitorStatus }) {
@@ -62,6 +108,7 @@ export function ExportLinks({ range }: { range: { preset: string; from?: string;
     ["pageviews", "Page views"],
     ["sources", "Sources"],
     ["campaigns", "Campaigns"],
+    ["locations", "Locations"],
   ] as const;
   return (
     <details className="relative">

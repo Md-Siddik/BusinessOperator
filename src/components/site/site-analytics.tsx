@@ -32,6 +32,15 @@ function writeChoice(choice: "granted" | "denied") {
   }
 }
 
+/** The browser's time zone (e.g. "Europe/Oslo"), so a visit can be shown in the visitor's local time. */
+function timeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Fire-and-forget: analytics must never affect the page. */
 async function post(url: string, body: unknown): Promise<{ id?: string } | null> {
   try {
@@ -81,7 +90,7 @@ export function SiteAnalytics({ labels }: { labels: CookieConsentLabels }) {
     if (!landing.current) landing.current = { url, referrer };
     last.current = { url };
     const entry = last.current;
-    void post("/api/track", { type: "pageview", url, referrer, webdriver: navigator.webdriver === true }).then((r) => {
+    void post("/api/track", { type: "pageview", url, referrer, tz: timeZone(), webdriver: navigator.webdriver === true }).then((r) => {
       if (r?.id) entry.id = r.id;
     });
   }, [pathname]);
@@ -93,7 +102,7 @@ export function SiteAnalytics({ labels }: { labels: CookieConsentLabels }) {
     setReopened(false);
     if (choice === "granted" && before !== "granted" && last.current) {
       // Re-record this page with consent (replacing its cookieless record), keeping how the visit arrived.
-      void post("/api/track", { type: "pageview", url: last.current.url, referrer: document.referrer, replaces: last.current.id, landing: landing.current ?? undefined, webdriver: navigator.webdriver === true });
+      void post("/api/track", { type: "pageview", url: last.current.url, referrer: document.referrer, replaces: last.current.id, landing: landing.current ?? undefined, tz: timeZone(), webdriver: navigator.webdriver === true });
     }
     if (choice === "denied") void post("/api/track/consent", { granted: false });
   }

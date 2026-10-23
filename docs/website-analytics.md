@@ -32,11 +32,12 @@ When someone lands (for example from an outreach email), sees the banner and cli
 
 ## What is collected
 
-**Never collected:** IP addresses, browser fingerprints, full referrer URLs (query strings are dropped), form contents, or anything about who a visitor is.
+**Never stored:** IP addresses (used only in memory for the location lookup, see below), browser fingerprints, full referrer URLs (query strings are dropped), form contents, or anything about who a visitor is.
 
 - **Visitor** (consent only): HMAC-SHA256 hash of the cookie id (the raw value is never stored; key `ANALYTICS_SECRET`, default `AUTH_SECRET`), a 4-character display code ("#A82F"), first/last seen, session and page-view counts, first source/campaign/landing page, and the links below.
 - **Session** (consent only): start, last activity, page count, landing and exit page, channel, referring domain, referrer (origin + path), UTM tags, enquiries.
-- **Page view**: time, path, language-neutral page, language, Service Management slug for `/services/<slug>`, consent flag, visitor/session (consent only), and source for arrivals.
+- **Page view**: time, path, language-neutral page, language, Service Management slug for `/services/<slug>`, consent flag, visitor/session (consent only), source for arrivals, coarse location and the browser's time zone.
+- **Visitor and session** also keep the coarse location and time zone, so the dashboard shows where and when each visit happened.
 
 ### Linking a visitor to a person
 
@@ -48,6 +49,37 @@ This happens only through the visitor's own first-party actions, and only on a b
 Nothing is inferred from technical signals.
 
 The Owner, Admin and Staff accounts are **never tracked**, so the team's own browsing doesn't inflate the numbers.
+
+## Location and visit time
+
+Each recorded page view gets a **coarse location**: country, region and city. Sources, in order:
+
+1. Location headers from the hosting platform, when present (Vercel `x-vercel-ip-*`, Cloudflare `cf-ipcountry` / `cf-ipcity` / `cf-region`).
+2. Otherwise a **local, offline** GeoIP database on this server: DB-IP "IP to City Lite" (`.mmdb`).
+   - Download or refresh it with `npm run geoip:update`. DB-IP publishes a new file monthly, so schedule the command monthly.
+   - It is saved to `.data/geoip/dbip-city-lite.mmdb` (ignored by git), or to the path in `GEOIP_DB_PATH`.
+   - Restart the app after an update.
+
+How the IP address is handled:
+
+- It is used **only in memory** for that one lookup, then discarded.
+- It is never stored, logged or sent to a third-party service.
+- Private and local addresses get no location.
+- Without a database or headers, the location shows as *Unknown*; everything else keeps working.
+
+City-level IP location is approximate; it often shows the internet provider's location, not the visitor's.
+
+**Visit time**: every time is shown in Norwegian time (Europe/Oslo). The tracker also sends the browser's time zone (for example `America/New_York`). When it differs, the dashboard adds the visitor's own local time.
+
+Where it shows:
+
+- **Overview → Recent visits**: when, from where, how they arrived, landing page.
+- **Locations tab**: countries and areas.
+- **Location** column in the visitors table.
+- Location and local time for every visit on a visitor's timeline.
+- Country, region, city and time zone columns in the CSV exports, plus a **Locations** export.
+
+Attribution: IP geolocation by [DB-IP](https://db-ip.com), licensed under CC BY 4.0. The attribution is shown on the analytics page.
 
 ## Definitions
 
@@ -119,6 +151,8 @@ There are five exports for the selected period: **visitors**, **sessions**, **pa
 | Path | What |
 |---|---|
 | `src/features/website-analytics/classify.ts` | Pure rules: bots, channels, UTM, paths, hashing, campaign links |
+| `src/features/website-analytics/geo.ts` | Coarse location (hosting headers or local GeoIP database) and time-zone validation |
+| `scripts/geoip-update.mjs` | Downloads the DB-IP City Lite database |
 | `src/features/website-analytics/collect.ts` | Recording, enquiry/login linking, forgetting a visitor |
 | `src/features/website-analytics/service.ts` | Owner-only queries and CSV export |
 | `src/models/WebAnalytics.ts` | `WebVisitor`, `WebSession`, `WebPageView` |
