@@ -685,6 +685,15 @@
     "mixed": "Mixed"
   },
   "footer": {
+    "socialEyebrow": "A little closer, wherever you are",
+    "socialTitle": "Let’s stay connected",
+    "socialSubtitle": "Find us on your favorite platform. Start a conversation, follow our updates, or connect with the team.",
+    "socialOpen": "Connect with us",
+    "socialComingSoon": "Coming soon",
+    "socialWhatsapp": "Let’s talk about your next project.",
+    "socialFacebook": "Follow our latest news and updates.",
+    "socialDiscord": "Join the conversation with our community.",
+    "socialLinkedin": "Connect with us professionally.",
     "tagline": "One long-term partner for the digital side of your business.",
     "servicesTitle": "Services",
     "companyTitle": "Company",

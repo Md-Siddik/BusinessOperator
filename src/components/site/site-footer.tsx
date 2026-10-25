@@ -6,14 +6,15 @@ import { siteConfig } from "@/config/site";
 import type { Translator } from "@/lib/i18n/translator";
 import type { SettingValue } from "@/features/settings/schemas";
 import { Logo } from "./logo";
+import { SocialSection } from "./social-section";
 
 /** Services come from Service Management (featured first); the full list is one click away. */
 export function SiteFooter({ locale, t, general, services = [] }: { locale: string; t: Translator["t"]; general: SettingValue<"general">; services?: { slug: string; name: string }[] }) {
   const lp = (p: string) => localizedPath(locale, p);
   const year = new Date().getFullYear();
-  const socials = Object.entries(general.social).filter(([, url]) => url);
   return (
     <footer className="bg-night-950 text-ink-300">
+      <SocialSection t={t} social={general.social} />
       <div className="container-page grid gap-10 py-16 md:grid-cols-12">
         <div className="md:col-span-4">
           <Logo href={lp("/")} label={general.logoText} light />
@@ -71,15 +72,6 @@ export function SiteFooter({ locale, t, general, services = [] }: { locale: stri
               </li>
             )}
             {general.address && <li>{general.address}</li>}
-            {socials.length > 0 && (
-              <li className="flex gap-3 pt-1">
-                {socials.map(([network, url]) => (
-                  <a key={network} href={url} rel="noopener noreferrer" target="_blank" className="capitalize hover:text-white">
-                    {network}
-                  </a>
-                ))}
-              </li>
-            )}
           </ul>
         </div>
       </div>

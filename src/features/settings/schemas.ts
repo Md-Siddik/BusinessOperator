@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { socialUrl } from "@/config/social";
 import { INDUSTRIES } from "@/config/industries";
 import { LANGUAGE_CODES } from "@/config/languages";
 
@@ -6,6 +7,18 @@ import { LANGUAGE_CODES } from "@/config/languages";
  * Every system setting has a Zod schema with defaults, so a missing or
  * partially-stored value always resolves to a complete, valid object.
  */
+const socialLinkSchema = z.string().trim().max(300).refine((value) => {
+  if (!value) return true;
+  return !!socialUrl(value);
+}, "Use a valid HTTPS link");
+
+const whatsappLinkSchema = z.string().trim().max(300).transform((value) => {
+  const digits = value.replace(/\D/g, "");
+  return /^\+?[\d\s().-]+$/.test(value) && digits.length >= 8 && digits.length <= 15
+    ? `https://wa.me/${digits}`
+    : value;
+}).pipe(socialLinkSchema);
+
 export const generalSettingsSchema = z.object({
   companyName: z.string().trim().min(1).max(100).default("ExploreTechify"),
   tagline: z.string().trim().max(200).default("Websites That Turn Visitors Into Customers."),
@@ -15,11 +28,15 @@ export const generalSettingsSchema = z.object({
   address: z.string().trim().max(300).default(""),
   social: z
     .object({
-      linkedin: z.string().trim().max(300).default(""),
-      x: z.string().trim().max(300).default(""),
-      instagram: z.string().trim().max(300).default(""),
+      whatsapp: whatsappLinkSchema.default(""),
+      facebook: socialLinkSchema.default(""),
+      discord: socialLinkSchema.default(""),
+      linkedin: socialLinkSchema.default(""),
+      x: socialLinkSchema.default(""),
+      instagram: socialLinkSchema.default(""),
+      youtube: socialLinkSchema.default(""),
     })
-    .default({ linkedin: "", x: "", instagram: "" }),
+    .default({ whatsapp: "", facebook: "", discord: "", linkedin: "", x: "", instagram: "", youtube: "" }),
 });
 
 export const languageSettingsSchema = z.object({

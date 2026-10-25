@@ -28,7 +28,13 @@ export const PUT = route<{ key: string }>({ internal: true, staff: true }, async
   const key = parseKey(params.key);
   const allowed = key === "general" || key === "languages" ? can(actor, "settings.manage") || can(actor, "content.manage") : can(actor, "settings.manage");
   if (!allowed) throw Errors.forbidden();
-  const value = await updateSetting(key, await readJson(req), actor);
+  const parsed = SETTING_SCHEMAS[key].safeParse(await readJson(req));
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string[]> = {};
+    for (const issue of parsed.error.issues) (fieldErrors[issue.path.join(".")] ??= []).push(issue.message);
+    return Response.json({ error: { code: "VALIDATION", message: "Please check the highlighted fields.", fieldErrors } }, { status: 400 });
+  }
+  const value = await updateSetting(key, parsed.data, actor);
   if (key === "general" || key === "languages") revalidatePath("/", "layout");
   if (key === "leadScoring") await rescoreCompanies({});
   return value;

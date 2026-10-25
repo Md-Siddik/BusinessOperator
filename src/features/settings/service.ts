@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { generalSettingsSchema } from "./schemas";
+import { SOCIAL_PLATFORMS } from "@/config/social";
 import { connectToDatabase, isDatabaseConfigured } from "@/lib/db/connect";
 import { SystemSetting } from "@/models";
 import { audit } from "@/lib/audit";
@@ -20,7 +23,11 @@ export async function getSetting<K extends SettingKey>(key: K): Promise<SettingV
   try {
     await connectToDatabase();
     const doc = await SystemSetting.findOne({ key }).lean<{ value: unknown }>();
-    const parsed = SETTING_SCHEMAS[key].safeParse(doc?.value ?? {});
+    // Read legacy social values without resetting unrelated settings. Writes remain strict.
+    const schema = key === "general" ? generalSettingsSchema.extend({
+      social: z.object(Object.fromEntries(SOCIAL_PLATFORMS.map(({ key }) => [key, z.string().nullable().optional().transform(value => value ?? "")]))).prefault({}),
+    }) : SETTING_SCHEMAS[key];
+    const parsed = schema.safeParse(doc?.value ?? {});
     const value = (parsed.success ? parsed.data : defaultSetting(key)) as SettingValue<K>;
     cache.set(key, { at: Date.now(), value });
     return value;
