@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { ExternalLink } from "lucide-react";
 import { AppShell, type NavGroup } from "@/components/app/app-shell";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LiveCountsProvider } from "@/components/app/live-counts";
@@ -50,9 +49,6 @@ export default async function StaffLayout({ children }: { children: ReactNode })
     <div className="flex flex-1 items-center justify-between gap-3">
       <p className="truncate text-sm font-medium text-ink-700">Staff workspace</p>
       <div className="flex items-center gap-1">
-        <a href="/" target="_blank" rel="noopener" className="hidden items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-600 hover:bg-ink-100 hover:text-ink-900 sm:inline-flex">
-          View website <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        </a>
         <NotificationBell allHref="/staff/notifications" />
         <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/staff/settings/security" />
       </div>
