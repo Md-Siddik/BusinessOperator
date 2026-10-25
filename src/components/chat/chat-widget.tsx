@@ -389,11 +389,11 @@ export function ChatWidget({ labels = DEFAULT_CHAT_LABELS, inboxHref = "/portal/
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={open ? labels.close : isTeam ? labels.teamTitle : labels.open}
+        aria-label={open ? labels.close : isTeam ? "Message" : labels.open}
         className="relative inline-flex h-14 items-center gap-2 rounded-full bg-brand-600 px-5 text-sm font-semibold text-white shadow-lifted transition-colors hover:bg-brand-700 focus-visible:outline-offset-4"
       >
         {open ? <X className="h-5 w-5" aria-hidden /> : <MessageCircle className="h-5 w-5" aria-hidden />}
-        <span className="hidden sm:inline">{open ? labels.close : isTeam ? labels.teamTitle : labels.open}</span>
+        <span className="hidden sm:inline">{open ? labels.close : isTeam ? "Message" : labels.open}</span>
         {!open && unread > 0 && (
           <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white" aria-label={`${unread} unread`}>
             {unread > 9 ? "9+" : unread}

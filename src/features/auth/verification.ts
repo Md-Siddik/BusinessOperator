@@ -2,7 +2,7 @@ import "server-only";
 import { createHmac, randomInt } from "node:crypto";
 import { z } from "zod";
 import { ContactRequest, User, Organization, type UserDoc } from "@/models";
-import { createOpaqueToken, hashToken } from "@/lib/auth/password";
+import { hashToken } from "@/lib/auth/password";
 import { emailSchema } from "@/lib/validation";
 import { Errors } from "@/lib/errors";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
@@ -34,7 +34,7 @@ export async function resendVerification(input: unknown) {
   const { email, challenge } = z.object({ email: emailSchema, challenge: z.string().min(20).max(200).optional() }).parse(input);
   const filter = challenge
     ? { email, role: { $in: ["OWNER", "ADMIN"] }, mfaChallengeHash: hashToken(challenge), status: { $ne: "SUSPENDED" } }
-    : { email, role: { $nin: ["OWNER", "ADMIN"] }, emailVerifiedAt: null, status: { $ne: "SUSPENDED" } };
+    : { email, emailVerifiedAt: null, status: { $ne: "SUSPENDED" } };
   const user = await User.findOne(filter).lean<UserDoc>();
   if (user) await issueAuthCode(user, challenge ? "MFA" : "VERIFY");
   return { ok: true };
@@ -44,13 +44,13 @@ export async function consumeAuthCode(input: unknown) {
   const { email, code, challenge } = z.object({ email: emailSchema, code: z.string().regex(/^[0-9]{6}$/), challenge: z.string().min(20).max(200).optional() }).parse(input);
   const purpose = challenge ? "MFA" : "VERIFY";
   const user = await User.findOneAndUpdate({
-    email, status: { $ne: "SUSPENDED" }, authCodePurpose: purpose, ...(purpose === "VERIFY" ? { role: { $nin: ["OWNER", "ADMIN"] } } : {}),
+    email, status: { $ne: "SUSPENDED" }, authCodePurpose: purpose, ...(purpose === "VERIFY" ? { emailVerifiedAt: null } : {}),
     authCodeExpiresAt: { $gt: new Date() }, authCodeAttempts: { $lt: 5 },
     ...(challenge ? { mfaChallengeHash: hashToken(challenge) } : {}),
   }, { $inc: { authCodeAttempts: 1 } }, { new: true }).select("+authCodeHash").lean<UserDoc>();
   if (!user || user.authCodeHash !== hashAuthCode(code)) throw Errors.badRequest("Invalid or expired code. Request a new code.");
-  const consumed = await User.updateOne({ _id: user._id, role: user.role, authCodeHash: user.authCodeHash, authCodePurpose: purpose, authCodeExpiresAt: { $gt: new Date() }, authCodeAttempts: { $lte: 5 }, status: { $ne: "SUSPENDED" } }, {
-    $set: { emailVerifiedAt: new Date(), ...(user.verificationActivates ? { status: "ACTIVE", verificationActivates: false } : {}) },
+  const consumed = await User.updateOne({ _id: user._id, email: user.email, role: user.role, authCodeHash: user.authCodeHash, authCodePurpose: purpose, authCodeExpiresAt: { $gt: new Date() }, authCodeAttempts: { $lte: 5 }, status: { $ne: "SUSPENDED" } }, {
+    $set: { emailVerifiedAt: user.emailVerifiedAt ?? new Date(), ...(user.verificationActivates ? { status: "ACTIVE", verificationActivates: false } : {}) },
     $unset: { authCodeHash: 1, authCodeExpiresAt: 1, authCodePurpose: 1, mfaChallengeHash: 1 },
   });
   if (!consumed.modifiedCount) throw Errors.badRequest("This code has already been used.");
@@ -60,15 +60,10 @@ export async function consumeAuthCode(input: unknown) {
 }
 
 export async function beginLogin(user: UserDoc) {
-  if (user.role === "OWNER" || user.role === "ADMIN") {
-    const { token, hash } = createOpaqueToken();
-    await User.updateOne({ _id: user._id }, { $set: { mfaChallengeHash: hash } });
-    await issueAuthCode(user, "MFA");
-    return { verificationRequired: true, challenge: token, email: user.email };
-  }
+  // Login never issues codes. Unfinished registration is resumed separately,
+  // using the original registration code or an explicit, rate-limited resend.
   if (!user.emailVerifiedAt) {
-    await issueAuthCode(user, "VERIFY");
-    return { verificationRequired: true, email: user.email };
+    return { registrationRequired: true, email: user.email };
   }
   return null;
 }

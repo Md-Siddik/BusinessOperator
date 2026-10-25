@@ -1,7 +1,7 @@
 /* ═══════════════════════════ Public site appearance ═══════════════════════════
  *
- * Imported by the public layout only (app/(site)/[locale]/layout.tsx). Its <html>
- * carries data-site-theme; the dashboard has its own root layout and never loads this.
+ * Shared by the public and authenticated layouts. Both restore data-site-theme
+ * from the same saved preference before the first paint.
  *
  *   dark             the whole site dark
  *   light            the whole site light, on a warm off-white canvas
@@ -96,11 +96,11 @@ html[data-site-theme="mixed"] [data-tone="dark"]:not([class*="bg-"]) {
 
 /* Colours that play two roles (a surface vs. text on an accent) are adjusted per class, outside islands. */
 :is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
-  .bg-white:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  :is(.bg-white, .focus\:bg-white:focus):not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
   background-color: #111a31;
 }
 :is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])
-  .bg-white\/85:not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
+  :is(.bg-white\/85, .bg-white\/90):not(:is([data-design="dark"], .bg-night-800, .bg-night-900, .bg-night-950, .bg-brand-950, .bg-ink-900) *) {
   background-color: rgb(10 15 31 / 0.85);
 }
 :is(html[data-site-theme="dark"] body, html[data-site-theme="mixed"] [data-tone="dark"])

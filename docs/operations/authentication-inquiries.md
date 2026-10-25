@@ -9,7 +9,7 @@ The existing Next.js/Mongoose application, custom bcrypt authentication, layouts
 - Signup requests name, email and password. Optional legacy business fields remain accepted by the server for compatibility.
 - Six-digit email codes expire after ten minutes, permit five durable attempts and have a sixty-second resend cooldown. Codes use a keyed HMAC in MongoDB and are redacted from transactional email history. Consumption is atomic and single-use.
 - Chat requires verified email. The floating chat embeds login/signup/verification and preserves the draft in component state throughout authentication. A revoked session returns to authentication without discarding the draft. Drafts do not survive a full browser reload.
-- Owner and Super Admin sign-ins require password plus a separate emailed security code. This is email-based second-factor authentication; authenticator apps, passkeys and recovery codes are not implemented.
+- All verified accounts, including Owner and Super Admin, sign in with email and password. Login never generates or sends a code. Unverified accounts resume registration using their original code or an explicit, rate-limited resend. Legacy challenge consumption remains separate from ordinary login; authenticator apps, passkeys and recovery codes are not implemented.
 - Cookies remain HTTP-only, Secure in production and SameSite=Lax. The header restores status before showing navigation and displays a profile menu. Sessions last seven days, renew through a guarded POST endpoint on navigation/focus, and have a thirty-day absolute lifetime. Logout revokes all sessions using the account's session version.
 - Signup/login/verification/reset/contact rate limits use shared MongoDB request budgets with TTL cleanup; other existing application limits keep their existing implementation.
 - Public inquiries persist without signup. A verification link proves email ownership before private replies can be sent. Verified client sessions can claim unlinked inquiries matching their email; other clients cannot access them.
@@ -43,7 +43,7 @@ Deployment sequence:
 1. Deploy these changes to the configured website.
 2. Run the migration command below in that deployment environment.
 3. Run the invitation command below. A live email provider is required; the command reports acceptance/failure per account and never prints invitation tokens.
-4. Each recipient opens their single-use, twenty-four-hour link and chooses a password. The Owner signs in and completes the email second factor. Verify all three dashboards before applying cleanup.
+4. Each recipient opens their single-use, twenty-four-hour link and chooses a password. Invitation acceptance establishes email ownership. Subsequent sign-in uses email and password. Verify all three dashboards before applying cleanup.
 5. Generate and review a fresh impact report, then run --apply. The script checks the reviewed suspension list and the verified Owner identity, verifies an AES-256-GCM encrypted account/organization backup, assigns the retained roles, suspends the seven other application accounts, and revokes their sessions. It retains all linked records.
 
 Exactly three ACTIVE application accounts is therefore pending invitation acceptance and the reviewed suspension step. Public client signup remains available as requested; future verified client registrations can increase this count.

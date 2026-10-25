@@ -35,7 +35,6 @@ export async function loadSessionUser(payload: SessionPayload | null): Promise<S
   const user = await User.findById(payload.sub).lean<UserDoc>();
   if (!user || (user.sessionVersion ?? 0) !== payload.sv) return null;
   if (user.status === "SUSPENDED") return null;
-  if ((user.role === "OWNER" || user.role === "ADMIN") && !payload.mf) return null;
 
   let organizationStatus: string | undefined;
   if (user.role === "CLIENT") {

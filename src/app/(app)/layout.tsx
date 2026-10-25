@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "../globals.css";
+import "../site-theme.css";
+import { DEFAULT_SITE_THEME, SITE_THEME_SCRIPT } from "@/components/site/theme";
 import { fontVariables } from "../fonts";
 import { siteConfig } from "@/config/site";
 import { ToastProvider } from "@/components/ui/toast";
@@ -13,7 +15,10 @@ export const metadata: Metadata = {
 /** Root layout for the authenticated application (dashboard + client portal). */
 export default function AppRootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={fontVariables}>
+    <html lang="en" className={fontVariables} data-site-theme={DEFAULT_SITE_THEME} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SITE_THEME_SCRIPT }} />
+      </head>
       <body className="min-h-dvh bg-ink-50 font-sans text-ink-900">
         <ToastProvider>{children}</ToastProvider>
       </body>

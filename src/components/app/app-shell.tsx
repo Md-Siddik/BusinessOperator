@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { Drawer } from "@/components/ui/overlay";
 import { LogoMark } from "@/components/site/logo";
+import { ThemeSwitcher } from "@/components/site/theme-switcher";
 import { cn } from "@/lib/utils";
 import { useLiveCounts } from "./live-counts";
 
@@ -311,8 +312,9 @@ export function AppShell({ groups, brandLabel, homeHref, topbar, children }: { g
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex min-w-0 flex-1 items-center gap-3">{topbar}</div>
+          <ThemeSwitcher labels={{ label: "Appearance", dark: "Dark", light: "Light", mixed: "Mixed" }} />
         </header>
-        <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main" className="flex-1 px-4 pt-6 pb-28 sm:px-6 lg:px-8">
           {children}
         </main>
       </div>

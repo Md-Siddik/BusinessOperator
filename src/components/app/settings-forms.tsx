@@ -42,7 +42,8 @@ function useSave(key: string) {
 
 function SaveBar({ pending }: { pending: boolean }) {
   return (
-    <div className="flex justify-end border-t border-ink-100 pt-4">
+    // Reserve a horizontal lane for the floating Message launcher, even while scrolling.
+    <div className="flex justify-end border-t border-ink-100 pt-4 pr-20 sm:pr-36">
       <Button type="submit" loading={pending}>
         <Save className="h-4 w-4" aria-hidden /> Save changes
       </Button>
