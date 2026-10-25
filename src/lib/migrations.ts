@@ -1,6 +1,6 @@
 import "server-only";
 import type { Types } from "mongoose";
-import { Company, Contact, Service, SystemSetting, type ContactDoc } from "@/models";
+import { Company, Contact, ContactRequest, Service, SystemSetting, type ContactDoc } from "@/models";
 import { classifyContactValue } from "@/lib/company-fields";
 import { LANGUAGE_CODES } from "@/config/languages";
 import { SERVICE_PAGES } from "@/config/service-pages";
@@ -13,6 +13,23 @@ import { defaultServiceRecord, defaultTranslation } from "@/features/service-cat
  * Each step only fills missing fields — never overwrites existing values.
  */
 const STEPS: { id: string; run: (log: (m: string) => void) => Promise<void> }[] = [
+  {
+    id: "2026-10-auth-budget-v1",
+    async run(log) {
+      const { default: mongoose } = await import("mongoose");
+      await mongoose.connection.db!.collection("authratelimits").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+      log("Authentication rate-limit expiry index created.");
+    },
+  },
+  {
+    id: "2026-10-verified-inquiries-v1",
+    async run(log) {
+      await ContactRequest.collection.createIndex({ submissionKey: 1 }, { unique: true, sparse: true });
+      await ContactRequest.collection.createIndex({ userId: 1 });
+      await ContactRequest.collection.createIndex({ email: 1, createdAt: -1 });
+      log("Inquiry ownership and idempotency indexes created; existing records and verification status preserved.");
+    },
+  },
   {
     id: "2026-10-contact-research-v1",
     async run(log) {

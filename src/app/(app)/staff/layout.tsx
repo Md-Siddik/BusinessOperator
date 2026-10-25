@@ -21,7 +21,9 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   const [messages, notifications] = await Promise.all([unreadConversationCount(actor), unreadNotificationCount(actor.id)]);
 
   const clientItems = [
-    ...(can(actor, "clients.manage") ? [{ href: "/staff/clients", label: "Clients", icon: "clients" }] : []),
+    ...(can(actor, "clients.manage") ? [{ href: "/staff/clients", label: "Clients", icon: "clients" }, { href: "/staff/inquiries", label: "Client Inquiries", icon: "queue" }] : []),
+    ...(can(actor, "users.manage") ? [{ href: "/staff/users", label: "Staff management", icon: "users" }] : []),
+    ...(can(actor, "analytics.view") ? [{ href: "/staff/reports", label: "Reports", icon: "analytics" }] : []),
     { href: "/staff/messages", label: "Messages", icon: "messages", badge: "messages" as const },
     { href: "/staff/tickets", label: "Requests & tickets", icon: "tickets" },
     { href: "/staff/projects", label: "Projects", icon: "projects" },

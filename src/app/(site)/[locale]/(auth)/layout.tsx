@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { Home } from "lucide-react";
 import { localizedPath } from "@/config/languages";
 import { Logo } from "@/components/site/logo";
 import { LanguageSwitcher } from "@/components/site/language-switcher";
@@ -20,9 +22,12 @@ export default async function AuthLayout({ children, params }: { children: React
         </div>
         <p className="relative text-xs text-brand-200/60">{t("footer.responseNote")}</p>
       </aside>
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between px-6 py-5 sm:px-10">
-          <Logo href={localizedPath(locale, "/")} className="lg:invisible" />
+      <div className="flex min-w-0 flex-col">
+        <div className="flex items-center justify-between gap-3 px-6 py-5 sm:px-10">
+          <Link href={localizedPath(locale, "/")} className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-medium text-ink-700 hover:text-brand-700">
+            <Home className="h-4 w-4" aria-hidden />
+            {t("nav.home")}
+          </Link>
           <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={t("nav.language")} compact />
         </div>
         <main id="main" className="flex flex-1 items-center justify-center px-6 pb-16 sm:px-10">

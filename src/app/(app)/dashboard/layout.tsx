@@ -140,6 +140,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     defaultOpen: false,
     items: [
       { href: "/dashboard/clients", label: "Clients", icon: "clients" },
+      { href: "/dashboard/inquiries", label: "Client Inquiries", icon: "queue" },
       { href: "/dashboard/messages", label: "Messages", icon: "messages", badge: "messages" },
       // Owner-only: the Zoho inbox (ZOHO_SMTP_USER) read over IMAP; page and service enforce OWNER too.
       ...(isOwner(actor) ? [{ href: "/dashboard/mailbox", label: "Client Mail", icon: "mailbox" }] : []),

@@ -15,7 +15,7 @@ function requireUsersManage(actor: Actor) {
 export async function listInternalUsersAdmin(actor: Actor, opts: { q?: string; page?: number } = {}) {
   requireUsersManage(actor);
   const page = opts.page ?? 1;
-  const filter: Record<string, unknown> = { role: { $in: ["OWNER", "ADMIN", "STAFF"] } };
+  const filter: Record<string, unknown> = { role: { $in: actor.role === "OWNER" ? ["OWNER", "ADMIN", "STAFF"] : ["STAFF"] } };
   if (opts.q) filter.$or = [{ name: new RegExp(escapeRegex(opts.q), "i") }, { email: new RegExp(escapeRegex(opts.q), "i") }];
   const [items, total] = await Promise.all([
     User.find(filter).select("name email role status permissions lastLoginAt createdAt isDemo").sort({ role: 1, name: 1 }).skip((page - 1) * 50).limit(50).lean<UserDoc[]>(),
@@ -78,7 +78,11 @@ export async function updateInternalUser(actor: Actor, userId: string, input: un
 
 /** Sign out a user everywhere (also used by "Sign out of all sessions"). */
 export async function revokeSessions(actor: Actor, userId: string) {
-  if (userId !== actor.id) requireUsersManage(actor);
+  if (userId !== actor.id) {
+    requireUsersManage(actor);
+    const target = await User.findById(parseObjectId(userId)).select("role").lean<{ role: string }>();
+    if (!target || (actor.role !== "OWNER" && target.role !== "STAFF")) throw Errors.forbidden();
+  }
   await User.updateOne({ _id: parseObjectId(userId) }, { $inc: { sessionVersion: 1 } });
   await audit(actor, "user.sessions_revoked", { entityType: "User", entityId: userId });
 }

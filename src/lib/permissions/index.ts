@@ -61,9 +61,11 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 /** `services.manage` (public services, prices, discounts) is held by ADMIN by default, not STAFF; the Owner can grant it. */
 export const STAFF_AREA_PERMISSIONS = ["clients.manage", "chat.manage", "tickets.manage", "projects.manage", "content.manage", "services.manage"] as const satisfies readonly Permission[];
 
+export const SUPER_ADMIN_PERMISSIONS: Permission[] = [...STAFF_AREA_PERMISSIONS, "users.manage", "analytics.view"];
+
 export const ROLE_DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
   OWNER: [...PERMISSIONS],
-  ADMIN: [...STAFF_AREA_PERMISSIONS],
+  ADMIN: [...SUPER_ADMIN_PERMISSIONS],
   STAFF: ["chat.manage", "tickets.manage", "projects.manage", "content.manage"],
   CLIENT: [],
 };
@@ -104,7 +106,7 @@ export function effectivePermissions(role: Role, stored?: string[] | null): Perm
   if (role === "CLIENT") return [];
   const source = stored && stored.length > 0 ? stored : ROLE_DEFAULT_PERMISSIONS[role];
   // Staff can only ever hold staff-area permissions (older stored lists may contain more).
-  return source.filter((p): p is Permission => (STAFF_AREA_PERMISSIONS as readonly string[]).includes(p));
+  return source.filter((p): p is Permission => (role === "ADMIN" ? SUPER_ADMIN_PERMISSIONS : STAFF_AREA_PERMISSIONS as readonly string[]).includes(p));
 }
 
 export function can(actor: Actor | null | undefined, permission: Permission): boolean {
@@ -118,7 +120,7 @@ export function canAny(actor: Actor | null | undefined, permissions: Permission[
   return permissions.some((p) => can(actor, p));
 }
 
-/** Only the Owner manages internal users and roles. */
+/** Owner manages privileged roles; Super Admin may manage STAFF only. */
 export function canAssignRole(actor: Actor, targetRole: Role): boolean {
-  return actor.role === "OWNER" && (ROLES as readonly string[]).includes(targetRole);
+  return (actor.role === "OWNER" && (ROLES as readonly string[]).includes(targetRole)) || (actor.role === "ADMIN" && can(actor, "users.manage") && targetRole === "STAFF");
 }

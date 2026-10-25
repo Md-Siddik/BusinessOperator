@@ -7,7 +7,7 @@ import { textToHtml } from "./render";
  * Transactional email — account, ticket and chat notifications. Kept strictly
  * separate from outreach: no campaign, no approval queue, no marketing content.
  */
-type TransactionalInput = { to: string; toName?: string; subject: string; text: string };
+type TransactionalInput = { to: string; toName?: string; subject: string; text: string; sensitive?: boolean };
 
 export async function sendTransactionalEmail(input: TransactionalInput) {
   const provider = getEmailProvider();
@@ -18,7 +18,7 @@ export async function sendTransactionalEmail(input: TransactionalInput) {
     toName: input.toName,
     from,
     subject: input.subject,
-    body: input.text,
+    body: input.sensitive ? "[Security message redacted]" : input.text,
     status: "APPROVED",
     provider: provider.id,
     simulated: !provider.isLive,
@@ -34,9 +34,11 @@ export async function sendTransactionalEmail(input: TransactionalInput) {
       html: textToHtml(input.text),
     });
     await EmailMessage.updateOne({ _id: record._id }, { status: "SENT", sentAt: new Date(), providerMessageId: result.id });
+    return { accepted: provider.isLive, simulated: !provider.isLive };
   } catch (err) {
     console.error("[email] transactional send failed", err);
     await EmailMessage.updateOne({ _id: record._id }, { status: "FAILED", error: String(err).slice(0, 500) });
+    return { accepted: false, simulated: !provider.isLive };
   }
 }
 

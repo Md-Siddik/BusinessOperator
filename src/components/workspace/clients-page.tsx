@@ -34,6 +34,7 @@ export async function ClientsPage({ base, searchParams }: { base: WorkspaceBase;
     return (
       <div className="space-y-6">
         <PageHeader eyebrow="Clients" title="Website enquiries" description="Submissions from the public contact form." />
+        <Link href={base + "/inquiries"} className="text-sm font-medium text-brand-700">Open Client Inquiries to reply and send quotations</Link>
         <LinkTabs active={activeTab} tabs={tabs} />
         <Card>
           {inquiries.items.length === 0 ? (

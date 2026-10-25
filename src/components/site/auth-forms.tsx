@@ -2,17 +2,14 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { CheckCircle2 } from "lucide-react";
-import { INDUSTRIES } from "@/config/industries";
-import { LANGUAGES, localizedPath } from "@/config/languages";
+
+import { localizedPath } from "@/config/languages";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { rememberAccount } from "./auth-button";
 import { createTranslator, type Messages } from "@/lib/i18n/translator";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/form";
+import { Field, Input } from "@/components/ui/form";
 import { Alert } from "@/components/ui/feedback";
-
-const COUNTRY_OPTIONS = ["NO", "SE", "DK", "FI", "DE", "FR", "GB", "NL", "BE", "AT", "CH", "IE", "PL", "ES", "IT", "PT", "IS", "EE", "CZ"];
 
 function useFormState() {
   const [pending, setPending] = useState(false);
@@ -39,15 +36,19 @@ function useFormState() {
 export function LoginForm({ locale, messages, next }: { locale: string; messages: Messages; next?: string }) {
   const { t } = createTranslator(messages);
   const { pending, error, fieldErrors, run } = useFormState();
+  const [showPassword, setShowPassword] = useState(false);
+  const [verification, setVerification] = useState<{ email: string; challenge?: string }>();
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     run(async () => {
-      const res = await apiFetch<{ redirect: string }>("/api/auth/login", { body: { email: fd.get("email"), password: fd.get("password"), next } });
+      const res = await apiFetch<{ redirect?: string; verificationRequired?: boolean; email?: string; challenge?: string }>("/api/auth/login", { body: { email: fd.get("email"), password: fd.get("password"), next } });
       rememberAccount();
-      window.location.assign(res.redirect);
+      if (res.verificationRequired) { setVerification({ email: String(res.email), challenge: res.challenge }); return; }
+      window.location.assign(res.redirect || "/portal");
     }, t("auth.login.invalid"));
   }
+  if (verification) return <VerificationForm {...verification} next={next} onComplete={(redirect) => window.location.assign(redirect)} />;
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
       {error && <Alert tone="danger">{error}</Alert>}
@@ -55,8 +56,9 @@ export function LoginForm({ locale, messages, next }: { locale: string; messages
         {(p) => <Input {...p} name="email" type="email" autoComplete="email" required autoFocus />}
       </Field>
       <Field label={t("auth.password")} error={fieldErrors.password}>
-        {(p) => <Input {...p} name="password" type="password" autoComplete="current-password" required />}
+        {(p) => <Input {...p} name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required />}
       </Field>
+      <button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)} className="text-sm text-brand-700">{showPassword ? "Hide password" : "Show password"}</button>
       <div className="flex justify-end">
         <Link href={localizedPath(locale, "/forgot-password")} className="text-sm font-medium text-brand-700 hover:text-brand-800">
           {t("auth.login.forgot")}
@@ -78,91 +80,35 @@ export function LoginForm({ locale, messages, next }: { locale: string; messages
 export function SignupForm({ locale, messages }: { locale: string; messages: Messages }) {
   const { t } = createTranslator(messages);
   const { pending, error, fieldErrors, run } = useFormState();
+  const [showPassword, setShowPassword] = useState(false);
   const [done, setDone] = useState(false);
-  const regionNames = new Intl.DisplayNames([locale === "no" ? "nb" : locale], { type: "region" });
+  const [email, setEmail] = useState("");
+
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const body = Object.fromEntries(new FormData(e.currentTarget).entries());
     run(async () => {
       await apiFetch("/api/auth/signup", { body });
+      setEmail(String(body.email));
       rememberAccount();
       setDone(true);
     }, t("contact.form.error"));
   }
-  if (done) {
-    return (
-      <div className="text-center" role="status">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" aria-hidden />
-        <h2 className="mt-4 text-xl font-semibold text-ink-900">{t("auth.signup.successTitle")}</h2>
-        <p className="mt-2 text-sm text-ink-600">{t("auth.signup.successText")}</p>
-        <Link href={localizedPath(locale, "/login")} className="mt-6 inline-block text-sm font-medium text-brand-700">
-          {t("auth.signup.signIn")}
-        </Link>
-      </div>
-    );
-  }
+  if (done) return <VerificationForm email={email} onComplete={(redirect) => window.location.assign(redirect)} />;
+
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       {error && <Alert tone="danger">{error}</Alert>}
       <Field label={t("auth.name")} error={fieldErrors.name}>
         {(p) => <Input {...p} name="name" autoComplete="name" required />}
       </Field>
-      <Field label={t("auth.company")} error={fieldErrors.company}>
-        {(p) => <Input {...p} name="company" autoComplete="organization" required />}
-      </Field>
       <Field label={t("auth.email")} error={fieldErrors.email}>
         {(p) => <Input {...p} name="email" type="email" autoComplete="email" required />}
       </Field>
       <Field label={t("auth.password")} error={fieldErrors.password} hint={t("auth.signup.passwordHint")}>
-        {(p) => <Input {...p} name="password" type="password" autoComplete="new-password" minLength={10} required />}
+        {(p) => <Input {...p} name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} required />}
       </Field>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label={t("auth.phone")} error={fieldErrors.phone} optional={t("contact.form.optional")}>
-          {(p) => <Input {...p} name="phone" type="tel" autoComplete="tel" />}
-        </Field>
-        <Field label={t("auth.country")} error={fieldErrors.country}>
-          {(p) => (
-            <Select {...p} name="country" required defaultValue="">
-              <option value="" disabled>
-                {t("contact.form.select")}
-              </option>
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {regionNames.of(c)}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-      </div>
-      <Field label={t("auth.website")} error={fieldErrors.website} optional={t("contact.form.optional")}>
-        {(p) => <Input {...p} name="website" inputMode="url" placeholder="example.com" />}
-      </Field>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label={t("auth.industry")} error={fieldErrors.industry}>
-          {(p) => (
-            <Select {...p} name="industry" defaultValue="">
-              <option value="">{t("contact.form.select")}</option>
-              {INDUSTRIES.map((i) => (
-                <option key={i} value={i}>
-                  {t(`industries.${i}`)}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-        <Field label={t("auth.preferredLanguage")} error={fieldErrors.preferredLanguage}>
-          {(p) => (
-            <Select {...p} name="preferredLanguage" defaultValue={locale}>
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code} lang={l.code}>
-                  {l.nativeName}
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-      </div>
+      <button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)} className="text-sm text-brand-700">{showPassword ? "Hide password" : "Show password"}</button>
       <div className="hidden" aria-hidden>
         <input name="website2" tabIndex={-1} autoComplete="off" />
       </div>
@@ -208,6 +154,7 @@ export function ForgotPasswordForm({ messages }: { messages: Messages }) {
 export function ResetPasswordForm({ locale, messages, token }: { locale: string; messages: Messages; token: string }) {
   const { t } = createTranslator(messages);
   const { pending, error, fieldErrors, run } = useFormState();
+  const [showPassword, setShowPassword] = useState(false);
   const [done, setDone] = useState(false);
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -230,11 +177,36 @@ export function ResetPasswordForm({ locale, messages, token }: { locale: string;
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
       {error && <Alert tone="danger">{error}</Alert>}
       <Field label={t("auth.password")} error={fieldErrors.password} hint={t("auth.signup.passwordHint")}>
-        {(p) => <Input {...p} name="password" type="password" autoComplete="new-password" minLength={10} required />}
+        {(p) => <Input {...p} name="password" type={showPassword ? "text" : "password"} autoComplete="new-password" minLength={10} required />}
       </Field>
+      <button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)} className="text-sm text-brand-700">{showPassword ? "Hide password" : "Show password"}</button>
       <Button type="submit" className="w-full" size="lg" loading={pending}>
         {t("auth.reset.submit")}
       </Button>
     </form>
   );
+}
+
+export function VerificationForm({ email, challenge, next, onComplete }: { email: string; challenge?: string; next?: string; onComplete: (redirect: string) => void }) {
+  const { pending, error, run } = useFormState();
+  const [notice, setNotice] = useState("If eligible, check your email for a code. If none arrives, request a new code. Codes expire after 10 minutes and allow five attempts.");
+  return <form className="space-y-4" onSubmit={(e) => {
+    e.preventDefault();
+    const code = new FormData(e.currentTarget).get("code");
+    void run(async () => {
+      const result = await apiFetch<{ redirect: string }>("/api/auth/verify", { body: { email, code, challenge, next } });
+      rememberAccount();
+      window.dispatchEvent(new Event("auth-changed"));
+      onComplete(result.redirect);
+    }, "Verification failed. Please retry.");
+  }}>
+    <p role="status" className="text-sm text-ink-600">{notice}</p>
+    {error && <Alert tone="danger">{error}</Alert>}
+    <Field label="Security code">{(p) => <Input {...p} name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required />}</Field>
+    <Button type="submit" loading={pending}>Verify and continue</Button>
+    <Button type="button" disabled={pending} onClick={() => void run(async () => {
+      await apiFetch("/api/auth/resend", { body: { email, challenge } });
+      setNotice("If eligible, a new code was requested. Wait at least 60 seconds before retrying.");
+    }, "Unable to request a code.")}>Resend code</Button>
+  </form>;
 }

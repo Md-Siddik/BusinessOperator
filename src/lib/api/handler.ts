@@ -5,6 +5,7 @@ import { AppError, Errors } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth/session";
 import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { can, isInternal, isOwner, isStaffMember, type Actor, type Permission } from "@/lib/permissions";
+import { enforceDurableAuthLimit } from "@/lib/auth/rate-limit";
 import { enforceRateLimit, type RateLimitRule } from "@/lib/rate-limit";
 
 type Options = {
@@ -87,8 +88,10 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
     try {
       assertSameOrigin(req);
       const ip = clientIp(req);
-      if (options.rateLimit) enforceRateLimit(options.rateLimit, ip);
+      const durable = options.rateLimit && ["login", "signup", "password-reset", "contact"].includes(options.rateLimit.bucket);
+      if (options.rateLimit && !durable) enforceRateLimit(options.rateLimit, ip);
       await connectToDatabase();
+      if (options.rateLimit && durable) await enforceDurableAuthLimit(options.rateLimit, ip);
 
       let actor: Actor | null = null;
       if (auth !== "none") {

@@ -39,7 +39,7 @@ let t: Awaited<ReturnType<typeof makeTenants>>;
 let adminAll: Awaited<ReturnType<typeof makeUser>>;
 
 function as(user: { actor: Actor } | null) {
-  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", actor: user.actor } : null;
+  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", emailVerifiedAt: new Date(), actor: user.actor } : null;
 }
 const req = (url: string, init?: ConstructorParameters<typeof NextRequest>[1]) => new NextRequest(new URL(url, "http://localhost:3000"), init);
 const ctx = <P extends object>(params: P = {} as P) => ({ params: Promise.resolve(params) });

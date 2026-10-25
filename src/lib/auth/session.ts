@@ -14,7 +14,7 @@ export async function setSessionCookie(payload: SessionPayload) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
+    maxAge: Math.max(0, Math.min(SESSION_MAX_AGE_SECONDS, (payload.st ?? Math.floor(Date.now() / 1000)) + 30 * 86400 - Math.floor(Date.now() / 1000))),
   });
 }
 

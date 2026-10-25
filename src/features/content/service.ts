@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { createHash } from "node:crypto";
+import { createOpaqueToken } from "@/lib/auth/password";
+import { sendTransactionalEmail } from "@/lib/email/transactional";
+import { absoluteUrl } from "@/config/site";
 import { INDUSTRIES } from "@/config/industries";
 import { LANGUAGE_CODES } from "@/config/languages";
 import { SERVICE_ITEM_KEYS } from "@/config/services";
@@ -19,6 +23,7 @@ export const ENGAGEMENT_MODELS = ["monthly", "growth", "project", "notSure"] as 
 export type EngagementModel = (typeof ENGAGEMENT_MODELS)[number];
 
 export const contactRequestSchema = z.object({
+  submissionId: z.string().uuid().optional(),
   name: z.string().trim().min(2).max(120),
   company: z.string().trim().max(200).optional(),
   email: emailSchema,
@@ -31,6 +36,7 @@ export const contactRequestSchema = z.object({
   message: z.string().trim().min(10, "Please write a few words about what you need").max(5000),
   preferredContact: z.enum(["email", "phone", "video"]).optional().or(z.literal("").transform(() => undefined)),
   budget: z.string().max(40).optional(),
+  timeline: z.string().trim().max(200).optional(),
   ongoingSupport: z.enum(["yes", "no", "maybe"]).optional().or(z.literal("").transform(() => undefined)),
   interestedServices: z.array(z.string().refine((s) => SERVICE_ITEM_KEYS.includes(s))).max(20).default([]),
   /** Landing page slug (from ?service=…); kept only when it looks like a slug. */
@@ -44,18 +50,32 @@ export const contactRequestSchema = z.object({
   website2: z.string().max(0).optional(),
 });
 
-export async function submitContactRequest(input: unknown, opts: { onCreated?: (id: string) => Promise<unknown> } = {}) {
-  const { country, website2: _hp, service, ...data } = contactRequestSchema.parse(input);
+export async function submitContactRequest(input: unknown, opts: { actor?: Actor | null; onCreated?: (id: string) => Promise<unknown> } = {}) {
+  const { country, website2: _hp, service, submissionId, ...data } = contactRequestSchema.parse(input);
   void _hp;
-  const doc = await ContactRequest.create({ ...data, countryCode: country, serviceSlug: service });
+  const submissionKey = createHash("sha256").update(submissionId ? data.email + ":" + submissionId : JSON.stringify(data) + Math.floor(Date.now() / 600000)).digest("hex");
+  const { token, hash } = createOpaqueToken();
+  const owned = opts.actor?.role === "CLIENT" && opts.actor.email === data.email;
+  let doc;
+  try {
+    doc = await ContactRequest.create({ ...data, countryCode: country, serviceSlug: service, submissionKey,
+      userId: owned ? opts.actor!.id : undefined, emailVerifiedAt: owned ? new Date() : undefined,
+      verificationTokenHash: owned ? undefined : hash, verificationExpiresAt: owned ? undefined : new Date(Date.now() + 86400000) });
+  } catch (err) {
+    if ((err as { code?: number }).code === 11000) return { ok: true };
+    throw err;
+  }
+  if (!owned) await sendTransactionalEmail({ to: data.email, toName: data.name, subject: "Verify your project inquiry email", sensitive: true,
+    text: "Confirm your email so our team can send private replies and quotations: " + absoluteUrl("/verify-inquiry?id=" + doc._id + "&token=" + token) });
+
   // Optional follow-up (website analytics); never allowed to fail the enquiry.
   await opts.onCreated?.(String(doc._id)).catch((err) => console.error("[contact] post-submit hook failed", err));
   await notifyInternal("clients.manage", {
     type: "CLIENT_REQUEST",
     title: `New enquiry: ${data.company || data.name}`,
     body: data.message.slice(0, 140),
-    link: `/dashboard/clients?tab=inquiries`,
-  });
+    link: `/dashboard/inquiries/${doc._id}`,
+  }).catch((err) => console.error("[contact] notification failed", err));
   await audit(null, "contact.submitted", { entityType: "ContactRequest", entityId: String(doc._id) });
   return { ok: true };
 }

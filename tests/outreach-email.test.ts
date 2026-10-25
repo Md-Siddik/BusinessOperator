@@ -35,7 +35,7 @@ const sig = { name: "ExploreTechify Team", email: "hello@exploretechify.com" };
 const req = (url: string, body: unknown) => new NextRequest(new URL(url, "http://localhost:3000"), { method: "POST", body: JSON.stringify(body), headers: { "content-type": "application/json" } });
 const ctx = { params: Promise.resolve({}) };
 function as(user: { actor: Actor } | null) {
-  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", actor: user.actor } : null;
+  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", emailVerifiedAt: new Date(), actor: user.actor } : null;
 }
 let seq = 0;
 async function company(fields: Record<string, unknown> = {}) {

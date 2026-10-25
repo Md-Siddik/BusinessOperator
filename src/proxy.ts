@@ -14,7 +14,7 @@ import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
 const APP_PREFIXES = ["/dashboard", "/staff", "/portal"];
 const NON_LOCALIZED = ["/api", "/_next", "/dashboard", "/staff", "/portal", "/favicon", "/icon", "/apple-icon", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/manifest"];
 /** Owner-dashboard sections that also exist in the staff workspace (client data, website maintenance). */
-const STAFF_SECTIONS = ["clients", "messages", "tickets", "projects", "services", "notifications", "settings"];
+const STAFF_SECTIONS = ["inquiries", "profile", "clients", "messages", "tickets", "projects", "services", "notifications", "settings"];
 
 /** Owner-only modules (also enforced by their pages, APIs and services). */
 const OWNER_ONLY_SECTIONS = ["/dashboard/opportunities", "/dashboard/website-analytics"];

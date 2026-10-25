@@ -7,7 +7,7 @@ const userSchema = new Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 120 },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: { type: String, select: false },
     role: { type: String, enum: ROLES, required: true, index: true },
     /** Explicit permissions for ADMIN/STAFF. Empty → role defaults. */
     permissions: { type: [String], default: [] },
@@ -18,6 +18,16 @@ const userSchema = new Schema(
     preferredLanguage: { type: String, default: "en" },
     /** Incremented to revoke all existing sessions. */
     sessionVersion: { type: Number, default: 0 },
+    invitationTokenHash: { type: String, select: false },
+    invitationExpiresAt: { type: Date, select: false },
+    emailVerifiedAt: Date,
+    verificationActivates: { type: Boolean, default: false },
+    mfaChallengeHash: { type: String, select: false },
+    authCodeHash: { type: String, select: false },
+    authCodeExpiresAt: { type: Date, select: false },
+    authCodeSentAt: Date,
+    authCodeAttempts: { type: Number, default: 0, select: false },
+    authCodePurpose: { type: String, enum: ["VERIFY", "MFA"], select: false },
     lastLoginAt: Date,
     lastSeenAt: Date,
     passwordResetTokenHash: { type: String, select: false },

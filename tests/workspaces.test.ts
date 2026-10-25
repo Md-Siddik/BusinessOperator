@@ -37,10 +37,10 @@ const ctx = <P extends object>(params: P = {} as P) => ({ params: Promise.resolv
 
 async function asUser(id: unknown) {
   const u = await User.findById(id).lean<UserDoc>();
-  session.current = await loadSessionUser({ sub: String(u!._id), role: u!.role as never, sv: u!.sessionVersion ?? 0 });
+  session.current = await loadSessionUser({ sub: String(u!._id), role: u!.role as never, sv: u!.sessionVersion ?? 0, mf: true });
 }
 function asActor(user: { actor: SessionUser["actor"] } | null) {
-  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", actor: user.actor } : null;
+  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", emailVerifiedAt: new Date(), actor: user.actor } : null;
 }
 
 beforeAll(async () => {
@@ -91,6 +91,7 @@ describe("Live chat: signup is required; pending clients can chat but nothing el
   let pendingUserId: unknown;
   beforeAll(async () => {
     await signupClient({ name: "Pending Person", company: "Pending Chat AS", email: "pending-chat@example.test", password: "a-strong-password-123", country: "NO" });
+    await User.updateOne({ email: "pending-chat@example.test" }, { $set: { emailVerifiedAt: new Date() } });
     pendingUserId = (await User.findOne({ email: "pending-chat@example.test" }).lean<UserDoc>())!._id;
   });
 
@@ -188,3 +189,5 @@ describe("Area routing (proxy)", () => {
     expect(new URL((await go("/portal", "STAFF")).headers.get("location")!).pathname).toBe("/staff");
   });
 });
+
+vi.mock("@/features/auth/verification", async (orig) => ({ ...(await orig<typeof import("@/features/auth/verification")>()), issueAuthCode: vi.fn(async () => undefined) }));

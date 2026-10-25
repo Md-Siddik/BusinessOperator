@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Send } from "lucide-react";
 import { SERVICE_ITEM_KEYS } from "@/config/services";
@@ -40,6 +40,7 @@ function NeedFromUrl({ onChange, onService }: { onChange: (value: string) => voi
 
 export function ContactForm({ locale, messages }: { locale: string; messages: Messages }) {
   const { t } = createTranslator(messages);
+  const submissionId = useRef<string | null>(null);
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [engagement, setEngagement] = useState("");
   const [need, setNeed] = useState("");
@@ -50,11 +51,14 @@ export function ContactForm({ locale, messages }: { locale: string; messages: Me
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (status === "sending") return;
     setStatus("sending");
     setError(undefined);
     setFieldErrors({});
     const fd = new FormData(e.currentTarget);
+    submissionId.current ??= crypto.randomUUID();
     const body = {
+      submissionId: submissionId.current,
       ...Object.fromEntries([...fd.entries()].filter(([k]) => k !== "interestedServices")),
       interestedServices: fd.getAll("interestedServices"),
       locale,
@@ -75,6 +79,7 @@ export function ContactForm({ locale, messages }: { locale: string; messages: Me
         <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" aria-hidden />
         <h2 className="mt-4 text-xl font-semibold text-ink-900">{t("contact.form.successTitle")}</h2>
         <p className="mt-2 text-ink-600">{t("contact.form.successText")}</p>
+        <p className="mt-2 text-sm text-ink-600">Please check your email to verify your inquiry address before receiving private replies.</p>
       </div>
     );
   }

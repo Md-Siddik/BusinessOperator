@@ -632,14 +632,14 @@
     },
     "signup": {
       "title": "Create a client account",
-      "subtitle": "For businesses working with ExploreTechify. New accounts are reviewed by our team before activation.",
+      "subtitle": "Create your account with your name, email, and password. Verify your email to start chatting.",
       "submit": "Create account",
       "submitting": "Creating account…",
       "haveAccount": "Already have an account?",
       "signIn": "Sign in",
       "passwordHint": "At least 10 characters.",
       "successTitle": "Account created",
-      "successText": "Thank you! Our team will review and activate your account shortly. You can sign in to see its status."
+      "successText": "Check your email to verify your account and continue."
     },
     "forgot": {
       "title": "Reset your password",
