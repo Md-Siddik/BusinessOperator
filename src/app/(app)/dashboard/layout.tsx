@@ -158,16 +158,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   groups.push(admin);
 
   const topbar = (
-    <div className="flex flex-1 items-center justify-between gap-3">
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {canIntel && <GlobalSearch />}
-        <div className="hidden lg:block">
+        <div className="hidden shrink-0 lg:block">
           <Suspense>
             <CountrySwitcher countries={countries.map((c) => ({ code: c.code, name: c.name, flag: c.flag, isLive: !c.isDemo }))} current={ctx.code} />
           </Suspense>
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         <NotificationBell allHref="/dashboard/notifications" />
         <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/dashboard/settings/security" />
       </div>

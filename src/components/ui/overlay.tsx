@@ -91,10 +91,10 @@ export function Dropdown({ trigger, children, align = "right", className, label 
     };
   }, [open]);
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       {trigger({ open, toggle: () => setOpen((o) => !o), id })}
       {open && (
-        <div id={id} role="menu" aria-label={label} className={cn("absolute z-40 mt-2 min-w-48 animate-fade-in rounded-xl border border-ink-200 bg-white p-1.5 shadow-lifted", align === "right" ? "right-0" : "left-0", className)}>
+        <div id={id} role="menu" aria-label={label} className={cn("absolute top-full z-40 mt-2 max-h-[min(24rem,calc(100dvh-5rem))] min-w-48 overflow-y-auto overscroll-contain animate-fade-in rounded-xl border border-ink-200 bg-white p-1.5 shadow-lifted", align === "right" ? "right-0" : "left-0", className)}>
           {children(close)}
         </div>
       )}

@@ -306,15 +306,11 @@ export function AppShell({ groups, brandLabel, homeHref, topbar, children }: { g
       </Drawer>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-ink-200 bg-white/90 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-ink-200 bg-white/90 px-4 backdrop-blur sm:px-6">
           <button type="button" className="rounded-lg p-2 text-ink-600 hover:bg-ink-100 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
             <Menu className="h-5 w-5" />
           </button>
-          <Link href="/" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink-600 hover:bg-ink-100">
-            <Home className="h-4 w-4" aria-hidden />
-            Home
-          </Link>
-          <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto">{topbar}</div>
+          <div className="flex min-w-0 flex-1 items-center gap-3">{topbar}</div>
         </header>
         <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           {children}
