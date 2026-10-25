@@ -14,6 +14,7 @@ export async function makeUser(role: Role, opts: { organizationId?: unknown; per
     name: opts.name ?? `${role} ${++n}`,
     email: `${role.toLowerCase()}-${++n}-${Date.now()}@test.local`,
     passwordHash: "not-used-in-service-tests",
+    emailVerifiedAt: new Date(),
     role,
     status: opts.status ?? "ACTIVE",
     organizationId: opts.organizationId,

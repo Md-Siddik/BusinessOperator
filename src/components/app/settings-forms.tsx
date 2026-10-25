@@ -1,5 +1,8 @@
 "use client";
 
+import Image from "next/image";
+import { SOCIAL_PLATFORMS } from "@/config/social";
+import type { SettingValue } from "@/features/settings/schemas";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { RefreshCw, Save } from "lucide-react";
@@ -47,13 +50,13 @@ function SaveBar({ pending }: { pending: boolean }) {
   );
 }
 
-export function GeneralSettingsForm({ value }: { value: { companyName: string; tagline: string; logoText: string; contactEmail: string; contactPhone: string; address: string; social: { linkedin: string; x: string; instagram: string } } }) {
+export function GeneralSettingsForm({ value }: { value: SettingValue<"general"> }) {
   const { pending, errors, save } = useSave("general");
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const g = (k: string) => String(fd.get(k) ?? "");
-    void save({ companyName: g("companyName"), tagline: g("tagline"), logoText: g("logoText"), contactEmail: g("contactEmail"), contactPhone: g("contactPhone"), address: g("address"), social: { linkedin: g("linkedin"), x: g("x"), instagram: g("instagram") } });
+    void save({ companyName: g("companyName"), tagline: g("tagline"), logoText: g("logoText"), contactEmail: g("contactEmail"), contactPhone: g("contactPhone"), address: g("address"), social: Object.fromEntries(SOCIAL_PLATFORMS.map(({ key }) => [key, g(key).trim()])) });
   }
   return (
     <form onSubmit={submit} className="space-y-4">
@@ -67,10 +70,14 @@ export function GeneralSettingsForm({ value }: { value: { companyName: string; t
         <Field label="Contact phone" optional="optional">{(p) => <Input {...p} name="contactPhone" defaultValue={value.contactPhone} />}</Field>
       </div>
       <Field label="Address" optional="optional">{(p) => <Input {...p} name="address" defaultValue={value.address} />}</Field>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="LinkedIn URL" optional="optional">{(p) => <Input {...p} name="linkedin" defaultValue={value.social.linkedin} />}</Field>
-        <Field label="X URL" optional="optional">{(p) => <Input {...p} name="x" defaultValue={value.social.x} />}</Field>
-        <Field label="Instagram URL" optional="optional">{(p) => <Input {...p} name="instagram" defaultValue={value.social.instagram} />}</Field>
+      <h2 className="pt-2 text-base font-semibold text-ink-900">Social media</h2>
+      <p className="text-sm text-ink-500">Saved HTTPS links appear on every public page. Clear a field and save to hide that platform.</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {SOCIAL_PLATFORMS.map(({ key, label }) => (
+          <Field key={key} label={<span className="inline-flex items-center gap-2"><Image src={"/icons/social/" + key + ".svg"} width={18} height={18} alt="" aria-hidden />{label} {key === "whatsapp" ? "number or URL" : "URL"}</span>} error={errors["social." + key]} optional="optional" hint={key === "whatsapp" ? "Include the country code, or paste a WhatsApp HTTPS link." : "Use a full HTTPS link."}>
+            {(p) => <Input {...p} name={key} type="text" inputMode="url" maxLength={300} defaultValue={value.social[key]} />}
+          </Field>
+        ))}
       </div>
       <p className="text-xs text-ink-500">The domain and canonical URL come from environment configuration (NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_SITE_DOMAIN).</p>
       <SaveBar pending={pending} />

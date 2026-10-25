@@ -43,7 +43,7 @@ const sp = <T,>(v: T): T => JSON.parse(JSON.stringify(v).replace(/[\u00a0\u202f]
 const req = (url: string, init?: { method?: string; body?: unknown }) => new NextRequest(new URL(url, "http://localhost:3000"), init ? { method: init.method ?? "POST", body: init.body === undefined ? undefined : JSON.stringify(init.body), headers: { "content-type": "application/json" } } : undefined);
 const ctx = <P,>(params: P) => ({ params: Promise.resolve(params) });
 function as(user: { actor: Actor } | null) {
-  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", actor: user.actor } : null;
+  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", emailVerifiedAt: new Date(), actor: user.actor } : null;
 }
 const sent: { subject: string; text: string }[] = [];
 let n = 0;

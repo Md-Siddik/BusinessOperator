@@ -35,7 +35,7 @@ const ctx = { params: Promise.resolve({}) };
 
 let t: Awaited<ReturnType<typeof makeTenants>>;
 function as(user: { actor: Actor } | null) {
-  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", actor: user.actor } : null;
+  session.current = user ? { id: user.actor.id, name: user.actor.name, email: user.actor.email, role: user.actor.role, status: "ACTIVE", organizationId: user.actor.organizationId, organizationStatus: "ACTIVE", emailVerifiedAt: new Date(), actor: user.actor } : null;
 }
 const req = (url: string, init: ConstructorParameters<typeof NextRequest>[1] = {}) => new NextRequest(new URL(url, `https://${HOST}`), init);
 const post = (url: string, body: unknown, cookie = "", ua = CHROME) =>

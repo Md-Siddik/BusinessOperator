@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { ExternalLink } from "lucide-react";
 import { AppShell, type NavGroup } from "@/components/app/app-shell";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LiveCountsProvider } from "@/components/app/live-counts";
@@ -22,7 +21,9 @@ export default async function StaffLayout({ children }: { children: ReactNode })
   const [messages, notifications] = await Promise.all([unreadConversationCount(actor), unreadNotificationCount(actor.id)]);
 
   const clientItems = [
-    ...(can(actor, "clients.manage") ? [{ href: "/staff/clients", label: "Clients", icon: "clients" }] : []),
+    ...(can(actor, "clients.manage") ? [{ href: "/staff/clients", label: "Clients", icon: "clients" }, { href: "/staff/inquiries", label: "Client Inquiries", icon: "queue" }] : []),
+    ...(can(actor, "users.manage") ? [{ href: "/staff/users", label: "Staff management", icon: "users" }] : []),
+    ...(can(actor, "analytics.view") ? [{ href: "/staff/reports", label: "Reports", icon: "analytics" }] : []),
     { href: "/staff/messages", label: "Messages", icon: "messages", badge: "messages" as const },
     { href: "/staff/tickets", label: "Requests & tickets", icon: "tickets" },
     { href: "/staff/projects", label: "Projects", icon: "projects" },
@@ -50,9 +51,6 @@ export default async function StaffLayout({ children }: { children: ReactNode })
     <div className="flex flex-1 items-center justify-between gap-3">
       <p className="truncate text-sm font-medium text-ink-700">Staff workspace</p>
       <div className="flex items-center gap-1">
-        <a href="/" target="_blank" rel="noopener" className="hidden items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-600 hover:bg-ink-100 hover:text-ink-900 sm:inline-flex">
-          View website <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        </a>
         <NotificationBell allHref="/staff/notifications" />
         <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/staff/settings/security" />
       </div>

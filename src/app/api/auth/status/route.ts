@@ -8,5 +8,5 @@ import { homeFor } from "@/lib/auth/session";
  */
 export const GET = route({ auth: "optional", allowPendingClient: true }, async ({ actor }) => {
   if (!actor) return { signedIn: false as const };
-  return { signedIn: true as const, role: actor.role, home: homeFor(actor.role) };
+  return { signedIn: true as const, role: actor.role, name: actor.name, home: homeFor(actor.role) };
 });

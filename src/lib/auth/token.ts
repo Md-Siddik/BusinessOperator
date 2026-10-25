@@ -9,7 +9,7 @@ import type { Role } from "@/lib/permissions";
 export const SESSION_COOKIE = "et_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
-export type SessionPayload = { sub: string; role: Role; sv: number };
+export type SessionPayload = { sub: string; role: Role; sv: number; mf?: boolean; st?: number };
 
 let warned = false;
 function getSecret() {
@@ -28,11 +28,13 @@ function getSecret() {
 }
 
 export async function signSession(payload: SessionPayload) {
-  return new SignJWT({ role: payload.role, sv: payload.sv })
+  const now = Math.floor(Date.now() / 1000);
+  const started = payload.st ?? now;
+  return new SignJWT({ role: payload.role, sv: payload.sv, mf: payload.mf === true, st: started })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE_SECONDS}s`)
+    .setExpirationTime(Math.min(now + SESSION_MAX_AGE_SECONDS, started + 30 * 86400))
     .sign(getSecret());
 }
 
@@ -41,7 +43,7 @@ export async function verifySession(token: string | undefined | null): Promise<S
   try {
     const { payload } = await jwtVerify(token, getSecret(), { algorithms: ["HS256"] });
     if (typeof payload.sub !== "string") return null;
-    return { sub: payload.sub, role: payload.role as Role, sv: Number(payload.sv ?? 0) };
+    return { sub: payload.sub, role: payload.role as Role, sv: Number(payload.sv ?? 0), mf: payload.mf === true, st: typeof payload.st === "number" ? payload.st : Number(payload.iat) };
   } catch {
     return null;
   }

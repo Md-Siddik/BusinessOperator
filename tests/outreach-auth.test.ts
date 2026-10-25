@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Company, EmailMessage, EmailTemplate, Organization, User, type CompanyDoc, type EmailMessageDoc, type UserDoc } from "@/models";
 import { hashPassword } from "@/lib/auth/password";
 import { isActiveSessionUser, loadSessionUser } from "@/lib/auth/actor";
@@ -99,6 +99,7 @@ describe("Authentication & accounts", () => {
     expect(session && isActiveSessionUser(session)).toBe(false);
 
     await setOrganizationStatus(t.owner.actor, String(user!.organizationId), "ACTIVE");
+    await User.updateOne({ _id: user!._id }, { $set: { emailVerifiedAt: new Date() } });
     const approved = await loadSessionUser({ sub: String(user!._id), role: "CLIENT", sv: 0 });
     expect(approved && isActiveSessionUser(approved)).toBe(true);
   });
@@ -144,3 +145,5 @@ describe("Upload validation", () => {
     await expectRejects(validateUpload(file("script.js", "text/javascript", Buffer.from("alert(1)"))), 400);
   });
 });
+
+vi.mock("@/features/auth/verification", async (orig) => ({ ...(await orig<typeof import("@/features/auth/verification")>()), issueAuthCode: vi.fn(async () => undefined) }));

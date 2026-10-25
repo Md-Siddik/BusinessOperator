@@ -80,7 +80,7 @@ const FLOW: { key: string; icon: LucideIcon }[] = [
 
 function GrowthFlowCard({ t }: { t: T }) {
   return (
-    <div className="relative mx-auto w-full max-w-md lg:max-w-none" aria-hidden>
+    <div className="relative mx-auto min-w-0 w-full max-w-md lg:max-w-none" aria-hidden>
       <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.6)] backdrop-blur-sm sm:p-5">
         <div className="flex items-center justify-between gap-3 px-2 pb-3 pt-1">
           <div>
@@ -122,22 +122,22 @@ export function HomeHero({ locale, t }: { locale: string; t: T }) {
     <section className="relative isolate overflow-hidden bg-night-950 text-white">
       <div className="bg-grid-dark pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top_left,black,transparent_75%)]" aria-hidden />
       <div className="pointer-events-none absolute -right-40 -top-48 -z-10 h-[38rem] w-[38rem] rounded-full bg-brand-600/25 blur-3xl" aria-hidden />
-      <div className="container-page grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.12fr_1fr] lg:gap-16 lg:py-24">
-        <div className="animate-fade-up">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-brand-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-signal-400" aria-hidden />
+      <div className="container-page grid grid-cols-1 items-center gap-10 py-12 sm:gap-12 sm:py-20 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:gap-16 lg:py-24">
+        <div className="min-w-0 animate-fade-up">
+          <span className="inline-flex max-w-full items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-brand-200">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-signal-400" aria-hidden />
             {t("home.hero.eyebrow")}
           </span>
-          <h1 className="mt-6 text-balance text-[2.5rem] font-semibold leading-[1.04] tracking-[-0.035em] sm:text-6xl lg:text-[4.25rem]">
+          <h1 className="mt-6 text-balance [overflow-wrap:anywhere] text-[clamp(2rem,9vw,2.5rem)] font-semibold leading-[1.04] tracking-[-0.035em] sm:text-6xl lg:text-[4.25rem]">
             {t("home.hero.titleStart")} <span className="bg-gradient-to-r from-brand-300 to-signal-300 bg-clip-text text-transparent">{t("home.hero.titleEnd")}</span>
           </h1>
           <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-ink-300">{t("home.hero.subtitle")}</p>
           {/* One primary goal; services stay one quiet click away. */}
-          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
-            <ButtonLink href={localizedPath(locale, "/contact")} size="lg" className="bg-brand-500 shadow-[0_10px_30px_-10px_rgb(61_102_240/0.8)] hover:bg-brand-400 active:bg-brand-600">
+          <div className="mt-9 flex min-w-0 flex-col items-stretch gap-x-7 gap-y-4 sm:flex-row sm:flex-wrap sm:items-center">
+            <ButtonLink href={localizedPath(locale, "/contact")} size="lg" className="max-w-full whitespace-normal text-center bg-brand-500 shadow-[0_10px_30px_-10px_rgb(61_102_240/0.8)] hover:bg-brand-400 active:bg-brand-600">
               {t("cta.letsWorkTogether")} <ArrowRight className="h-4 w-4" aria-hidden />
             </ButtonLink>
-            <Link href={localizedPath(locale, "/services")} className="group inline-flex items-center gap-1.5 text-[15px] font-semibold text-ink-200 transition-colors hover:text-white">
+            <Link href={localizedPath(locale, "/services")} className="group inline-flex justify-center items-center gap-1.5 text-[15px] font-semibold text-ink-200 transition-colors hover:text-white">
               {t("cta.exploreServices")} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
             </Link>
           </div>

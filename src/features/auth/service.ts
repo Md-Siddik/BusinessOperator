@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { getEmailProvider } from "@/lib/email/provider";
+import { issueAuthCode } from "./verification";
 import { LANGUAGE_CODES } from "@/config/languages";
 import { INDUSTRIES } from "@/config/industries";
 import { Organization, User, type UserDoc } from "@/models";
@@ -23,7 +25,7 @@ export async function authenticate(input: unknown, ip?: string) {
     await audit(null, "auth.login_failed", { metadata: { email }, ip });
     throw Errors.unauthorized("Invalid email or password.");
   }
-  const ok = await verifyPassword(password, user.passwordHash);
+  const ok = user.passwordHash ? await verifyPassword(password, user.passwordHash) : await dummyPasswordCheck(password);
   if (!ok || user.status === "SUSPENDED") {
     await audit(null, "auth.login_failed", { entityType: "User", entityId: String(user._id), metadata: { email, suspended: user.status === "SUSPENDED" }, ip });
     throw Errors.unauthorized("Invalid email or password.");
@@ -39,11 +41,11 @@ export async function authenticate(input: unknown, ip?: string) {
 
 export const signupSchema = z.object({
   name: z.string().trim().min(2, "Enter your name").max(120),
-  company: z.string().trim().min(2, "Enter your company name").max(200),
+  company: z.string().trim().max(200).optional(),
   email: emailSchema,
   password: passwordSchema,
   phone: optionalPhone,
-  country: isoCountrySchema,
+  country: isoCountrySchema.optional(),
   website: optionalUrl,
   industry: z.enum(INDUSTRIES).optional().or(z.literal("").transform(() => undefined)),
   preferredLanguage: z.enum(LANGUAGE_CODES as [string, ...string[]]).default("en"),
@@ -57,14 +59,16 @@ export const signupSchema = z.object({
  */
 export async function signupClient(input: unknown, ip?: string) {
   const data = signupSchema.parse(input);
+  if (!getEmailProvider().isLive && process.env.NODE_ENV !== "test") throw Errors.badRequest("Account verification is unavailable. Please retry later.");
   if (await User.exists({ email: data.email })) {
     // Same response as success to avoid account enumeration; the owner gets nothing new.
+    await hashPassword(data.password);
     await audit(null, "auth.signup_duplicate", { metadata: { email: data.email }, ip });
     return { ok: true };
   }
   const org = await Organization.create({
-    name: data.company,
-    slug: `${slugify(data.company)}-${Math.random().toString(36).slice(2, 7)}`,
+    name: data.company || data.name,
+    slug: `${slugify(data.company || data.name)}-${Math.random().toString(36).slice(2, 7)}`,
     countryCode: data.country,
     website: data.website,
     industry: data.industry,
@@ -77,21 +81,26 @@ export async function signupClient(input: unknown, ip?: string) {
     name: data.name,
     email: data.email,
     passwordHash: await hashPassword(data.password),
+    verificationActivates: true,
     role: "CLIENT",
     status: "PENDING_APPROVAL",
     organizationId: org._id,
     phone: data.phone,
     preferredLanguage: data.preferredLanguage,
+  }).catch(async (err: unknown) => {
+    if ((err as { code?: number }).code !== 11000) throw err;
+    await Organization.deleteOne({ _id: org._id });
+    return null;
   });
+  if (!user) return { ok: true };
   await audit(null, "auth.signup", { entityType: "User", entityId: String(user._id), organizationId: String(org._id), ip });
   await notifyInternal("clients.manage", {
     type: "CLIENT_SIGNUP",
-    title: `New client signup: ${data.company}`,
-    body: `${data.name} (${data.email}) is awaiting approval.`,
+    title: `New client signup: ${data.company || data.name}`,
+    body: `${data.name} (${data.email}) is verifying their account.`,
     link: `/dashboard/clients/${org._id}`,
-  });
-  const userMail = transactionalTemplates.signupReceived(data.name);
-  await sendTransactionalEmail({ to: data.email, toName: data.name, ...userMail });
+  }).catch((err) => console.error("[auth] Signup notification failed", err));
+  await issueAuthCode(user, "VERIFY");
   return { ok: true };
 }
 
@@ -102,7 +111,7 @@ export async function requestPasswordReset(input: unknown, ip?: string) {
   const { token, hash } = createOpaqueToken();
   await User.updateOne({ _id: user._id }, { $set: { passwordResetTokenHash: hash, passwordResetExpiresAt: new Date(Date.now() + 3_600_000) } });
   const mail = transactionalTemplates.passwordReset(user.name, absoluteUrl(`/reset-password?token=${token}`));
-  await sendTransactionalEmail({ to: user.email, toName: user.name, ...mail });
+  await sendTransactionalEmail({ to: user.email, toName: user.name, ...mail, sensitive: true });
   await audit(null, "auth.password_reset_requested", { entityType: "User", entityId: String(user._id), ip });
   return { ok: true };
 }

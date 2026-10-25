@@ -17,7 +17,11 @@ export const siteConfig = {
     phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "",
     address: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "",
   },
+  // Public cards use saved dashboard links only.
   social: {
+    whatsapp: process.env.NEXT_PUBLIC_SOCIAL_WHATSAPP || "",
+    facebook: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK || "",
+    discord: process.env.NEXT_PUBLIC_SOCIAL_DISCORD || "",
     linkedin: process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN || "",
     x: process.env.NEXT_PUBLIC_SOCIAL_X || "",
     instagram: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM || "",

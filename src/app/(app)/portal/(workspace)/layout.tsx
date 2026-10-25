@@ -24,6 +24,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       collapsible: true,
       items: [
         { href: "/portal/messages", label: "Messages", icon: "messages", badge: "messages" },
+        { href: "/portal/inquiries", label: "My Inquiries", icon: "queue" },
         { href: "/portal/requests", label: "Requests", icon: "queue" },
         { href: "/portal/tickets", label: "Support tickets", icon: "tickets" },
         { href: "/portal/projects", label: "Projects", icon: "projects" },

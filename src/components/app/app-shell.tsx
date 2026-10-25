@@ -243,11 +243,12 @@ function WebsiteLink({ collapsed, onNavigate }: { collapsed: boolean; onNavigate
     <Link
       href="/"
       onClick={onNavigate}
-      title={collapsed ? "Back to website" : undefined}
+      aria-label="Home"
+      title={collapsed ? "Home" : undefined}
       className={cn("flex items-center gap-2 border-t border-ink-100 px-5 py-3 text-xs text-ink-500 hover:text-ink-800", collapsed && "justify-center px-0")}
     >
       <Home className="h-4 w-4" aria-hidden />
-      {!collapsed && "Back to website"}
+      {!collapsed && "Home"}
     </Link>
   );
 }
@@ -309,7 +310,11 @@ export function AppShell({ groups, brandLabel, homeHref, topbar, children }: { g
           <button type="button" className="rounded-lg p-2 text-ink-600 hover:bg-ink-100 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation">
             <Menu className="h-5 w-5" />
           </button>
-          {topbar}
+          <Link href="/" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-ink-600 hover:bg-ink-100">
+            <Home className="h-4 w-4" aria-hidden />
+            Home
+          </Link>
+          <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto">{topbar}</div>
         </header>
         <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           {children}

@@ -1,4 +1,5 @@
 "use client";
+import { QuickAuth } from "@/components/site/quick-auth";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { usePathname } from "next/navigation";
@@ -52,7 +53,7 @@ const mergeMessages = (current: Msg[], incoming: Msg[]) => {
   return [...byId.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 };
 
-export function ChatWidget({ labels = DEFAULT_CHAT_LABELS, signupHref = "/signup", loginHref = "/login", inboxHref = "/portal/messages" }: { labels?: ChatWidgetLabels; signupHref?: string; loginHref?: string; inboxHref?: string }) {
+export function ChatWidget({ labels = DEFAULT_CHAT_LABELS, inboxHref = "/portal/messages" }: { labels?: ChatWidgetLabels; signupHref?: string; loginHref?: string; inboxHref?: string }) {
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
@@ -207,6 +208,11 @@ export function ChatWidget({ labels = DEFAULT_CHAT_LABELS, signupHref = "/signup
       setText("");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : labels.error);
+      if (err instanceof ApiError && err.status === 401) {
+        setMessages([]); setConversationId(null);
+        void fetch("/api/chat/session", { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()).then(setSession).catch(() => undefined);
+        window.dispatchEvent(new Event("auth-changed"));
+      }
     } finally {
       setSending(false);
     }
@@ -267,16 +273,13 @@ export function ChatWidget({ labels = DEFAULT_CHAT_LABELS, signupHref = "/signup
             </div>
           ) : session.state === "anonymous" ? (
             <div className="space-y-4 p-5">
-              <p className="text-base font-semibold text-ink-900">{labels.signupTitle}</p>
-              <p className="text-sm leading-relaxed text-ink-600">{labels.signupText}</p>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <a href={signupHref} className="inline-flex h-10 flex-1 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700">
-                  {labels.signup}
-                </a>
-                <a href={loginHref} className="inline-flex h-10 flex-1 items-center justify-center rounded-lg border border-ink-200 px-4 text-sm font-semibold text-ink-800 hover:bg-ink-50">
-                  {labels.login}
-                </a>
-              </div>
+              <QuickAuth onComplete={() => {
+                void fetch("/api/chat/session", { credentials: "same-origin", cache: "no-store" })
+                  .then((r) => r.json()).then(setSession).catch(() => setError(labels.error));
+              }} />
+              <label className="block text-sm text-ink-600">Draft message
+                <textarea value={text} maxLength={10000} onChange={(e) => setText(e.target.value)} className="mt-1 w-full rounded-lg border border-ink-200 p-2" />
+              </label>
             </div>
           ) : !showThread ? (
             // Team: conversation list

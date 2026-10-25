@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Home, Menu, X } from "lucide-react";
 import { localizedPath } from "@/config/languages";
 import { ButtonLink } from "@/components/ui/button";
 import { Drawer } from "@/components/ui/overlay";
@@ -54,7 +54,7 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
   return (
     // Light in Mixed mode; a translucent bar over whatever canvas the active theme has.
     <header data-tone="light" className={cn("sticky top-0 z-40 border-b bg-white/85 backdrop-blur-md transition-colors duration-200", scrolled ? "border-ink-200/70" : "border-transparent")}>
-      <div className="container-page flex h-16 items-center justify-between gap-4">
+      <div className="container-page flex h-16 items-center justify-between gap-2">
         <Logo href={lp("/")} />
         <nav aria-label={labels.mainNavigation} className="hidden items-center gap-1 lg:flex">
           {nav.map((n) => (
@@ -63,7 +63,11 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Link href={home} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-sm font-medium text-ink-700 hover:bg-ink-100 lg:hidden">
+            <Home className="h-4 w-4" aria-hidden />
+            {labels.home}
+          </Link>
           <div className="hidden items-center sm:flex">
             <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} compact />
             <ThemeSwitcher labels={labels.theme} />

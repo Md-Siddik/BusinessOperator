@@ -26,7 +26,7 @@ describe("RBAC", () => {
     expect(can(s, "tickets.manage")).toBe(true);
     expect(can(s, "content.manage")).toBe(true);
     expect(can(s, "clients.manage")).toBe(false);
-    for (const p of ["companies.read", "companies.export", "outreach.manage", "outreach.approve", "analytics.view", "registry.sync", "users.manage", "settings.manage", "audit.view"] as const) {
+    for (const p of ["companies.read", "companies.export", "outreach.manage", "outreach.approve", "registry.sync", "settings.manage", "audit.view"] as const) {
       expect(can(s, p)).toBe(false);
       expect(can(actor("ADMIN"), p)).toBe(false);
     }
@@ -34,13 +34,13 @@ describe("RBAC", () => {
   });
   it("owner-dashboard permissions stored on an old ADMIN/STAFF account are never effective", () => {
     // Website maintenance (incl. public service management) only — never company intelligence, CRM, outreach, users or system settings.
-    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual(["chat.manage", "clients.manage", "content.manage", "projects.manage", "services.manage", "tickets.manage"]);
+    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual(["analytics.view", "chat.manage", "clients.manage", "content.manage", "projects.manage", "services.manage", "tickets.manage", "users.manage"]);
     expect(effectivePermissions("STAFF", ["companies.read", "outreach.manage"])).toEqual([]);
   });
-  it("only the owner may assign roles", () => {
+  it("only the owner assigns privileged roles; Super Admin can assign STAFF", () => {
     expect(canAssignRole(actor("OWNER"), "ADMIN")).toBe(true);
     expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "ADMIN")).toBe(false);
-    expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "STAFF")).toBe(false);
+    expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "STAFF")).toBe(true);
   });
   it("ignores unknown stored permissions", () => {
     expect(effectivePermissions("ADMIN", ["tickets.manage", "hack.everything"])).toEqual(["tickets.manage"]);
@@ -145,7 +145,7 @@ describe("Tokens", () => {
   });
   it("session JWTs verify and reject tampering", async () => {
     const jwt = await signSession({ sub: "abc", role: "STAFF", sv: 2 });
-    expect(await verifySession(jwt)).toEqual({ sub: "abc", role: "STAFF", sv: 2 });
+    expect(await verifySession(jwt)).toMatchObject({ sub: "abc", role: "STAFF", sv: 2 });
     const [h, p, s] = jwt.split(".");
     const forged = `${h}.${Buffer.from(JSON.stringify({ sub: "abc", role: "OWNER", sv: 2 })).toString("base64url")}.${s}`;
     expect(await verifySession(forged)).toBeNull();

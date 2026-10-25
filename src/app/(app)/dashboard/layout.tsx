@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Suspense } from "react";
-import { ExternalLink } from "lucide-react";
 import { AppShell, type NavGroup } from "@/components/app/app-shell";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { CountrySwitcher } from "@/components/app/country-switcher";
@@ -141,6 +140,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     defaultOpen: false,
     items: [
       { href: "/dashboard/clients", label: "Clients", icon: "clients" },
+      { href: "/dashboard/inquiries", label: "Client Inquiries", icon: "queue" },
       { href: "/dashboard/messages", label: "Messages", icon: "messages", badge: "messages" },
       // Owner-only: the Zoho inbox (ZOHO_SMTP_USER) read over IMAP; page and service enforce OWNER too.
       ...(isOwner(actor) ? [{ href: "/dashboard/mailbox", label: "Client Mail", icon: "mailbox" }] : []),
@@ -168,10 +168,6 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         </div>
       </div>
       <div className="flex items-center gap-1">
-        {/* The public website, in a new tab — the dashboard itself stays private. */}
-        <a href="/" target="_blank" rel="noopener" className="hidden items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-ink-600 hover:bg-ink-100 hover:text-ink-900 sm:inline-flex">
-          View website <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        </a>
         <NotificationBell allHref="/dashboard/notifications" />
         <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/dashboard/settings/security" />
       </div>

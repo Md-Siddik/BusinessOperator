@@ -153,7 +153,7 @@ export const QUIET_NOTIFICATION_TYPES: NotificationType[] = ["SYNC_COMPLETED", "
 export const SYNC_STATUSES = ["RUNNING", "SUCCESS", "PARTIAL", "FAILED"] as const;
 export type SyncStatus = (typeof SYNC_STATUSES)[number];
 
-export const CONTACT_REQUEST_STATUSES = ["NEW", "IN_REVIEW", "CONVERTED", "ARCHIVED"] as const;
+export const CONTACT_REQUEST_STATUSES = ["NEW", "UNDER_REVIEW", "QUOTATION_SENT", "IN_DISCUSSION", "ACCEPTED", "REJECTED", "COMPLETED", "IN_REVIEW", "CONVERTED", "ARCHIVED"] as const;
 export type ContactRequestStatus = (typeof CONTACT_REQUEST_STATUSES)[number];
 
 /** Chat attachment & document upload limits. */

@@ -10,6 +10,7 @@ export type SessionUser = {
   email: string;
   role: Role;
   status: string;
+  emailVerifiedAt?: Date | null;
   preferredLanguage?: string | null;
   organizationId?: string;
   organizationStatus?: string;
@@ -34,6 +35,7 @@ export async function loadSessionUser(payload: SessionPayload | null): Promise<S
   const user = await User.findById(payload.sub).lean<UserDoc>();
   if (!user || (user.sessionVersion ?? 0) !== payload.sv) return null;
   if (user.status === "SUSPENDED") return null;
+  if ((user.role === "OWNER" || user.role === "ADMIN") && !payload.mf) return null;
 
   let organizationStatus: string | undefined;
   if (user.role === "CLIENT") {
@@ -49,6 +51,7 @@ export async function loadSessionUser(payload: SessionPayload | null): Promise<S
     email: user.email,
     role: user.role as Role,
     status: user.status,
+    emailVerifiedAt: user.emailVerifiedAt,
     preferredLanguage: user.preferredLanguage,
     organizationId: user.organizationId ? String(user.organizationId) : undefined,
     organizationStatus,
@@ -60,12 +63,13 @@ export async function loadSessionUser(payload: SessionPayload | null): Promise<S
  * A signed-up client still awaiting approval (account AND organization pending — never suspended).
  * Such a user may use the live chat only; every other area still requires approval.
  */
-export function isPendingClientUser(u: Pick<SessionUser, "status" | "role" | "organizationStatus">) {
-  return u.role === "CLIENT" && u.status === "PENDING_APPROVAL" && u.organizationStatus === "PENDING_APPROVAL";
+export function isPendingClientUser(u: Pick<SessionUser, "status" | "role" | "organizationStatus" | "emailVerifiedAt">) {
+  return !!u.emailVerifiedAt && u.role === "CLIENT" && u.status === "PENDING_APPROVAL" && u.organizationStatus === "PENDING_APPROVAL";
 }
 
 /** A user may act (call APIs, see data) only when their account — and client org — is active. */
-export function isActiveSessionUser(u: Pick<SessionUser, "status" | "role" | "organizationStatus">) {
+export function isActiveSessionUser(u: Pick<SessionUser, "status" | "role" | "organizationStatus" | "emailVerifiedAt">) {
+  if (!u.emailVerifiedAt) return false;
   if (u.status !== "ACTIVE") return false;
   if (u.role === "CLIENT" && u.organizationStatus !== "ACTIVE") return false;
   return true;
