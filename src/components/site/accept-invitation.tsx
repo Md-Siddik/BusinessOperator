@@ -17,7 +17,7 @@ export function AcceptInvitation({ token }: { token: string }) {
     catch (err) { setError(err instanceof Error ? err.message : "Unable to accept invitation."); }
     finally { setPending(false); }
   }
-  if (done) return <div role="status" className="space-y-4"><p>Your password is set. Sign in to continue. Owner and Super Admin accounts require a security code at sign-in.</p><Link href="/login" className="text-brand-700">Sign in</Link></div>;
+  if (done) return <div role="status" className="space-y-4"><p>Your password is set. Sign in with your email and password to continue.</p><Link href="/login" className="text-brand-700">Sign in</Link></div>;
   return <form onSubmit={submit} className="space-y-4"><h1 className="text-2xl font-semibold">Set up your account</h1>
     {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
     <Field label="Full name">{(p) => <Input {...p} name="name" autoComplete="name" minLength={2} maxLength={120} required />}</Field>

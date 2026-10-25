@@ -8,7 +8,7 @@ import { rememberAccount } from "./auth-button";
 
 export function QuickAuth({ onComplete }: { onComplete: () => void }) {
   const [signup, setSignup] = useState(false);
-  const [verification, setVerification] = useState<{ email: string; challenge?: string }>();
+  const [verification, setVerification] = useState<{ email: string }>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [show, setShow] = useState(false);
@@ -19,8 +19,8 @@ export function QuickAuth({ onComplete }: { onComplete: () => void }) {
     const body = Object.fromEntries(new FormData(e.currentTarget));
     setPending(true); setError("");
     try {
-      const result = await apiFetch<{ verificationRequired?: boolean; challenge?: string }>(signup ? "/api/auth/signup" : "/api/auth/login", { body });
-      if (signup || result.verificationRequired) setVerification({ email: String(body.email), challenge: result.challenge });
+      const result = await apiFetch<{ registrationRequired?: boolean }>(signup ? "/api/auth/signup" : "/api/auth/login", { body });
+      if (signup || result.registrationRequired) setVerification({ email: String(body.email) });
       else complete();
     } catch (err) { setError(err instanceof Error ? err.message : "Please retry."); }
     finally { setPending(false); }

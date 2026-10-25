@@ -3,8 +3,8 @@ import { Types } from "mongoose";
 import { ContactRequest, EmailMessage, Organization, User, type UserDoc } from "@/models";
 import { acceptInvitation, inviteAuthorizedAccounts } from "@/features/auth/invitations";
 import { enforceDurableAuthLimit } from "@/lib/auth/rate-limit";
-import { createInternalUser, updateInternalUser, revokeSessions } from "@/features/users/service";
-import { signupClient } from "@/features/auth/service";
+import { createInternalUser, updateInternalUser, updateOwnProfile, revokeSessions } from "@/features/users/service";
+import { authenticate, signupClient } from "@/features/auth/service";
 import { beginLogin, consumeAuthCode, hashAuthCode, issueAuthCode, resendVerification } from "@/features/auth/verification";
 import { loadSessionUser, isActiveSessionUser } from "@/lib/auth/actor";
 import { signSession, verifySession } from "@/lib/auth/token";
@@ -26,6 +26,53 @@ async function setCode(id: unknown, code = "123456", purpose = "VERIFY", expires
   await User.updateOne({ _id: id }, { $set: { authCodeHash: hashAuthCode(code), authCodeExpiresAt: new Date(expires), authCodeAttempts: 0, authCodePurpose: purpose } });
 }
 describe("Verified onboarding and sessions", () => {
+  it("keeps ownership verified across revoked sessions and repeated password logins without sending codes", async () => {
+    const email = "repeat-login@example.test";
+    const password = "Repeat-login-password-123";
+    await signupClient({ name: "Repeat Login", email, password });
+    const code = sent.filter((mail) => mail.to === email).at(-1)!.text.match(/code is ([0-9]{6})/)![1];
+    await consumeAuthCode({ email, code });
+    const verified = await User.findOne({ email }).lean<UserDoc>();
+    const before = sent.length;
+    for (let i = 0; i < 5; i++) {
+      const user = await authenticate({ email, password });
+      expect(await beginLogin(user)).toBeNull();
+      expect(user.emailVerifiedAt).toEqual(verified!.emailVerifiedAt);
+      const payload = { sub: String(user._id), role: user.role, sv: user.sessionVersion ?? 0 };
+      const session = await loadSessionUser(await verifySession(await signSession(payload)));
+      expect(isActiveSessionUser(session!)).toBe(true);
+      await revokeSessions(session!.actor, String(user._id));
+      expect(await loadSessionUser(payload)).toBeNull();
+    }
+    await resendVerification({ email });
+    expect(sent).toHaveLength(before);
+    expect((await User.findOne({ email }).lean<UserDoc>())!.emailVerifiedAt).toEqual(verified!.emailVerifiedAt);
+  });
+  it("requires pending registration completion without sending codes during login, for every role", async () => {
+    const before = sent.length;
+    const pendingUsers = [];
+    for (const role of ["CLIENT", "STAFF", "ADMIN", "OWNER"] as const) {
+      const user = await User.create({ name: "Unverified", email: `unverified-${role.toLowerCase()}@example.test`, role, status: "ACTIVE" });
+      const result = await beginLogin(user.toObject());
+      expect(result).toEqual({ registrationRequired: true, email: user.email });
+      expect((await User.findById(user._id).select("+authCodePurpose").lean<UserDoc>())?.authCodePurpose).toBeUndefined();
+      pendingUsers.push(user);
+    }
+    expect(sent).toHaveLength(before);
+    for (const user of pendingUsers) {
+      await resendVerification({ email: user.email });
+      const code = sent.at(-1)!.text.match(/code is ([0-9]{6})/)![1];
+      await consumeAuthCode({ email: user.email, code });
+      expect(await beginLogin((await User.findById(user._id).lean<UserDoc>())!)).toBeNull();
+    }
+  });
+  it("does not let profile updates transfer verified ownership to another email", async () => {
+    const before = await User.findById(t.clientA.actor.id).lean<UserDoc>();
+    await updateOwnProfile(t.clientA.actor, { email: "replacement@example.test" });
+    const after = await User.findById(t.clientA.actor.id).lean<UserDoc>();
+    expect(after!.email).toBe(before!.email);
+    expect(after!.emailVerifiedAt).toEqual(before!.emailVerifiedAt);
+  });
   it("uses only name/email/password, then activates after a single-use email code", async () => {
     await signupClient({ name: "Minimal Client", email: "minimal@example.test", password: "Secure-password-123" });
     const user = await User.findOne({ email: "minimal@example.test" }).lean<UserDoc>();
@@ -43,43 +90,45 @@ describe("Verified onboarding and sessions", () => {
     expect(await User.countDocuments({ email: user!.email })).toBe(1);
   });
   it("rejects expired codes and locks out after five failed guesses", async () => {
-    await setCode(t.clientA.user._id, "123456", "VERIFY", Date.now() - 1);
-    await expectRejects(consumeAuthCode({ email: t.clientA.actor.email, code: "123456" }), 400);
-    await setCode(t.clientA.user._id);
-    for (let i = 0; i < 5; i++) await expectRejects(consumeAuthCode({ email: t.clientA.actor.email, code: "000000" }), 400);
-    await expectRejects(consumeAuthCode({ email: t.clientA.actor.email, code: "123456" }), 400);
+    const user = await User.create({ name: "Code limits", email: "code-limits@example.test", role: "CLIENT" });
+    await setCode(user._id, "123456", "VERIFY", Date.now() - 1);
+    await expectRejects(consumeAuthCode({ email: user.email, code: "123456" }), 400);
+    await setCode(user._id);
+    for (let i = 0; i < 5; i++) await expectRejects(consumeAuthCode({ email: user.email, code: "000000" }), 400);
+    await expectRejects(consumeAuthCode({ email: user.email, code: "123456" }), 400);
   });
   it("allows only one concurrent consumer", async () => {
-    await setCode(t.clientA.user._id);
-    const results = await Promise.allSettled([consumeAuthCode({ email: t.clientA.actor.email, code: "123456" }), consumeAuthCode({ email: t.clientA.actor.email, code: "123456" })]);
+    const user = await User.create({ name: "Concurrent code", email: "concurrent-code@example.test", role: "CLIENT" });
+    await setCode(user._id);
+    const results = await Promise.allSettled([consumeAuthCode({ email: user.email, code: "123456" }), consumeAuthCode({ email: user.email, code: "123456" })]);
     expect(results.filter((x) => x.status === "fulfilled")).toHaveLength(1);
   });
-  it("requires privileged login challenges and refuses verification-only bypasses", async () => {
-    const challenge = await beginLogin(t.owner.user.toObject());
-    expect(challenge?.challenge).toBeTruthy();
-    const code = sent.filter((x) => x.to === t.owner.actor.email).at(-1)!.text.match(/code is ([0-9]{6})/)![1];
-    await expectRejects(consumeAuthCode({ email: t.owner.actor.email, code }), 400);
-    await consumeAuthCode({ email: t.owner.actor.email, code, challenge: challenge!.challenge });
-    const payload = { sub: t.owner.actor.id, role: "OWNER" as const, sv: 0 };
-    expect(await loadSessionUser(payload)).toBeNull();
-    expect(await loadSessionUser({ ...payload, mf: true })).toBeTruthy();
+  it("allows verified owner/admin password sessions without role-based OTP and rejects stale ownership codes", async () => {
+    const before = sent.length;
+    for (const user of [t.owner.user, t.admin.user]) {
+      expect(await beginLogin(user.toObject())).toBeNull();
+      const payload = { sub: String(user._id), role: user.role, sv: user.sessionVersion ?? 0 };
+      expect(await loadSessionUser(await verifySession(await signSession(payload)))).toBeTruthy();
+    }
     await setCode(t.owner.actor.id);
     await expectRejects(consumeAuthCode({ email: t.owner.actor.email, code: "123456" }), 400);
-    const before = sent.length;
     await resendVerification({ email: t.owner.actor.email });
     expect(sent).toHaveLength(before);
   });
   it("resends MFA only with its password-authenticated challenge", async () => {
     const user = await User.create({ name: "MFA resend", email: "mfa-resend@example.test", role: "ADMIN", status: "ACTIVE" });
-    const login = await beginLogin(user.toObject());
-    await expectRejects(resendVerification({ email: user.email, challenge: login!.challenge }), 429);
+    // Legacy/explicit challenges are separate from normal login, which never creates one.
+    const challenge = "explicit-security-challenge-token-123456";
+    await User.updateOne({ _id: user._id }, { $set: { mfaChallengeHash: hashToken(challenge) } });
+    await issueAuthCode(user, "MFA");
+    await expectRejects(resendVerification({ email: user.email, challenge }), 429);
     await User.updateOne({ _id: user._id }, { $unset: { authCodeSentAt: 1 } });
     const before = sent.length;
     await resendVerification({ email: user.email, challenge: "wrong-challenge-token-123456" });
     expect(sent).toHaveLength(before);
-    await resendVerification({ email: user.email, challenge: login!.challenge });
+    await resendVerification({ email: user.email, challenge });
     const code = sent.at(-1)!.text.match(/code is ([0-9]{6})/)![1];
-    await consumeAuthCode({ email: user.email, challenge: login!.challenge, code });
+    await consumeAuthCode({ email: user.email, challenge, code });
   });
   it("reports email failure and permits retry without leaving a cooldown lock", async () => {
     const user = await User.create({ name: "Retry mail", email: "mail-retry@example.test", role: "CLIENT", status: "PENDING_APPROVAL" });
@@ -168,7 +217,7 @@ describe("Invitations, delegated administration, and shared rate limits", () => 
     const activated = await User.findById(owner!._id).lean<UserDoc>();
     expect(activated?.status).toBe("ACTIVE");
     expect(activated?.emailVerifiedAt).toBeTruthy();
-    expect((await beginLogin(activated!))?.challenge).toBeTruthy();
+    expect(await beginLogin(activated!)).toBeNull();
     await expectRejects(acceptInvitation({ token, name: "Replay", password: "Strong-invited-password-123" }), 400);
   });
   it("lets Super Admin manage STAFF while preventing privileged-role escalation or revocation", async () => {

@@ -37,18 +37,18 @@ export function LoginForm({ locale, messages, next }: { locale: string; messages
   const { t } = createTranslator(messages);
   const { pending, error, fieldErrors, run } = useFormState();
   const [showPassword, setShowPassword] = useState(false);
-  const [verification, setVerification] = useState<{ email: string; challenge?: string }>();
+  const [registration, setRegistration] = useState<{ email: string }>();
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     run(async () => {
-      const res = await apiFetch<{ redirect?: string; verificationRequired?: boolean; email?: string; challenge?: string }>("/api/auth/login", { body: { email: fd.get("email"), password: fd.get("password"), next } });
+      const res = await apiFetch<{ redirect?: string; registrationRequired?: boolean; email?: string }>("/api/auth/login", { body: { email: fd.get("email"), password: fd.get("password"), next } });
+      if (res.registrationRequired) { setRegistration({ email: String(res.email) }); return; }
       rememberAccount();
-      if (res.verificationRequired) { setVerification({ email: String(res.email), challenge: res.challenge }); return; }
       window.location.assign(res.redirect || "/portal");
     }, t("auth.login.invalid"));
   }
-  if (verification) return <VerificationForm {...verification} next={next} onComplete={(redirect) => window.location.assign(redirect)} />;
+  if (registration) return <VerificationForm {...registration} next={next} onComplete={(redirect) => window.location.assign(redirect)} />;
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
       {error && <Alert tone="danger">{error}</Alert>}
@@ -189,7 +189,9 @@ export function ResetPasswordForm({ locale, messages, token }: { locale: string;
 
 export function VerificationForm({ email, challenge, next, onComplete }: { email: string; challenge?: string; next?: string; onComplete: (redirect: string) => void }) {
   const { pending, error, run } = useFormState();
-  const [notice, setNotice] = useState("If eligible, check your email for a code. If none arrives, request a new code. Codes expire after 10 minutes and allow five attempts.");
+  const [notice, setNotice] = useState(challenge
+    ? "Security check: enter the code sent to your email. Codes expire after 10 minutes and allow five attempts."
+    : "Complete registration by verifying your email address with your registration code. You only need to verify this address once. If your code expired or delivery failed, request a new code below. Codes expire after 10 minutes and allow five attempts.");
   return <form className="space-y-4" onSubmit={(e) => {
     e.preventDefault();
     const code = new FormData(e.currentTarget).get("code");
@@ -203,7 +205,7 @@ export function VerificationForm({ email, challenge, next, onComplete }: { email
     <p role="status" className="text-sm text-ink-600">{notice}</p>
     {error && <Alert tone="danger">{error}</Alert>}
     <Field label="Security code">{(p) => <Input {...p} name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required />}</Field>
-    <Button type="submit" loading={pending}>Verify and continue</Button>
+    <Button type="submit" loading={pending}>{challenge ? "Complete sign-in" : "Verify and continue"}</Button>
     <Button type="button" disabled={pending} onClick={() => void run(async () => {
       await apiFetch("/api/auth/resend", { body: { email, challenge } });
       setNotice("If eligible, a new code was requested. Wait at least 60 seconds before retrying.");

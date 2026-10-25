@@ -16,8 +16,8 @@ function safeNext(next: unknown, role: string) {
 export const POST = route({ auth: "none", rateLimit: RATE_LIMITS.login }, async ({ req, ip }) => {
   const body = (await readJson(req)) as { next?: unknown };
   const user = await authenticate(body, ip);
-  const verification = await beginLogin(user);
-  if (verification) return verification;
+  const registration = await beginLogin(user);
+  if (registration) return registration;
   await setSessionCookie({ sub: String(user._id), role: user.role, sv: user.sessionVersion ?? 0 });
   // Client accounts on a browser that accepted analytics: link the earlier anonymous visits.
   if (req.cookies.get(CONSENT_COOKIE)?.value === "granted") {
