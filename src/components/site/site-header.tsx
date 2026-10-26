@@ -10,7 +10,7 @@ import { Drawer } from "@/components/ui/overlay";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { LanguageSwitcher } from "./language-switcher";
-import { AuthButton } from "./auth-button";
+import { AuthButton, HeaderAuthProvider, type HeaderAuthState } from "./auth-button";
 import { ThemeSegmented, ThemeSwitcher, type ThemeLabels } from "./theme-switcher";
 
 export type HeaderLabels = {
@@ -29,7 +29,13 @@ export type HeaderLabels = {
   theme: ThemeLabels;
 };
 
-export function SiteHeader({ locale, labels, enabledLanguages }: { locale: string; labels: HeaderLabels; enabledLanguages: string[] }) {
+export type SiteHeaderProps = { locale: string; labels: HeaderLabels; enabledLanguages: string[]; initialAuth: HeaderAuthState };
+
+export function SiteHeader({ initialAuth, ...props }: SiteHeaderProps) {
+  return <HeaderAuthProvider initialState={initialAuth}><HeaderContent {...props} /></HeaderAuthProvider>;
+}
+
+function HeaderContent({ locale, labels, enabledLanguages }: Omit<SiteHeaderProps, "initialAuth">) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -72,8 +78,7 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
             <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} compact />
             <ThemeSwitcher labels={labels.theme} />
           </div>
-          {/* One auth button: "Login" for signed-in / returning visitors (opens their own area), "Sign up" for new visitors. */}
-          <AuthButton loginHref={lp("/login")} signupHref={lp("/signup")} loginLabel={labels.clientLogin} signupLabel={labels.signup} className="hidden md:inline-flex" />
+          <AuthButton loginHref={lp("/login")} loginLabel={labels.clientLogin} className="hidden md:inline-flex" />
           <ButtonLink href={lp("/contact")} size="sm" className="hidden sm:inline-flex">
             {labels.cta}
           </ButtonLink>
@@ -100,7 +105,7 @@ export function SiteHeader({ locale, labels, enabledLanguages }: { locale: strin
         <div className="space-y-3 border-t border-ink-100 p-4">
           <LanguageSwitcher locale={locale} enabled={enabledLanguages} label={labels.language} />
           <ThemeSegmented labels={labels.theme} />
-          <AuthButton loginHref={lp("/login")} signupHref={lp("/signup")} loginLabel={labels.clientLogin} signupLabel={labels.signup} className="h-11 w-full" onNavigate={() => setOpen(false)} />
+          <AuthButton loginHref={lp("/login")} loginLabel={labels.clientLogin} className="h-11 w-full" onNavigate={() => setOpen(false)} />
           <ButtonLink href={lp("/contact")} className="w-full" onClick={() => setOpen(false)}>
             {labels.cta} <ArrowRight className="h-4 w-4" />
           </ButtonLink>
