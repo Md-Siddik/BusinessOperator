@@ -1,14 +1,16 @@
 import "server-only";
 import { Types } from "mongoose";
 import { z } from "zod";
-import { LeadAssignment, User, type GrantOrigin, type UserDoc } from "@/models";
+import { LeadAssignment, SystemSetting, User, type GrantOrigin, type UserDoc } from "@/models";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
 import { toActor } from "@/lib/auth/actor";
 import {
+  ACCESS_PRESETS,
   can,
   canAssignRole,
   effectivePermissions,
+  eligiblePermissions,
   isOwner,
   PERMISSION_CATALOG,
   PERMISSION_DEFS,
@@ -30,12 +32,13 @@ import { parseObjectId } from "@/lib/validation";
  * Policy (documented in docs/access-control.md):
  *  1. Default deny. A non-Owner holds a permission while at least one recorded grant exists and
  *     the catalog makes it eligible for their role.
- *  2. The Owner may grant any eligible permission to any team member. Owner-only entries —
- *     Company Intelligence above all — can't be granted by anyone, whatever the payload says.
+ *  2. The Owner may grant any eligible permission to any team member. Owner-only entries
+ *     (Owner tools, CRM / outreach / registry syncs) can't be granted by anyone, whatever the
+ *     payload says.
  *  3. A Super Admin may grant a permission only through the one scoped authority the catalog
  *     names for it (`delegatedBy`), only to the roles it allows, and — where `grantorMustHold` —
  *     only while holding the permission too. Authority never implies any other grant right.
- *  4. Grants made through a scoped grant authority (Opportunity Intelligence, marketer leads)
+ *  4. Grants made through a scoped grant authority (Opportunity / Company Intelligence, marketer leads)
  *     depend on it: when the grantor loses that authority (or the permission they had to hold),
  *     those grants are revoked and audited. Independent Owner grants are never touched.
  *  5. Owner grants can only be removed by the Owner.
@@ -51,7 +54,6 @@ const label = (p: Permission) => PERMISSION_DEFS[p]?.label ?? p;
 
 function baseCheck(actor: Actor, target: Target, def: PermissionDef | undefined): string | null {
   if (!def) return "Unknown permission.";
-  if (def.companyIntelligence) return "Company Intelligence is Owner-only and can't be granted to anyone.";
   if (def.ownerOnly) return `“${def.label}” is an Owner-only feature and can't be granted.`;
   if (target.role === "OWNER") return "The Owner always has full access.";
   if (!TEAM_ROLES.includes(target.role)) return "Client accounts can't receive team permissions.";
@@ -293,8 +295,8 @@ export type AccessUserView = {
   migrated: boolean;
 };
 
-/** Delegation authorities that open the Permission Management page for a Super Admin. */
-export const ACCESS_MANAGER_PERMISSIONS: Permission[] = ["users.manage", "opportunities.grant", "marketerLeads.grant"];
+/** Delegation authorities that open the Permission Management page for an Admin. */
+export const ACCESS_MANAGER_PERMISSIONS: Permission[] = ["users.manage", "opportunities.grant", "marketerLeads.grant", "companies.grant"];
 
 export function canOpenAccessManager(actor: Actor) {
   return isOwner(actor) || (actor.role === "ADMIN" && ACCESS_MANAGER_PERMISSIONS.some((p) => can(actor, p)));
@@ -308,7 +310,7 @@ export function visibleCatalog(actor: Actor): PermissionDef[] {
 
 /** Roles of the accounts this actor may manage at all. */
 function manageableRoles(actor: Actor): Role[] {
-  if (isOwner(actor)) return ["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"];
+  if (isOwner(actor)) return ["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"];
   const roles = new Set<Role>();
   for (const d of visibleCatalog(actor)) for (const r of d.delegateTargets ?? d.eligibleRoles) roles.add(r);
   return [...roles];
@@ -361,7 +363,6 @@ async function buildViews(actor: Actor, users: TargetUser[]): Promise<AccessUser
       const canRevoke = held && role !== "OWNER" && r.ok && (r.ownerScope || !onlyOwnerGrants);
       let lockedReason: string | undefined;
       if (role === "OWNER") lockedReason = "The Owner always has full access.";
-      else if (def.companyIntelligence) lockedReason = "Company Intelligence is Owner-only — it can never be granted.";
       else if (def.ownerOnly) lockedReason = "Owner-only feature — it can't be granted.";
       else if (held && !canRevoke) lockedReason = !r.ok ? r.reason : "Granted by the Owner — only the Owner can remove it.";
       else if (!held && !g.ok) lockedReason = g.reason;
@@ -396,8 +397,9 @@ async function buildViews(actor: Actor, users: TargetUser[]): Promise<AccessUser
 }
 
 /** What the Permission Management page lets this person do with accounts (create / edit / starting access). */
-export function accountAbilities(actor: Actor) {
-  const roles: Role[] = ["ADMIN", "STAFF", "DIGITAL_MARKETER", "OWNER"];
+export async function accountAbilities(actor: Actor) {
+  const roles: Role[] = ["ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER", "OWNER"];
+  const roleTemplates = await getRoleTemplates();
   const mayManageAccounts = isOwner(actor) || can(actor, "users.manage");
   const assignableRoles = mayManageAccounts ? roles.filter((r) => canAssignRole(actor, r)) : [];
   const editableRoles: Role[] = isOwner(actor) ? roles : can(actor, "users.manage") ? ["STAFF"] : [];
@@ -405,7 +407,119 @@ export function accountAbilities(actor: Actor) {
   const templates: Partial<Record<Role, Permission[]>> = {};
   for (const r of assignableRoles) {
     grantable[r] = PERMISSIONS.filter((p) => grantDecision(actor, { id: "new-account", role: r }, p).ok);
-    templates[r] = ROLE_TEMPLATES[r].filter((p) => grantable[r]!.includes(p));
+    templates[r] = roleTemplates[r].filter((p) => grantable[r]!.includes(p));
   }
-  return { assignableRoles, editableRoles, grantable, templates };
+  return { assignableRoles, editableRoles, grantable, templates, roleTemplates: isOwner(actor) ? roleTemplates : undefined };
+}
+
+/* ───────────────────────── Bulk changes, presets and role templates ───────────────────────── */
+
+export const bulkAccessSchema = z.object({
+  changes: z.array(accessChangeSchema).min(1).max(PERMISSIONS.length * 2),
+});
+
+/**
+ * Several grants / revocations for one person (service toggle, "apply template"). Each change is
+ * decided, stored and audited exactly like a single toggle; one refused change never blocks the
+ * others. Returns the person's view plus what was refused, in plain language.
+ */
+export async function applyAccessChanges(actor: Actor, userId: string, input: unknown) {
+  const { changes } = bulkAccessSchema.parse(input);
+  const target = await loadTarget(userId);
+  const t: Target = { id: String(target._id), role: target.role as Role };
+  const refused: { permission: Permission; reason: string }[] = [];
+  let applied = 0;
+  // Revocations first: a template that swaps one permission for another never holds both.
+  const ordered = [...changes].sort((a, b) => (a.action === b.action ? 0 : a.action === "revoke" ? -1 : 1));
+  for (const c of ordered) {
+    try {
+      const current = await loadTarget(userId);
+      if (c.action === "grant") await grant(actor, current, t, c.permission);
+      else await revoke(actor, current, t, c.permission);
+      applied++;
+    } catch (e) {
+      refused.push({ permission: c.permission, reason: e instanceof Error ? e.message : "Refused" });
+    }
+  }
+  const [view] = await buildViews(actor, [await loadTarget(userId)]);
+  return { view: view!, applied, refused };
+}
+
+/** The changes that would set `userId`'s access to exactly `permissions` (only what this actor may change). */
+export function diffToTarget(actor: Actor, view: Pick<AccessUserView, "id" | "role" | "effective" | "rows">, permissions: Permission[]) {
+  const want = new Set(permissions.filter((p) => eligiblePermissions(view.role).includes(p)));
+  const changes: { permission: Permission; action: "grant" | "revoke" }[] = [];
+  for (const row of view.rows) {
+    if (want.has(row.key) && !row.held && row.canGrant) changes.push({ permission: row.key, action: "grant" });
+    if (!want.has(row.key) && row.held && row.canRevoke) changes.push({ permission: row.key, action: "revoke" });
+  }
+  return changes;
+}
+
+export const presetSchema = z.object({ preset: z.string().min(1).max(60) });
+
+/** Apply a named access preset (or this role's template, preset "role-template") to one person. */
+export async function applyPreset(actor: Actor, userId: string, input: unknown) {
+  const { preset } = presetSchema.parse(input);
+  const view = await getAccess(actor, userId);
+  let permissions: Permission[];
+  if (preset === "role-template") permissions = (await getRoleTemplates())[view.role];
+  else {
+    const def = ACCESS_PRESETS.find((p) => p.id === preset);
+    if (!def) throw Errors.badRequest("Unknown template.");
+    if (!def.roles.includes(view.role)) throw Errors.badRequest(`“${def.label}” isn't meant for the ${ROLE_LABELS[view.role]} role.`);
+    permissions = def.permissions;
+  }
+  const changes = diffToTarget(actor, view, permissions);
+  if (!changes.length) return { view, applied: 0, refused: [] };
+  const res = await applyAccessChanges(actor, userId, { changes });
+  await audit(actor, "permission.template_applied", { entityType: "User", entityId: userId, metadata: { preset, targetRole: view.role, applied: res.applied, refused: res.refused.length } });
+  return res;
+}
+
+const ROLE_TEMPLATE_KEY = "access.roleTemplates";
+const TEMPLATE_ROLES: Role[] = ["ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"];
+
+/** Starting access per role: the Owner's saved templates, falling back to the built-in ones. */
+export async function getRoleTemplates(): Promise<Record<Role, Permission[]>> {
+  const doc = await SystemSetting.findOne({ key: ROLE_TEMPLATE_KEY }).lean<{ value?: Partial<Record<Role, string[]>> }>();
+  const out = { ...ROLE_TEMPLATES };
+  for (const r of TEMPLATE_ROLES) {
+    const saved = doc?.value?.[r];
+    if (Array.isArray(saved)) out[r] = eligiblePermissions(r).filter((p) => saved.includes(p));
+  }
+  return out;
+}
+
+export const roleTemplateSchema = z.object({
+  role: z.enum(TEMPLATE_ROLES as [Role, ...Role[]]),
+  permissions: z.array(z.enum(PERMISSIONS)).max(PERMISSIONS.length),
+  /** Also set every active account with this role to exactly the template. */
+  applyToExisting: z.boolean().default(false),
+});
+
+/** Owner only: change a role's template; optionally apply it to everyone with that role (each change audited). */
+export async function setRoleTemplate(actor: Actor, input: unknown) {
+  if (!isOwner(actor)) throw Errors.forbidden("Only the Owner can change role templates.");
+  const { role, permissions, applyToExisting } = roleTemplateSchema.parse(input);
+  const eligible = eligiblePermissions(role);
+  const invalid = permissions.filter((p) => !eligible.includes(p));
+  if (invalid.length) throw Errors.badRequest(`Not available for the ${ROLE_LABELS[role]} role: ${invalid.map(label).join(", ")}.`);
+  const before = (await getRoleTemplates())[role];
+  await SystemSetting.updateOne({ key: ROLE_TEMPLATE_KEY }, { $set: { [`value.${role}`]: [...new Set(permissions)] } }, { upsert: true });
+  await audit(actor, "permission.role_template_changed", { entityType: "Role", entityId: role, metadata: { before, after: permissions } });
+  let accounts = 0;
+  let changes = 0;
+  if (applyToExisting) {
+    const users = await User.find({ role, status: { $ne: "SUSPENDED" } }).select("_id").lean<{ _id: Types.ObjectId }[]>();
+    for (const u of users) {
+      const view = await getAccess(actor, String(u._id));
+      const diff = diffToTarget(actor, view, permissions);
+      if (!diff.length) continue;
+      const res = await applyAccessChanges(actor, String(u._id), { changes: diff });
+      accounts++;
+      changes += res.applied;
+    }
+  }
+  return { role, permissions: (await getRoleTemplates())[role], accounts, changes };
 }

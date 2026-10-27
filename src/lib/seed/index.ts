@@ -112,6 +112,8 @@ export async function seedDatabase({ reset = false, log = console.info as Log } 
   const staff2 = await mkUser({ email: "staff2@demo.exploretechify.local", name: "Mikkel Staff", role: "STAFF" });
   // Digital Marketer: starts with no access (default deny) — the Owner grants "View Assigned Client Leads".
   await mkUser({ email: "marketer@demo.exploretechify.local", name: "Maya Marketer", role: "DIGITAL_MARKETER", permissions: [], permissionGrants: [] as never });
+  // Manager: also default deny — the Owner switches on the services they manage.
+  await mkUser({ email: "manager@demo.exploretechify.local", name: "Mona Manager", role: "MANAGER", permissions: [], permissionGrants: [] as never });
   const ownerActor = toActor(owner);
   const adminActor = toActor(admin);
   const internal = [owner, admin, staff, staff2];

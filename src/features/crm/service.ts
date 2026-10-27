@@ -64,7 +64,7 @@ export async function assignLead(actor: Actor, companyId: string, input: unknown
   if (!company) throw Errors.notFound();
   let assigneeName = "Unassigned";
   if (userId) {
-    const user = await User.findOne({ _id: userId, role: { $in: ["OWNER", "ADMIN", "STAFF"] }, status: "ACTIVE" }).select("name").lean<{ name: string }>();
+    const user = await User.findOne({ _id: userId, role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] }, status: "ACTIVE" }).select("name").lean<{ name: string }>();
     if (!user) throw Errors.badRequest("Assignee must be an active internal user.");
     assigneeName = user.name;
   }
@@ -211,6 +211,6 @@ export async function convertToClient(actor: Actor, companyId: string) {
 }
 
 export async function listInternalUsers() {
-  return User.find({ role: { $in: ["OWNER", "ADMIN", "STAFF"] }, status: "ACTIVE" }).select("name email role").sort({ name: 1 }).lean<{ _id: Types.ObjectId; name: string; email: string; role: string }[]>();
+  return User.find({ role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] }, status: "ACTIVE" }).select("name email role").sort({ name: 1 }).lean<{ _id: Types.ObjectId; name: string; email: string; role: string }[]>();
 }
 

@@ -18,7 +18,7 @@ const STAFF_SECTIONS = ["inquiries", "profile", "clients", "messages", "tickets"
 
 /** Owner-only modules (also enforced by their pages, APIs and services). */
 const OWNER_ONLY_SECTIONS = ["/dashboard/opportunities", "/dashboard/website-analytics"];
-const TEAM_WORKSPACE_ROLES = ["ADMIN", "STAFF", "DIGITAL_MARKETER"];
+const TEAM_WORKSPACE_ROLES = ["ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"];
 
 function homeFor(role: string) {
   return role === "OWNER" ? "/dashboard" : role === "CLIENT" ? "/portal" : "/staff";

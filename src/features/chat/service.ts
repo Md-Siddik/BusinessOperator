@@ -206,7 +206,7 @@ export async function startConversation(actor: Actor, input: unknown, files: Val
 
 async function resolveDefaultAssignee(settings: ChatSettings) {
   if (!settings.defaultAssigneeId || !Types.ObjectId.isValid(settings.defaultAssigneeId)) return null;
-  const ok = await User.exists({ _id: settings.defaultAssigneeId, role: { $in: ["OWNER", "ADMIN", "STAFF"] }, status: "ACTIVE" });
+  const ok = await User.exists({ _id: settings.defaultAssigneeId, role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] }, status: "ACTIVE" });
   return ok ? settings.defaultAssigneeId : null;
 }
 
@@ -343,7 +343,7 @@ export async function updateConversation(actor: Actor, conversationId: string, i
   const conv = await loadConversation(actor, conversationId);
   if (data.assignedTo !== undefined && !can(actor, "chat.manage")) throw Errors.forbidden("Only chat managers can reassign conversations.");
   if (data.assignedTo) {
-    const ok = await User.exists({ _id: data.assignedTo, role: { $in: ["OWNER", "ADMIN", "STAFF"] }, status: "ACTIVE" });
+    const ok = await User.exists({ _id: data.assignedTo, role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] }, status: "ACTIVE" });
     if (!ok) throw Errors.badRequest("Assignee must be an active internal user.");
   }
   const updated = await Conversation.findByIdAndUpdate(conv._id, { $set: data }, { new: true }).populate("assignedTo", "name").lean<ConversationDoc>();

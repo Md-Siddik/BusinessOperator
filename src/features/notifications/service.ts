@@ -49,7 +49,7 @@ export async function notifyUsers(userIds: string[], input: NotifyInput) {
 
 /** Active internal users holding a permission (OWNER always included). */
 export async function internalUserIdsWith(permission: Permission) {
-  const users = await User.find({ role: { $in: ["OWNER", "ADMIN", "STAFF"] }, status: "ACTIVE" })
+  const users = await User.find({ role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] }, status: "ACTIVE" })
     .select("_id role permissions permissionGrants")
     .lean<{ _id: Types.ObjectId; role: Role; permissions: string[]; permissionGrants?: { permission: string }[] }[]>();
   return users.filter((u) => effectivePermissions(u.role, u.permissions, u.permissionGrants).includes(permission)).map((u) => String(u._id));

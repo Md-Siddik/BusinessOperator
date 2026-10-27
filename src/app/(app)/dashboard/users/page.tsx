@@ -18,7 +18,7 @@ export default async function UsersPage() {
         description="Choose a person to see exactly what they can use and turn individual permissions on or off. Everyone except the Owner starts with no access. Changes apply on their next click — no sign-out needed."
       />
       <AccessPolicyNote />
-      <AccessManager initialUsers={JSON.parse(JSON.stringify(users))} viewerRole={actor.role} abilities={accountAbilities(actor)} />
+      <AccessManager initialUsers={JSON.parse(JSON.stringify(users))} viewerRole={actor.role} abilities={await accountAbilities(actor)} />
     </div>
   );
 }
