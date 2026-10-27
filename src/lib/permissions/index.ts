@@ -1,73 +1,44 @@
+import { eligiblePermissions, PERMISSION_DEFS, PERMISSIONS, ROLE_TEMPLATES, ROLES, type Permission, type Role } from "./catalog";
+
+export * from "./catalog";
+
 /**
- * Role-based access control. Roles carry DEFAULT permission sets; ADMIN and
- * STAFF users may have an explicit permission list stored on their account
- * (editable by the Owner). OWNER always has every permission.
+ * Access policy, evaluated server-side on every request (the actor is rebuilt from the
+ * database per request, so a grant or revocation applies to the very next request).
  *
- * Authorization is always evaluated server-side, via the service layer.
+ *  - OWNER holds every permission by role.
+ *  - Everyone else holds only what was explicitly granted (default deny). Grants are stored
+ *    with their provenance on the account (`permissionGrants`, see features/access).
+ *  - A grant only counts when the catalog says the permission is eligible for the role;
+ *    Owner-only entries (Company Intelligence, Owner tools) never count for anyone else.
+ *
+ * Workspaces: OWNER → /dashboard · ADMIN, STAFF, DIGITAL_MARKETER → /staff · CLIENT → /portal.
  */
-export const ROLES = ["OWNER", "ADMIN", "STAFF", "CLIENT"] as const;
-export type Role = (typeof ROLES)[number];
+export { ROLES };
+export type { Role, Permission };
+
+/** Client-service team (OWNER, ADMIN, STAFF) — the roles that work with client data. */
 export const INTERNAL_ROLES: Role[] = ["OWNER", "ADMIN", "STAFF"];
+/** Every employee account, including Digital Marketers (who never see client data unless granted). */
+export const TEAM_ROLES: Role[] = ["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"];
 
-export const PERMISSIONS = [
-  "companies.read",
-  "companies.edit",
-  "companies.export",
-  "leads.manage",
-  "outreach.manage",
-  "outreach.approve",
-  "clients.manage",
-  "users.manage",
-  "analytics.view",
-  "content.manage",
-  "services.manage",
-  "registry.sync",
-  "chat.manage",
-  "tickets.manage",
-  "projects.manage",
-  "settings.manage",
-  "audit.view",
-] as const;
-export type Permission = (typeof PERMISSIONS)[number];
+/** Role templates double as the access of accounts that predate per-user grants (see `effectivePermissions`). */
+export const ROLE_DEFAULT_PERMISSIONS = ROLE_TEMPLATES;
 
-export const PERMISSION_LABELS: Record<Permission, string> = {
-  "companies.read": "View company intelligence",
-  "companies.edit": "Edit companies",
-  "companies.export": "Export company data (CSV)",
-  "leads.manage": "Manage all leads (not only assigned)",
-  "outreach.manage": "Create outreach drafts, templates & campaigns",
-  "outreach.approve": "Approve & send outreach",
-  "clients.manage": "Manage clients & approvals",
-  "users.manage": "Manage internal users",
-  "analytics.view": "View analytics",
-  "content.manage": "Manage website content & translations",
-  "services.manage": "Manage public services, pricing, discounts & landing pages",
-  "registry.sync": "Run registry syncs",
-  "chat.manage": "Access all client conversations",
-  "tickets.manage": "Manage all requests & tickets",
-  "projects.manage": "Manage all projects",
-  "settings.manage": "Manage system settings",
-  "audit.view": "View audit logs",
-};
+/** Client-service permissions (pre-catalog name, kept for older imports). */
+export const STAFF_AREA_PERMISSIONS = ["clients.manage", "chat.manage", "tickets.manage", "projects.manage", "content.manage", "services.manage"] as const satisfies readonly Permission[];
+export const SUPER_ADMIN_PERMISSIONS: Permission[] = [...STAFF_AREA_PERMISSIONS, "users.manage", "analytics.view"];
+/** Access to work explicitly assigned to a person — implicit for accounts that predate per-user grants. */
+export const ASSIGNED_WORK_PERMISSIONS: Permission[] = ["conversations.assigned", "tickets.assigned", "projects.assigned"];
 
 /**
- * Access model:
- *  - OWNER  → the owner dashboard (/dashboard): everything, including every internal API.
- *  - ADMIN / STAFF → the staff workspace (/staff): client data and website maintenance only.
- *    They can never hold company-intelligence, CRM, outreach, analytics, user or system
- *    permissions — `effectivePermissions` filters to this list whatever is stored.
- *  - CLIENT → the client portal (/portal).
+ * What an account that has not been migrated to per-user grants may hold — exactly the access
+ * it had before (staff-area lists plus assigned work). New scoped permissions (Opportunity
+ * Intelligence, marketer leads) are only ever effective through a recorded grant.
  */
-/** `services.manage` (public services, prices, discounts) is held by ADMIN by default, not STAFF; the Owner can grant it. */
-export const STAFF_AREA_PERMISSIONS = ["clients.manage", "chat.manage", "tickets.manage", "projects.manage", "content.manage", "services.manage"] as const satisfies readonly Permission[];
-
-export const SUPER_ADMIN_PERMISSIONS: Permission[] = [...STAFF_AREA_PERMISSIONS, "users.manage", "analytics.view"];
-
-export const ROLE_DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
-  OWNER: [...PERMISSIONS],
-  ADMIN: [...SUPER_ADMIN_PERMISSIONS],
-  STAFF: ["chat.manage", "tickets.manage", "projects.manage", "content.manage"],
-  CLIENT: [],
+const LEGACY_ELIGIBLE: Partial<Record<Role, Permission[]>> = {
+  ADMIN: [...SUPER_ADMIN_PERMISSIONS, ...ASSIGNED_WORK_PERMISSIONS],
+  STAFF: [...STAFF_AREA_PERMISSIONS, ...ASSIGNED_WORK_PERMISSIONS],
 };
 
 export type Actor = {
@@ -83,15 +54,23 @@ export function isInternal(actor: Pick<Actor, "role"> | null | undefined): boole
   return !!actor && INTERNAL_ROLES.includes(actor.role);
 }
 
-/** ADMIN or STAFF — users of the staff workspace. */
+/** Any employee account (Owner, Super Admin, Staff, Digital Marketer). */
+export function isTeamMember(actor: Pick<Actor, "role"> | null | undefined): boolean {
+  return !!actor && TEAM_ROLES.includes(actor.role);
+}
+
+/** ADMIN or STAFF — client-service users of the team workspace. */
 export function isStaffMember(actor: Pick<Actor, "role"> | null | undefined): boolean {
   return actor?.role === "ADMIN" || actor?.role === "STAFF";
 }
 
+export function isDigitalMarketer(actor: Pick<Actor, "role"> | null | undefined): boolean {
+  return actor?.role === "DIGITAL_MARKETER";
+}
+
 /**
- * Owner-only areas (e.g. Verified Opportunity Intelligence) are gated on the
- * account's actual role — deliberately NOT a grantable permission, so it can
- * never be delegated to ADMIN/STAFF through the permission editor.
+ * Owner-only areas (Company Intelligence, Owner tools) are gated on the account's actual
+ * role — never on a grantable permission — so they can't be delegated through any editor or API.
  */
 export function isOwner(actor: Pick<Actor, "role"> | null | undefined): boolean {
   return actor?.role === "OWNER";
@@ -101,18 +80,36 @@ export function isClient(actor: Pick<Actor, "role"> | null | undefined): boolean
   return actor?.role === "CLIENT";
 }
 
-export function effectivePermissions(role: Role, stored?: string[] | null): Permission[] {
+type StoredGrant = { permission?: string | null };
+
+/**
+ * Effective permissions of an account.
+ *  - `grants` present (array, possibly empty): the union of granted permissions eligible for the role.
+ *  - `grants` absent: an account from before per-user grants — keeps its previous access
+ *    (stored list, or the role template when empty) limited to what that model allowed.
+ */
+export function effectivePermissions(role: Role, stored?: string[] | null, grants?: StoredGrant[] | null): Permission[] {
   if (role === "OWNER") return [...PERMISSIONS];
-  if (role === "CLIENT") return [];
-  const source = stored && stored.length > 0 ? stored : ROLE_DEFAULT_PERMISSIONS[role];
-  // Staff can only ever hold staff-area permissions (older stored lists may contain more).
-  return source.filter((p): p is Permission => (role === "ADMIN" ? SUPER_ADMIN_PERMISSIONS : STAFF_AREA_PERMISSIONS as readonly string[]).includes(p));
+  if (role === "CLIENT" || !(ROLES as readonly string[]).includes(role)) return [];
+  if (Array.isArray(grants)) {
+    const eligible = eligiblePermissions(role);
+    const held = new Set(grants.map((g) => g.permission));
+    return eligible.filter((p) => held.has(p));
+  }
+  const legacy = LEGACY_ELIGIBLE[role];
+  if (!legacy) return [];
+  const source = new Set<string>(stored && stored.length > 0 ? stored : ROLE_TEMPLATES[role]);
+  for (const p of ASSIGNED_WORK_PERMISSIONS) source.add(p);
+  return legacy.filter((p) => source.has(p));
 }
 
 export function can(actor: Actor | null | undefined, permission: Permission): boolean {
   if (!actor) return false;
   if (actor.role === "OWNER") return true;
   if (actor.role === "CLIENT") return false;
+  // Defence in depth: Owner-only entries never count for another role, whatever the actor object says.
+  const def = PERMISSION_DEFS[permission];
+  if (!def || def.ownerOnly || !def.eligibleRoles.includes(actor.role)) return false;
   return actor.permissions.includes(permission);
 }
 
@@ -120,7 +117,8 @@ export function canAny(actor: Actor | null | undefined, permissions: Permission[
   return permissions.some((p) => can(actor, p));
 }
 
-/** Owner manages privileged roles; Super Admin may manage STAFF only. */
+/** Owner assigns every role; a Super Admin with "Manage staff accounts" may create / assign STAFF only. */
 export function canAssignRole(actor: Actor, targetRole: Role): boolean {
+  if (targetRole === "CLIENT") return false;
   return (actor.role === "OWNER" && (ROLES as readonly string[]).includes(targetRole)) || (actor.role === "ADMIN" && can(actor, "users.manage") && targetRole === "STAFF");
 }

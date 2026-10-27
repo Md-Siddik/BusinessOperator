@@ -50,6 +50,8 @@ export type CompanyRow = {
   eligibility: string;
   fitScore: number;
   suggestedService?: string;
+  /** Active Digital Marketer assignments (Owner view only). */
+  sentToMarketers?: number;
 };
 
 /** What the registry for this row's country can provide — drives "not available" wording. */

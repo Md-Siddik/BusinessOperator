@@ -1,6 +1,6 @@
 import "server-only";
 import type { Types } from "mongoose";
-import { Company, Contact, ContactRequest, Service, SystemSetting, type ContactDoc } from "@/models";
+import { Company, Contact, ContactRequest, LeadAssignment, Service, SystemSetting, User, type ContactDoc } from "@/models";
 import { classifyContactValue } from "@/lib/company-fields";
 import { LANGUAGE_CODES } from "@/config/languages";
 import { SERVICE_PAGES } from "@/config/service-pages";
@@ -86,6 +86,24 @@ const STEPS: { id: string; run: (log: (m: string) => void) => Promise<void> }[] 
       });
       await Service.insertMany(docs);
       log(`services: seeded ${docs.length} services from the existing landing pages`);
+    },
+  },
+  {
+    id: "2026-10-access-grants-v1",
+    /**
+     * Per-person permissions with provenance. Every Super Admin / Staff account keeps exactly the
+     * access it has today (its stored list or, when empty, its role defaults — plus work assigned
+     * to it), now written down as MIGRATION grants. Nothing is added; Owner and client accounts
+     * are untouched. Idempotent: accounts that already have grants are skipped.
+     */
+    async run(log) {
+      const { ensureGrantsRecorded } = await import("@/features/access/service");
+      const ids = await User.find({ role: { $in: ["ADMIN", "STAFF", "DIGITAL_MARKETER"] }, permissionGrants: { $exists: false } }).distinct("_id");
+      for (const id of ids) await ensureGrantsRecorded(id);
+      await LeadAssignment.collection.createIndex({ companyId: 1, recipientId: 1 }, { unique: true });
+      await LeadAssignment.collection.createIndex({ recipientId: 1, status: 1, sentAt: -1 });
+      await User.collection.createIndex({ "permissionGrants.grantedBy": 1 }, { sparse: true });
+      log(`access: recorded existing permissions as grants for ${ids.length} account(s); lead-assignment indexes created`);
     },
   },
 ];

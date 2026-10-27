@@ -82,10 +82,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           const { meta, title } = card
             ? countryNavMeta({ ...card, detail: c.stateMessage })
             : countryNavMeta({ name: c.name, state: c.state, adapterReady: false, today: null, detail: c.stateMessage });
-          return { href: `/dashboard/companies/${c.slug}`, label: c.name, icon: "globe", flag: c.flag, demo: c.isDemo, meta, metaTitle: title };
+          return { href: `/dashboard/companies/${c.slug}`, label: c.name, icon: "globe", flag: c.flag, demo: c.isDemo, meta, metaTitle: `${title} · Update window: ${c.jurisdiction.updateWindow}` };
         }),
         { href: "/dashboard/companies/all", label: "All Countries", icon: "globe", flag: "🌍" },
         { href: "/dashboard/sources", label: "Data Sources", icon: "sources" },
+        { href: "/dashboard/coverage", label: "Coverage", icon: "verify" },
       ],
     });
   }
@@ -153,7 +154,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   });
   // Every titled group is a dropdown, closed until opened; the group holding the current page opens itself.
   const admin: NavGroup = { title: "Settings", collapsible: true, defaultOpen: false, items: [{ href: "/dashboard/settings", label: "Settings", icon: "settings" }] };
-  if (can(actor, "users.manage")) admin.items.push({ href: "/dashboard/users", label: "Users", icon: "users" });
+  if (can(actor, "users.manage")) admin.items.push({ href: "/dashboard/users", label: "Users & access", icon: "users" });
   if (can(actor, "audit.view")) admin.items.push({ href: "/dashboard/audit", label: "Audit Logs", icon: "audit" });
   groups.push(admin);
 

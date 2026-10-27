@@ -5,43 +5,68 @@ import { Check, Copy, ExternalLink, Globe2, Mail, MapPin, Phone, Smartphone, Use
 import { CONTACT_SOURCE_LABELS, displayWebsite, formatPhone, type ContactSourceKind } from "@/lib/company-fields";
 import { cn } from "@/lib/utils";
 
-/** Copy-to-clipboard with visible "Copied" confirmation (announced to screen readers). */
-export function CopyButton({ value, label, className }: { value: string; label: string; className?: string }) {
-  const [copied, setCopied] = useState(false);
+/**
+ * Copy-to-clipboard with a visible, announced result. Uses the async Clipboard API, falls back to
+ * a hidden textarea, and when both fail says so and (with `selectTargetId`) selects the value on
+ * screen so it can be copied by hand.
+ */
+export function CopyButton({ value, label, className, selectTargetId, iconOnly }: { value: string; label: string; className?: string; selectTargetId?: string; iconOnly?: boolean }) {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   async function copy(e: React.MouseEvent) {
     e.stopPropagation();
+    let ok = false;
     try {
       await navigator.clipboard.writeText(value);
+      ok = true;
     } catch {
       // Fallback for browsers without async clipboard permission.
-      const ta = document.createElement("textarea");
-      ta.value = value;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = value;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand("copy");
+        ta.remove();
+      } catch {
+        ok = false;
+      }
     }
-    setCopied(true);
+    if (!ok && selectTargetId) {
+      const el = document.getElementById(selectTargetId);
+      const sel = window.getSelection();
+      if (el && sel) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+    setState(ok ? "copied" : "failed");
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), 1600);
+    timer.current = setTimeout(() => setState("idle"), ok ? 1600 : 4000);
   }
+  const text = state === "copied" ? "Copied" : state === "failed" ? (selectTargetId ? "Selected — press Ctrl+C" : "Copy failed") : "Copy";
   return (
     <button
       type="button"
       onClick={copy}
       className={cn(
-        "inline-flex h-6 items-center gap-1 rounded-md border px-1.5 text-[11px] font-medium transition-colors",
-        copied ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-ink-200 bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900",
+        "inline-flex h-6 items-center gap-1 rounded-md border px-1.5 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+        state === "copied" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : state === "failed" ? "border-amber-300 bg-amber-50 text-amber-900" : "border-ink-200 bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900",
         className,
       )}
-      aria-label={copied ? `${label} copied` : `Copy ${label}`}
+      aria-label={state === "copied" ? `${label} copied` : state === "failed" ? `Could not copy ${label}` : `Copy ${label}`}
+      title={iconOnly && state === "idle" ? `Copy ${label}` : undefined}
     >
-      {copied ? <Check className="h-3 w-3" aria-hidden /> : <Copy className="h-3 w-3" aria-hidden />}
-      <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+      {state === "copied" ? <Check className="h-3 w-3" aria-hidden /> : <Copy className="h-3 w-3" aria-hidden />}
+      <span aria-live="polite" className={iconOnly && state === "idle" ? "sr-only" : undefined}>
+        {text}
+      </span>
     </button>
   );
 }

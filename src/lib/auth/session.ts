@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { can, isInternal, isOwner, type Actor, type Permission } from "@/lib/permissions";
+import { can, canAny, isInternal, isOwner, isTeamMember, type Actor, type Permission } from "@/lib/permissions";
 import { isActiveSessionUser, loadSessionUser } from "./actor";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, signSession, verifySession, type SessionPayload } from "./token";
 
@@ -56,23 +56,43 @@ export async function requireInternalPage(permission?: Permission): Promise<Acto
 }
 
 /**
- * For staff-workspace pages (/staff): ADMIN and STAFF (client data and website maintenance).
- * The owner works in the owner dashboard and is redirected there.
+ * For team-workspace pages any employee may open (/staff overview, notifications, own profile,
+ * and pages gated purely by a permission such as the marketer leads table). With `permissions`,
+ * at least one of them is required. The owner works in the owner dashboard.
  */
-export async function requireStaffPage(permission?: Permission): Promise<Actor> {
+export async function requireTeamPage(permissions?: Permission | Permission[]): Promise<Actor> {
   const user = await getSessionUser();
   if (!user) redirect("/login?next=/staff");
   if (user.role === "OWNER") redirect("/dashboard");
+  if (!isTeamMember(user.actor)) redirect(homeFor(user.role));
+  if (!isActiveSessionUser(user)) redirect("/login");
+  const required = permissions === undefined ? [] : Array.isArray(permissions) ? permissions : [permissions];
+  if (required.length && !canAny(user.actor, required)) redirect("/staff?denied=1");
+  return user.actor;
+}
+
+/**
+ * For client-service pages of the team workspace (/staff): ADMIN and STAFF only. A Digital
+ * Marketer gets the access-denied notice on the workspace home; the owner is sent to the dashboard.
+ */
+export async function requireStaffPage(permission?: Permission | Permission[]): Promise<Actor> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/staff");
+  if (user.role === "OWNER") redirect("/dashboard");
+  if (user.role === "DIGITAL_MARKETER") redirect("/staff?denied=1");
   if (!isInternal(user.actor)) redirect(homeFor(user.role));
   if (!isActiveSessionUser(user)) redirect("/login");
-  if (permission && !can(user.actor, permission)) redirect("/staff?denied=1");
+  const required = permission === undefined ? [] : Array.isArray(permission) ? permission : [permission];
+  if (required.length && !canAny(user.actor, required)) redirect("/staff?denied=1");
   return user.actor;
 }
 
 /** Pages shared by the owner dashboard and the staff workspace pick their guard by base path. */
 export type WorkspaceBase = "/dashboard" | "/staff";
-export function requireWorkspacePage(base: WorkspaceBase, permission?: Permission) {
-  return base === "/staff" ? requireStaffPage(permission) : requireInternalPage(permission);
+/** With several permissions, holding any one of them is enough (the Owner holds all). */
+export function requireWorkspacePage(base: WorkspaceBase, permission?: Permission | Permission[]) {
+  if (base === "/staff") return requireStaffPage(permission);
+  return requireInternalPage(Array.isArray(permission) ? undefined : permission);
 }
 
 /**

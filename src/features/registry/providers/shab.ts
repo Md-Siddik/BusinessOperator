@@ -18,7 +18,9 @@ import type { CompanyRegistryProvider, FetchContext, NormalizedCompany, Provider
  * The operator states that only the signed PDF is legally binding; its link is the source URL.
  */
 const BASE = (process.env.SWITZERLAND_SHAB_API_URL || "https://amtsblattportal.ch/api/v1").replace(/\/$/, "");
-const http = createHttpClient({ name: "SHAB (Official Gazettes Portal)", minIntervalMs: 250, timeoutMs: 30_000 });
+// The portal intermittently drops connections from some hosts ("fetch failed"); a day list can
+// take ~12 s, so allow a longer timeout and more retries before a run is marked failed.
+const http = createHttpClient({ name: "SHAB (Official Gazettes Portal)", minIntervalMs: 250, timeoutMs: 60_000, maxRetries: 5 });
 const parser = new XMLParser({ ignoreAttributes: true, removeNSPrefix: true, processEntities: true, parseTagValue: false, trimValues: true });
 /** Sole proprietorships are natural persons; excluded unless explicitly enabled. */
 const includeSoleTraders = () => process.env.SWITZERLAND_INCLUDE_SOLE_TRADERS === "true";

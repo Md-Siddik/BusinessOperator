@@ -1,15 +1,25 @@
-import { requireStaffPage } from "@/lib/auth/session";
-import { listInternalUsersAdmin } from "@/features/users/service";
-import { effectivePermissions, type Role } from "@/lib/permissions";
+import { redirect } from "next/navigation";
+import { requireTeamPage } from "@/lib/auth/session";
+import { ACCESS_MANAGER_PERMISSIONS, accountAbilities, canOpenAccessManager, listAccess } from "@/features/access/service";
 import { PageHeader } from "@/components/ui/data";
-import { CreateUserButton, EditUserButton } from "@/components/app/user-admin";
+import { AccessManager } from "@/components/app/access-manager";
+import { AccessPolicyNote } from "@/components/app/access-policy-note";
+
+export const metadata = { title: "Users & access" };
+
+/**
+ * Permission Management for a Super Admin: only the people and permissions their Owner-granted,
+ * scoped authorities cover (staff accounts, Opportunity Intelligence access, marketer lead access).
+ */
 export default async function Page() {
-  const actor = await requireStaffPage("users.manage");
-  const result = await listInternalUsersAdmin(actor);
-  return <div className="space-y-5"><PageHeader title="Staff management" description="Manage staff within approved permissions. Owner and Super Admin identities cannot be changed here." actions={<CreateUserButton isOwner={false} />} />
-    <div className="divide-y rounded-xl border border-ink-200 bg-white px-5">{result.items.map((u) => <div key={String(u._id)} className="flex flex-wrap items-center justify-between gap-3 py-4">
-      <div><p className="font-semibold">{u.name}</p><p className="text-sm text-ink-500">{u.email} · {u.status}</p></div>
-      <EditUserButton user={{ id: String(u._id), name: u.name, role: u.role, status: u.status, permissions: effectivePermissions(u.role as Role, u.permissions) }} isOwner={false} isSelf={String(u._id) === actor.id} />
-    </div>)}</div>
-  </div>;
+  const actor = await requireTeamPage(ACCESS_MANAGER_PERMISSIONS);
+  if (!canOpenAccessManager(actor)) redirect("/staff?denied=1");
+  const users = await listAccess(actor);
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Users & access" description="You can change only the permissions the Owner has allowed you to manage. Owner grants can only be removed by the Owner." />
+      <AccessPolicyNote delegate />
+      <AccessManager initialUsers={JSON.parse(JSON.stringify(users))} viewerRole={actor.role} abilities={accountAbilities(actor)} />
+    </div>
+  );
 }

@@ -3,5 +3,6 @@ import { getOpportunityDetail, updateOpportunity } from "@/features/opportunitie
 
 type P = { id: string };
 
-export const GET = route<P>({ ownerOnly: true }, async ({ actor, params }) => getOpportunityDetail(actor, params.id));
+// Owner, or a team member granted "View Opportunity Intelligence" (read only; Owner-private fields stripped).
+export const GET = route<P>({ team: true, permission: "opportunities.view" }, async ({ actor, params }) => getOpportunityDetail(actor, params.id));
 export const PATCH = route<P>({ ownerOnly: true }, async ({ req, actor, params }) => updateOpportunity(actor, params.id, await readJson(req)));

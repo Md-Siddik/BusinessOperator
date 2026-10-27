@@ -15,7 +15,8 @@ import { notifyInternal, notifyUsers } from "@/features/notifications/service";
  * Access scope (always applied in the database query):
  *  - CLIENT: own organization only
  *  - tickets.manage: everything
- *  - other internal staff: tickets assigned to them
+ *  - internal staff with tickets.assigned: tickets assigned to them
+ *  - other internal staff: none (default deny)
  */
 export function ticketAccessFilter(actor: Actor): FilterQuery<SupportTicketDoc> {
   if (isClient(actor)) {
@@ -23,7 +24,7 @@ export function ticketAccessFilter(actor: Actor): FilterQuery<SupportTicketDoc> 
     return { organizationId: new Types.ObjectId(actor.organizationId) };
   }
   if (can(actor, "tickets.manage")) return {};
-  if (isInternal(actor)) return { assignedTo: new Types.ObjectId(actor.id) };
+  if (isInternal(actor)) return can(actor, "tickets.assigned") ? { assignedTo: new Types.ObjectId(actor.id) } : { _id: { $in: [] } };
   throw Errors.forbidden();
 }
 

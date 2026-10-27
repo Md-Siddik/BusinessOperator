@@ -1,4 +1,4 @@
-import { requireWorkspacePage, type WorkspaceBase } from "@/lib/auth/session";
+import { requireTeamPage, requireWorkspacePage, type WorkspaceBase } from "@/lib/auth/session";
 import { listNotifications } from "@/features/notifications/service";
 import { Card } from "@/components/ui/card";
 import { PageHeader, Pagination } from "@/components/ui/data";
@@ -6,7 +6,8 @@ import { NotificationList } from "@/components/app/notification-list";
 import { MarkAllReadButton } from "@/components/app/user-admin";
 
 export async function NotificationsPage({ base, searchParams }: { base: WorkspaceBase; searchParams: Promise<{ page?: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  // Every team member (including Digital Marketers) has their own notifications.
+  const actor = base === "/staff" ? await requireTeamPage() : await requireWorkspacePage(base);
   const page = Number((await searchParams).page ?? 1) || 1;
   const result = await listNotifications(actor, { page, pageSize: 30 });
   return (

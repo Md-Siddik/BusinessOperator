@@ -11,10 +11,10 @@ import { getOrganizationActivity, getOrganizationOverview } from "@/features/cli
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DemoBadge, StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader } from "@/components/ui/data";
-import { AddClientUser, ClientServiceEditor, DocumentUpload, OrgStatusActions } from "@/components/app/client-admin";
+import { AddClientUser, ClientServiceEditor, ClientUserActions, DocumentUpload, OrgStatusActions } from "@/components/app/client-admin";
 
 export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; params: Promise<{ id: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, "clients.manage");
   const { id } = await params;
   let data;
   try {
@@ -25,6 +25,7 @@ export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; 
   const { org, users, services, projects, tickets, documents, conversations } = data;
   const activity = await getOrganizationActivity(actor, id, 15);
   const manage = can(actor, "clients.manage");
+  const isOwner = actor.role === "OWNER";
   const manager = org.accountManagerId as unknown as { name?: string; email?: string } | null;
 
   return (
@@ -71,6 +72,11 @@ export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; 
                 <p className="text-xs text-ink-500">
                   {u.email} · last login {u.lastLoginAt ? formatRelative(u.lastLoginAt) : "never"}
                 </p>
+                {isOwner && (
+                  <div className="mt-2">
+                    <ClientUserActions user={{ id: String(u._id), name: u.name }} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>

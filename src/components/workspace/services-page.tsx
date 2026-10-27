@@ -15,7 +15,7 @@ import { CATEGORY_ICONS } from "@/components/site/sections";
 import { CaseStudyEditor } from "@/components/app/case-study-editor";
 
 export async function ServicesPage({ base }: { base: WorkspaceBase }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, ["content.manage", "services.manage"]);
   const [en, usage, requested, caseStudies] = await Promise.all([
     getMessages("en"),
     ClientService.aggregate([{ $group: { _id: { c: "$category", s: "$status" }, n: { $sum: 1 } } }]),

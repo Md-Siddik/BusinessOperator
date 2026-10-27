@@ -17,11 +17,12 @@ export type SessionUser = {
   actor: Actor;
 };
 
-export function toActor(user: Pick<UserDoc, "_id" | "role" | "permissions" | "organizationId" | "name" | "email">): Actor {
+export function toActor(user: Pick<UserDoc, "_id" | "role" | "permissions" | "organizationId" | "name" | "email"> & { permissionGrants?: { permission?: string | null }[] | null }): Actor {
   return {
     id: String(user._id),
     role: user.role as Role,
-    permissions: effectivePermissions(user.role as Role, user.permissions),
+    // Rebuilt from the stored grants on every request — a revocation applies to the next request.
+    permissions: effectivePermissions(user.role as Role, user.permissions, user.permissionGrants),
     organizationId: user.organizationId ? String(user.organizationId) : undefined,
     name: user.name,
     email: user.email,

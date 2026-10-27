@@ -208,6 +208,12 @@ export interface CompanyRegistryProvider {
   isConfigured(): boolean;
   /** Recommended scheduled sync interval, respecting the source's update cadence and limits. */
   recommendedSyncMinutes: number;
+  /**
+   * Days an incremental sync re-reads behind the last successful day (default 1). Sources that
+   * publish registrations with a lag of several days need a longer look-back, or late records
+   * would never be fetched. Re-reading is safe: records are upserted by registry id.
+   */
+  lookbackDays?: number;
 
   /**
    * What getRegistrations' day window selects. "registration" (default): companies

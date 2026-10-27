@@ -58,6 +58,35 @@ export const COUNTRY_STATUS_MEANINGS: Record<CountryStatus, string> = {
   NA: "No verified automated source",
 };
 
+/**
+ * How quickly a source's new registrations become available — a verified, per-source fact
+ * (documented by the publisher and checked against stored first-seen times), never a guess.
+ *  SAME_DAY  — registrations of today are available today
+ *  NEXT_DAY  — usually within 1–2 days
+ *  DELAYED   — several days (publication lag)
+ *  PERIODIC  — weekly / monthly bulk
+ *  UNKNOWN   — not established
+ */
+export type FeedTimeliness = "SAME_DAY" | "NEXT_DAY" | "DELAYED" | "PERIODIC" | "UNKNOWN";
+export const TIMELINESS_LABELS: Record<FeedTimeliness, string> = {
+  SAME_DAY: "Same day",
+  NEXT_DAY: "Next day",
+  DELAYED: "Delayed",
+  PERIODIC: "Periodic",
+  UNKNOWN: "Unknown",
+};
+
+export type Continent = "EUROPE" | "NORTH_AMERICA" | "ASIA" | "MIDDLE_EAST" | "OCEANIA";
+/** Europe first, then the other regions (used inside each coverage tier). */
+export const CONTINENT_ORDER: Continent[] = ["EUROPE", "NORTH_AMERICA", "ASIA", "MIDDLE_EAST", "OCEANIA"];
+export const CONTINENT_LABELS: Record<Continent, string> = {
+  EUROPE: "Europe",
+  NORTH_AMERICA: "North America",
+  ASIA: "Asia",
+  MIDDLE_EAST: "Middle East",
+  OCEANIA: "Oceania",
+};
+
 /** Registrations of the recent window (from daily snapshots) used for ranking. */
 export type CountryCoverage = { days: number; total: number; withEmail: number; withPhone: number; withWebsite: number; withPerson: number; withDirect: number };
 
@@ -70,6 +99,9 @@ export type CountryRankInput = {
   paid?: boolean;
   lastSuccessAt?: Date | string | null;
   coverage?: CountryCoverage | null;
+  /** Verified availability of new registrations at the source (see FeedTimeliness). */
+  timeliness?: FeedTimeliness;
+  continent?: Continent;
 };
 
 /** "Meaningful" contact coverage: at least 5 contactable companies and 5 % of recent registrations. */
@@ -110,14 +142,41 @@ export function countryTier(x: CountryRankInput): number {
   return 6;
 }
 
+/**
+ * Coverage tier shown to the Owner (lower = higher in every country list):
+ *  1 — a verified, working same-day registration feed with synchronized data
+ *  2 — a working feed that is not reliably same-day (or connected and awaiting its first sync)
+ *  3 — partial, credential-gated, paid, failing or unavailable
+ */
+export function coverageTier(x: CountryRankInput): 1 | 2 | 3 {
+  const s = countryStatus(x);
+  if (s === "LIVE") return x.timeliness === "SAME_DAY" ? 1 : 2;
+  if (s === "NOT_SYNCED") return 2;
+  return 3;
+}
+
+export const COVERAGE_TIER_LABELS: Record<1 | 2 | 3, { title: string; description: string }> = {
+  1: { title: "Same-day registrations", description: "Verified source publishing today's registrations today." },
+  2: { title: "Recent registrations", description: "Working source, but new companies appear after a delay — see each country's update window." },
+  3: { title: "Partial, delayed or not available", description: "Needs credentials, paid, lookup only, failing, or no verified source." },
+};
+
+const continentRank = (c?: Continent) => (c ? CONTINENT_ORDER.indexOf(c) : 0);
+
 const dayKey = (d: Date | string | null | undefined) => (d ? new Date(d).toISOString().slice(0, 10) : "");
 
 /**
- * Order: tier → recent registrations available → latest successful sync (by day, so
- * minute-level sync jitter does not reshuffle the list) → contact coverage → name.
- * READY sorts before PAID inside tier 4.
+ * Order: coverage tier (same-day → recent → partial/unavailable) → Europe first → tier →
+ * recent registrations available → latest successful sync (by day, so minute-level sync
+ * jitter does not reshuffle the list) → contact coverage → name. READY sorts before PAID.
  */
 export function compareCountries(a: CountryRankInput, b: CountryRankInput) {
+  const ca = coverageTier(a);
+  const cb = coverageTier(b);
+  if (ca !== cb) return ca - cb;
+  const ra0 = continentRank(a.continent);
+  const rb0 = continentRank(b.continent);
+  if (ra0 !== rb0) return ra0 - rb0;
   const ta = countryTier(a);
   const tb = countryTier(b);
   if (ta !== tb) return ta - tb;

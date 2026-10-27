@@ -1,5 +1,8 @@
+import type { Continent, FeedTimeliness } from "@/lib/integration-state";
+
 /**
- * European jurisdiction catalogue — research status for every jurisdiction.
+ * Jurisdiction catalogue — research status for every jurisdiction (Europe, plus the major
+ * North American, Asian, Middle Eastern and Oceanian economies added in Oct 2026).
  *
  * A jurisdiction listed here is NOT an integration. `state` is the honest
  * baseline; runtime status (credentials present, provider errors) refines it.
@@ -13,7 +16,13 @@
 export type IntegrationState = "CONNECTED" | "LOOKUP_ONLY" | "NEEDS_CREDENTIALS" | "NEEDS_APPROVAL" | "UNDER_RESEARCH" | "PROVIDER_ERROR" | "NO_VERIFIED_FEED";
 export type EvidenceLevel = "NONE" | "DOCUMENTED" | "CONFIGURED" | "AUTHENTICATED" | "REAL_DATA_TESTED" | "FRESHNESS_MEASURED";
 export type ScopeDecision = "IN_SCOPE" | "OWNER_REVIEW" | "TRANSCONTINENTAL_REVIEW" | "RESTRICTED_REVIEW" | "NOT_APPLICABLE";
-export type JurisdictionGroup = "EU" | "EEA_EFTA" | "UK" | "CROWN_DEPENDENCY" | "WESTERN_BALKANS" | "MICROSTATE" | "EASTERN_EUROPE" | "TRANSCONTINENTAL";
+export type JurisdictionGroup = "EU" | "EEA_EFTA" | "UK" | "CROWN_DEPENDENCY" | "WESTERN_BALKANS" | "MICROSTATE" | "EASTERN_EUROPE" | "TRANSCONTINENTAL" | "NORTH_AMERICA" | "ASIA" | "MIDDLE_EAST" | "OCEANIA";
+
+/** Region used for filtering and for "Europe first" ordering inside each coverage tier. */
+export function continentOf(group: JurisdictionGroup): Continent {
+  if (group === "NORTH_AMERICA" || group === "ASIA" || group === "MIDDLE_EAST" || group === "OCEANIA") return group;
+  return "EUROPE";
+}
 
 export const INTEGRATION_STATE_LABELS: Record<IntegrationState, string> = {
   CONNECTED: "Connected",
@@ -61,12 +70,19 @@ export type Jurisdiction = {
   defaultEnabled: boolean;
   notes?: string;
   sources?: string[];
+  /** Verified availability of new registrations (see FeedTimeliness) and the window in words. */
+  timeliness: FeedTimeliness;
+  updateWindow: string;
+  continent: Continent;
 };
 
 const NV = "Not yet verified";
 
-function j(x: Omit<Jurisdiction, "defaultEnabled" | "scope" | "evidence" | "providers"> & Partial<Pick<Jurisdiction, "defaultEnabled" | "scope" | "evidence" | "providers">>): Jurisdiction {
-  return { defaultEnabled: false, scope: "IN_SCOPE", evidence: "NONE", providers: [], ...x };
+type JurisdictionInput = Omit<Jurisdiction, "defaultEnabled" | "scope" | "evidence" | "providers" | "timeliness" | "updateWindow" | "continent"> &
+  Partial<Pick<Jurisdiction, "defaultEnabled" | "scope" | "evidence" | "providers" | "timeliness" | "updateWindow">>;
+
+function j(x: JurisdictionInput): Jurisdiction {
+  return { defaultEnabled: false, scope: "IN_SCOPE", evidence: "NONE", providers: [], timeliness: "UNKNOWN", updateWindow: "Not established", continent: continentOf(x.group), ...x };
 }
 
 /** Default text for jurisdictions not yet researched in depth. */
@@ -93,7 +109,7 @@ function research(code: string, name: string, adjective: string, flag: string, g
   });
 }
 
-export const JURISDICTIONS: Jurisdiction[] = [
+const EUROPE: Jurisdiction[] = [
   // ───────────── Implemented / documented ─────────────
   j({
     code: "NO", name: "Norway", adjective: "Norwegian", flag: "🇳🇴", group: "EEA_EFTA", timezone: "Europe/Oslo", languages: ["no", "en"],
@@ -288,7 +304,22 @@ export const JURISDICTIONS: Jurisdiction[] = [
   research("LT", "Lithuania", "Lithuanian", "🇱🇹", "EU", "Europe/Vilnius", ["lt", "en"], "Register of Legal Entities (Registrų centras)", "https://www.registrucentras.lt", "Legal entity code", { feed: "Registrų centras open-data files (registered legal entities CSV) / get.data.gov.lt", evidence: "DOCUMENTED", notes: "2026-10-18: the open-data download answered 403 to automated clients and get.data.gov.lt returned 500. Access controls are not bypassed — no adapter." }),
   research("LU", "Luxembourg", "Luxembourg", "🇱🇺", "EU", "Europe/Luxembourg", ["fr", "de", "en"], "Luxembourg Business Registers (LBR/RCS)", "https://www.lbr.lu", "RCS number"),
   research("MT", "Malta", "Maltese", "🇲🇹", "EU", "Europe/Malta", ["en", "mt"], "Malta Business Registry", "https://mbr.mt", "Company number"),
-  research("PL", "Poland", "Polish", "🇵🇱", "EU", "Europe/Warsaw", ["pl", "en"], "National Court Register (KRS) / CEIDG", "https://ekrs.ms.gov.pl", "KRS / NIP", { feed: "KRS open API (api-krs.ms.gov.pl): /Biuletyn/{date} lists KRS numbers with entries that day, /OdpisAktualny/{krs} returns the extract (registration date, address, board, email / website fields). CEIDG API (sole traders) requires a token", access: "Open, no key (KRS)", evidence: "DOCUMENTED", notes: "2026-10-18: the KRS API returned a ‘Przerwa techniczna’ (maintenance) page, so response contracts could not be verified. The bulletin lists every changed entity, so one extract call per entity is needed to find new registrations — an adapter must be rate-limited carefully." }),
+  j({
+    code: "PL", name: "Poland", adjective: "Polish", flag: "🇵🇱", group: "EU", timezone: "Europe/Warsaw", languages: ["pl", "en"],
+    registry: { name: "National Court Register (KRS)", url: "https://ekrs.ms.gov.pl" },
+    registrationNumberLabel: "KRS number",
+    feed: "KRS open API (api-krs.ms.gov.pl): /Biuletyn/{date} lists KRS numbers with entries that day; /OdpisAktualny/{krs}?rejestr=P returns the official extract with dataRejestracjiWKRS",
+    registrationDateMeaning: "dataRejestracjiWKRS — date of entry in the National Court Register",
+    entities: "Business register (rejestr przedsiębiorców, KRS P): companies, partnerships, cooperatives. Associations (KRS S) and sole traders (CEIDG) are not included",
+    contactFields: "Email and website when the company registered them (adresPocztyElektronicznej, adresStronyInternetowej). Board names are masked by the public API",
+    updateFrequency: "Same day — the bulletin for a day is published that day (verified 26 Oct 2026, 21:10 Europe/Warsaw)",
+    access: "Open, no key",
+    permittedUse: "Public register data published by the Ministry of Justice; marketing use must respect GDPR and Polish electronic-communications rules",
+    state: "CONNECTED", evidence: "REAL_DATA_TESTED", providers: ["krs-pl"], defaultEnabled: true,
+    timeliness: "SAME_DAY", updateWindow: "Same day (bulletin published the same evening)",
+    notes: "2026-10-27: API reachable again (it was in maintenance on 2026-10-18). Each new company is confirmed from its own extract; extract calls are rate-limited (about 4 requests per second) and stop once the day's block of new KRS numbers has been passed.",
+    sources: ["https://prs.ms.gov.pl/krs/openApi", "https://api-krs.ms.gov.pl/api/krs/Biuletyn/2026-10-26"],
+  }),
   research("PT", "Portugal", "Portuguese", "🇵🇹", "EU", "Europe/Lisbon", ["pt", "en"], "Registo Comercial (IRN)", "https://www.irn.mj.pt", "NIPC"),
   research("RO", "Romania", "Romanian", "🇷🇴", "EU", "Europe/Bucharest", ["ro", "en"], "National Trade Register Office (ONRC)", "https://www.onrc.ro", "CUI / Registration number"),
   research("SI", "Slovenia", "Slovenian", "🇸🇮", "EU", "Europe/Ljubljana", ["sl", "en"], "AJPES — Business Register", "https://www.ajpes.si", "Registration number"),
@@ -350,6 +381,153 @@ export const JURISDICTIONS: Jurisdiction[] = [
   research("AM", "Armenia", "Armenian", "🇦🇲", "TRANSCONTINENTAL", "Asia/Yerevan", ["hy", "en"], "State Register of Legal Entities", "https://www.e-register.am", "Registration number", { scope: "TRANSCONTINENTAL_REVIEW" }),
   research("AZ", "Azerbaijan", "Azerbaijani", "🇦🇿", "TRANSCONTINENTAL", "Asia/Baku", ["az", "en"], "State Tax Service — register", "https://www.taxes.gov.az", "VÖEN", { scope: "TRANSCONTINENTAL_REVIEW" }),
   research("KZ", "Kazakhstan", "Kazakh", "🇰🇿", "TRANSCONTINENTAL", "Asia/Almaty", ["kk", "ru", "en"], "National Register of Business Identification Numbers", "https://stat.gov.kz", "BIN", { scope: "TRANSCONTINENTAL_REVIEW" }),
+];
+
+/** Verified update windows of the European sources (evidence: docs/country-data-status.md). */
+const EUROPE_TIMELINESS: Record<string, [FeedTimeliness, string]> = {
+  NO: ["SAME_DAY", "Same day — real-time register API (46 % of Oct 2026 registrations were first seen on their registration day)"],
+  FI: ["NEXT_DAY", "1–2 days (daily open data; median 2 days observed)"],
+  IE: ["NEXT_DAY", "About 1 day (daily open data; median 1 day observed)"],
+  LV: ["NEXT_DAY", "1–2 days (file regenerated daily)"],
+  EE: ["NEXT_DAY", "1–2 days (file regenerated each morning)"],
+  CZ: ["DELAYED", "1–4 working days (ARES batches; median 4 days observed)"],
+  CH: ["DELAYED", "1–5 working days after the journal date (SHAB publication)"],
+  FR: ["DELAYED", "About 1–2 weeks (BODACC publication lag; median 9 days observed)"],
+  GB: ["SAME_DAY", "Same day per the Companies House streaming API documentation — not yet measured (credentials required)"],
+  NL: ["SAME_DAY", "Within about 15 minutes per KVK documentation (paid service, not measured)"],
+  DE: ["NEXT_DAY", "About 24 hours per the commercial provider (not measured)"],
+  DK: ["UNKNOWN", "Not measured (credentials required)"],
+};
+
+/* ───────────── North America, Asia, Middle East, Oceania (added Oct 2026) ───────────── */
+
+const DESK = "Not yet verified — desk research only (27 Oct 2026). Not scraped.";
+
+const WORLD: Jurisdiction[] = [
+  j({
+    code: "US", name: "United States", adjective: "US", flag: "🇺🇸", group: "NORTH_AMERICA", timezone: "America/New_York", languages: ["en"],
+    registry: { name: "State Secretaries of State — business registers (NY, CO, CT, OR open data)", url: "https://data.ny.gov" },
+    registrationNumberLabel: "State + entity number",
+    feed: "Socrata SODA API of each state's official open-data portal: New York n9v6-gdp6 (initial_dos_filing_date), Colorado 4ykn-tg5h (entityformdate), Connecticut n7gp-d28j (date_registration), Oregon tckn-sxa6 (registry_date; rows grouped per registry number)",
+    registrationDateMeaning: "State filing / formation date as recorded by the Secretary of State",
+    entities: "Domestic and foreign business entities registered in NY, CO, CT and OR. Not-for-profits and Oregon assumed business names excluded; foreign qualifications marked as such. There is no national register",
+    contactFields: "Connecticut publishes a business email address; Oregon names an authorized representative or registered agent; no phone numbers or websites",
+    updateFrequency: "Daily dataset refresh; the newest filing dates trail the calendar by 1–3 days (verified 26 Oct 2026)",
+    access: "Open, no key (optional Socrata app token US_SOCRATA_APP_TOKEN raises rate limits)",
+    permittedUse: "Public-domain / open state data",
+    state: "CONNECTED", evidence: "REAL_DATA_TESTED", providers: ["us-state-open-data"], defaultEnabled: true,
+    timeliness: "NEXT_DAY", updateWindow: "1–3 days (daily state datasets)",
+    notes: "State-level coverage only (4 of 50 states; Oregon added 27 Oct 2026, ~200–700 new entities per working day). Delaware, California, Texas, Florida and other states have no verified open daily feed.",
+    sources: ["https://data.ny.gov/d/n9v6-gdp6", "https://data.colorado.gov/d/4ykn-tg5h", "https://data.ct.gov/d/n7gp-d28j"],
+  }),
+  j({
+    code: "CA", name: "Canada", adjective: "Canadian", flag: "🇨🇦", group: "NORTH_AMERICA", timezone: "America/Toronto", languages: ["en", "fr"],
+    registry: { name: "Corporations Canada (ISED) — federal corporations", url: "https://ised-isde.canada.ca/site/corporations-canada/en" },
+    registrationNumberLabel: "Federal corporation number",
+    feed: "Open data “Federal Corporations” — daily CSV of active CBCA business corporations (open.canada.ca, frequency P1D)",
+    registrationDateMeaning: "CBCA anniversary date — date of incorporation, amalgamation or continuance",
+    entities: "Federally incorporated business corporations only. Provincial registers (Ontario, Québec, BC …) are not included",
+    contactFields: "None (registered office address only)",
+    updateFrequency: "Daily file (verified 26 Oct 2026, modified 11:06 UTC)",
+    access: "Open, no key",
+    permittedUse: "Open Government Licence – Canada",
+    state: "CONNECTED", evidence: "REAL_DATA_TESTED", providers: ["corporations-canada"], defaultEnabled: true,
+    timeliness: "NEXT_DAY", updateWindow: "About 1 day (daily file)",
+    notes: "Provincial registers (Québec REQ open data, Ontario, BC) not yet researched in depth.",
+    sources: ["https://open.canada.ca/data/en/dataset/0032ce54-c5dd-4b66-99a0-320a7b5e99f2"],
+  }),
+  j({
+    code: "JP", name: "Japan", adjective: "Japanese", flag: "🇯🇵", group: "ASIA", timezone: "Asia/Tokyo", languages: ["ja", "en"],
+    registry: { name: "National Tax Agency — Corporate Number Publication Site", url: "https://www.houjin-bangou.nta.go.jp" },
+    registrationNumberLabel: "Corporate number",
+    feed: "Web-API v4 period endpoint /diff (process 01 = new designation), XML",
+    registrationDateMeaning: "Corporate number designation date (法人番号指定年月日) — follows commercial registration; not the registration date itself",
+    entities: "Stock companies, godo kaisha and other registered corporations; foreign companies marked",
+    contactFields: "None (address only)",
+    updateFrequency: "Daily (business days) per NTA documentation — not verified",
+    access: "Free application ID (JAPAN_HOUJIN_APP_ID) after registration with the NTA",
+    permittedUse: "NTA Web-API terms of use (attribution required)",
+    state: "NEEDS_CREDENTIALS", evidence: "DOCUMENTED", providers: ["nta-jp"],
+    timeliness: "NEXT_DAY", updateWindow: "Daily per documentation — not verified",
+    notes: "Adapter written against the published Web-API specification; not run against the live API (no application ID).",
+    sources: ["https://www.houjin-bangou.nta.go.jp/webapi/"],
+  }),
+  research("KR", "South Korea", "Korean", "🇰🇷", "ASIA", "Asia/Seoul", ["ko", "en"], "Supreme Court Registry Office (Internet Registry Office)", "https://www.iros.go.kr", "Corporate registration number", {
+    state: "NO_VERIFIED_FEED",
+    feed: "No open daily or bulk feed of new incorporations identified; registry extracts are per company and paid. DART (FSS) covers disclosing companies only",
+    access: "Paid per extract",
+    notes: DESK,
+  }),
+  research("SG", "Singapore", "Singaporean", "🇸🇬", "ASIA", "Asia/Singapore", ["en"], "Accounting and Corporate Regulatory Authority (ACRA)", "https://www.acra.gov.sg", "UEN", {
+    feed: "ACRA “Information on Corporate Entities” — 27 CSV files on data.gov.sg (one per initial letter)",
+    updateFrequency: "Monthly (verified 27 Oct 2026: last updated 14 Oct 2026)",
+    access: "Open (data.gov.sg)",
+    evidence: "DOCUMENTED",
+    timeliness: "PERIODIC",
+    updateWindow: "Monthly bulk — not a daily feed",
+    notes: "Monthly snapshots only; no adapter built (registrations would appear up to a month late). ACRA's daily BizFile+ data is paid.",
+  }),
+  research("HK", "Hong Kong", "Hong Kong", "🇭🇰", "ASIA", "Asia/Hong_Kong", ["zh", "en"], "Companies Registry", "https://www.cr.gov.hk", "Company number (CR No.)", {
+    state: "NO_VERIFIED_FEED",
+    feed: "No open feed of new incorporations; e-Search (ICRIS) is paid per search",
+    access: "Paid per search",
+    notes: DESK,
+  }),
+  research("TW", "Taiwan", "Taiwanese", "🇹🇼", "ASIA", "Asia/Taipei", ["zh", "en"], "Department of Commerce (GCIS) — company registration", "https://data.gcis.nat.gov.tw", "Business accounting number (統一編號)", {
+    state: "LOOKUP_ONLY",
+    feed: "GCIS open-data API answers per company by tax ID (verified 27 Oct 2026); a filter on Company_Setup_Date returned no results, so there is no date-window feed",
+    access: "Open, no key",
+    evidence: "DOCUMENTED",
+    notes: "Lookup only — new registrations can't be listed by date through the verified API.",
+  }),
+  research("IN", "India", "Indian", "🇮🇳", "ASIA", "Asia/Kolkata", ["en", "hi"], "Ministry of Corporate Affairs (MCA21)", "https://www.mca.gov.in", "CIN", {
+    feed: "Company master data on data.gov.in (free API key) — periodic snapshots; MCA21 has no free API",
+    access: "Free key (data.gov.in) — not obtained",
+    timeliness: "PERIODIC",
+    updateWindow: "Periodic — not verified",
+    notes: "Not yet verified: the data.gov.in catalogue did not answer during the check (27 Oct 2026).",
+  }),
+  research("AE", "United Arab Emirates", "Emirati", "🇦🇪", "MIDDLE_EAST", "Asia/Dubai", ["ar", "en"], "Emirate economic departments and free-zone registries (DED, ADGM, DIFC …)", "https://www.economy.gov.ae", "Licence / registration number", {
+    state: "NO_VERIFIED_FEED",
+    feed: "No national open feed — registration is per emirate and per free zone",
+    notes: DESK,
+  }),
+  research("SA", "Saudi Arabia", "Saudi", "🇸🇦", "MIDDLE_EAST", "Asia/Riyadh", ["ar", "en"], "Ministry of Commerce — Commercial Registration", "https://mc.gov.sa", "CR number", {
+    state: "NO_VERIFIED_FEED",
+    feed: "No open daily feed of new commercial registrations identified",
+    notes: DESK,
+  }),
+  research("QA", "Qatar", "Qatari", "🇶🇦", "MIDDLE_EAST", "Asia/Qatar", ["ar", "en"], "Ministry of Commerce and Industry — Commercial Registration", "https://www.moci.gov.qa", "CR number", {
+    state: "NO_VERIFIED_FEED",
+    feed: "No open feed of new registrations identified",
+    notes: DESK,
+  }),
+  j({
+    code: "AU", name: "Australia", adjective: "Australian", flag: "🇦🇺", group: "OCEANIA", timezone: "Australia/Sydney", languages: ["en"],
+    registry: { name: "Australian Securities and Investments Commission (ASIC)", url: "https://asic.gov.au" },
+    registrationNumberLabel: "ACN",
+    feed: "ASIC Company Dataset on data.gov.au — CKAN DataStore filtered by “Date of Registration”",
+    registrationDateMeaning: "ASIC date of registration",
+    entities: "Companies registered with ASIC (proprietary and public; foreign companies marked)",
+    contactFields: "None (no address in the open dataset)",
+    updateFrequency: "Daily refresh up to the previous Sydney day (verified 26–27 Oct 2026)",
+    access: "Open, no key",
+    permittedUse: "CC BY 3.0 AU",
+    state: "CONNECTED", evidence: "REAL_DATA_TESTED", providers: ["asic-au"], defaultEnabled: true,
+    timeliness: "NEXT_DAY", updateWindow: "1–2 days (daily refresh; the newest day stays partial until the next refresh)",
+    sources: ["https://data.gov.au/data/dataset/asic-companies"],
+  }),
+  research("NZ", "New Zealand", "New Zealand", "🇳🇿", "OCEANIA", "Pacific/Auckland", ["en"], "New Zealand Companies Office / NZBN", "https://www.companiesoffice.govt.nz", "Company number / NZBN", {
+    feed: "Companies Register and NZBN APIs on api.business.govt.nz — subscription key required (unauthenticated requests answer 401, verified 27 Oct 2026)",
+    access: "Free subscription key (not obtained)",
+    evidence: "DOCUMENTED",
+    notes: "No adapter yet — needs the Owner's free API subscription and a verified date-window query.",
+  }),
+];
+
+export const JURISDICTIONS: Jurisdiction[] = [
+  ...EUROPE.map((x) => (EUROPE_TIMELINESS[x.code] ? { ...x, timeliness: EUROPE_TIMELINESS[x.code]![0], updateWindow: EUROPE_TIMELINESS[x.code]![1] } : x)),
+  ...WORLD,
 ];
 
 export function getJurisdiction(code: string | undefined | null) {

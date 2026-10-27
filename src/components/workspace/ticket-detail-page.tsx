@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/data";
 import { TicketDetail } from "@/components/tickets/ticket-pages";
 
 export async function TicketDetailPage({ base, params }: { base: WorkspaceBase; params: Promise<{ id: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, ["tickets.manage", "tickets.assigned"]);
   const { id } = await params;
   let ticket;
   try {

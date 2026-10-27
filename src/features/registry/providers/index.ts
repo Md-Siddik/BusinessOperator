@@ -4,6 +4,11 @@ import { JURISDICTIONS } from "@/config/jurisdictions";
 import { isDemoModeEnabled } from "@/lib/data-mode";
 import { summarizeProvider, type CompanyRegistryProvider, type ProviderSummary } from "../types";
 import { createAresCzProvider } from "./ares-cz";
+import { createAsicAuProvider } from "./asic-au";
+import { createCorporationsCanadaProvider } from "./corporations-canada";
+import { createKrsPlProvider } from "./krs-pl";
+import { createNtaJpProvider } from "./nta-jp";
+import { createUsSocrataProvider } from "./us-socrata";
 import { createBodaccProvider } from "./bodacc";
 import { createBrregProvider } from "./brreg";
 import { createCompaniesHouseProvider } from "./companies-house";
@@ -46,6 +51,12 @@ const REAL_FACTORIES: Record<string, () => CompanyRegistryProvider> = {
   openregister: createOpenRegisterProvider,
   cvr: createCvrProvider,
   bolagsverket: createBolagsverketProvider,
+  // Added Oct 2026 — verified official sources outside the original European set (see docs/country-data-status.md).
+  "krs-pl": createKrsPlProvider,
+  "us-state-open-data": createUsSocrataProvider,
+  "corporations-canada": createCorporationsCanadaProvider,
+  "asic-au": createAsicAuProvider,
+  "nta-jp": createNtaJpProvider,
   // Catalogue placeholders for every jurisdiction without an adapter.
   ...Object.fromEntries(JURISDICTIONS.filter((j) => !j.providers.length).map((j) => [`catalogue-${j.code.toLowerCase()}`, () => createCatalogueProvider(j)])),
   // Commercial fallback, selectable per jurisdiction once licensed.

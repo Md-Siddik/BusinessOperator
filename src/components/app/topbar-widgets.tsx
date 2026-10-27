@@ -10,17 +10,26 @@ import { apiFetch } from "@/lib/api/client";
 import { formatRelative } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import { useLiveCounts } from "./live-counts";
+import { markNotificationRead } from "./notification-read";
 
 type NotificationItem = { _id: string; title: string; body?: string; link?: string; readAt?: string | null; updatedAt: string };
 
 /** Notification center dropdown with live unread badge. */
 export function NotificationBell({ allHref }: { allHref: string }) {
-  const { notifications } = useLiveCounts();
+  const { notifications, refresh } = useLiveCounts();
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   async function load() {
     setItems(null);
     const res = await apiFetch<{ items: NotificationItem[] }>("/api/notifications?pageSize=8");
     setItems(res.items);
+  }
+  /** Opening one notification marks only that notification read (the panel itself marks nothing). */
+  async function openItem(n: NotificationItem) {
+    if (n.readAt) return;
+    const readAt = new Date().toISOString();
+    setItems((list) => list?.map((x) => (x._id === n._id ? { ...x, readAt } : x)) ?? null);
+    if (await markNotificationRead(n._id)) refresh();
+    else setItems((list) => list?.map((x) => (x._id === n._id ? { ...x, readAt: null } : x)) ?? null);
   }
   async function markAll() {
     await apiFetch("/api/notifications", { body: {} });
@@ -65,7 +74,14 @@ export function NotificationBell({ allHref }: { allHref: string }) {
               <p className="px-4 py-8 text-center text-sm text-ink-500">You&apos;re all caught up.</p>
             ) : (
               items.map((n) => (
-                <Link key={n._id} href={n.link ?? allHref} onClick={close} role="menuitem" className={cn("block border-b border-ink-50 px-4 py-3 hover:bg-ink-50", !n.readAt && "bg-brand-50/40")}>
+                <Link
+                  key={n._id}
+                  href={n.link ?? allHref}
+                  onClick={() => {
+                    void openItem(n);
+                    close();
+                  }}
+                  role="menuitem" className={cn("block border-b border-ink-50 px-4 py-3 hover:bg-ink-50", !n.readAt && "bg-brand-50/40")}>
                   <p className="flex items-start gap-2 text-sm text-ink-900">
                     {!n.readAt && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-600" aria-label="Unread" />}
                     <span className="font-medium">{n.title}</span>

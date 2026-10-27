@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useState } from "react";
-import { Columns3, Eye, ShieldAlert } from "lucide-react";
+import { Columns3, ShieldAlert } from "lucide-react";
 import { formatDay } from "@/lib/dates/country-time";
 import { cn } from "@/lib/utils";
 import { Dropdown } from "@/components/ui/overlay";
@@ -12,6 +12,7 @@ import { QualifyButtons } from "./qualify-buttons";
 import { CompanyDrawer } from "./company-drawer";
 import { ContactStatus } from "./contact-status";
 import { CompanyEmailActions, type CompanyEmailContext } from "@/components/email-sender/company-email-actions";
+import { SendToMarketerButton } from "./send-to-marketer";
 
 const FRESHNESS_SHORT: Record<string, string> = { REAL_TIME: "Real-time", NEAR_REAL_TIME: "Near real-time", DAILY: "Daily", PERIODIC: "Periodic", UNKNOWN: "Freshness unknown" };
 import type { CompanyRow, SourceCapabilities } from "./types";
@@ -36,7 +37,7 @@ function missingLabel(field: keyof SourceCapabilities, caps: Record<string, Sour
   return "Not available from registry";
 }
 
-export function RegistrationsTable({ rows, capabilities, canQualify, showCountry, emailContext }: { rows: CompanyRow[]; capabilities: Record<string, SourceCapabilities>; canQualify: boolean; showCountry?: boolean; emailContext?: CompanyEmailContext }) {
+export function RegistrationsTable({ rows, capabilities, canQualify, canSendToMarketer, showCountry, emailContext }: { rows: CompanyRow[]; capabilities: Record<string, SourceCapabilities>; canQualify: boolean; canSendToMarketer?: boolean; showCountry?: boolean; emailContext?: CompanyEmailContext }) {
   const [hidden, setHidden] = useState<Set<OptionalColumn>>(new Set());
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<Record<string, Partial<CompanyRow>>>({});
@@ -68,6 +69,8 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
   const data = rows.map((r) => ({ ...r, ...overrides[r.id] }));
   const patch = useCallback((id: string, p: Partial<CompanyRow>) => setOverrides((o) => ({ ...o, [id]: { ...o[id], ...p } })), []);
   const emailActions = (r: CompanyRow) => (emailContext && r.email ? <CompanyEmailActions row={r} ctx={emailContext} onSent={(p) => patch(r.id, p)} /> : undefined);
+  const sendToMarketer = (r: CompanyRow, size: "sm" | "md" = "sm") =>
+    canSendToMarketer ? <SendToMarketerButton companyId={r.id} companyName={r.name} sentCount={r.sentToMarketers} disabled={r.isDemo} size={size} onChange={(n) => patch(r.id, { sentToMarketers: n })} /> : null;
 
   return (
     <>
@@ -227,11 +230,8 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
                     </p>
                   </td>
                 )}
-                <td className="whitespace-nowrap border-b border-ink-100 px-3 py-3 text-right group-hover:bg-ink-50/80">
-                  <button type="button" onClick={() => setOpenIndex(i)} className="inline-flex h-8 items-center gap-1 rounded-lg border border-ink-200 bg-white px-2.5 text-xs font-medium text-ink-700 hover:bg-ink-50" aria-label={`Quick view ${r.name}`}>
-                    <Eye className="h-3.5 w-3.5" aria-hidden /> View
-                  </button>
-                </td>
+                {/* Row action: send this company (by its id) to a Digital Marketer. The quick view opens from the company name. */}
+                <td className="whitespace-nowrap border-b border-ink-100 px-3 py-3 text-right group-hover:bg-ink-50/80">{sendToMarketer(r, "md")}</td>
               </tr>
               </Fragment>
             ))}
@@ -265,7 +265,10 @@ export function RegistrationsTable({ rows, capabilities, canQualify, showCountry
               <ContactValue kind="website" showLabel value={r.website} sourceKind={r.sources.website?.kind} missing={missingLabel("website", capabilities, r)} disabledActions={r.isDemo} />
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-100 pt-3">
-              <QualifyButtons companyId={r.id} relevance={r.relevance} saved={r.saved} stage={r.stage} canQualify={canQualify} onChange={(p) => patch(r.id, p)} />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <QualifyButtons companyId={r.id} relevance={r.relevance} saved={r.saved} stage={r.stage} canQualify={canQualify} onChange={(p) => patch(r.id, p)} />
+                {sendToMarketer(r)}
+              </div>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setOpenIndex(i)} className="inline-flex h-8 items-center rounded-lg border border-ink-200 px-2.5 text-xs font-medium text-ink-700">
                   Quick view

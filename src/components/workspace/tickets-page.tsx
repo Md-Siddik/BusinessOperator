@@ -11,7 +11,7 @@ import { LinkTabs, PageHeader, Pagination, withParams } from "@/components/ui/da
 import { TicketTable } from "@/components/tickets/ticket-pages";
 
 export async function TicketsPage({ base, searchParams }: { base: WorkspaceBase; searchParams: Promise<{ kind?: string; status?: string; organizationId?: string; page?: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, ["tickets.manage", "tickets.assigned"]);
   const sp = await searchParams;
   const result = await listTickets(actor, { ...sp, kind: sp.kind || undefined, status: sp.status || undefined });
   const orgName = sp.organizationId ? (await Organization.findById(sp.organizationId).select("name").lean<{ name: string }>())?.name : undefined;

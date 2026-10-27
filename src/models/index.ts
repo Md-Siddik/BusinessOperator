@@ -34,3 +34,4 @@ export * from "./Opportunity";
 export * from "./OpportunityFeed";
 export * from "./Service";
 export * from "./WebAnalytics";
+export * from "./LeadAssignment";

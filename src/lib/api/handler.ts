@@ -4,7 +4,7 @@ import { connectToDatabase, DatabaseUnavailableError } from "@/lib/db/connect";
 import { AppError, Errors } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth/session";
 import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
-import { can, isInternal, isOwner, isStaffMember, type Actor, type Permission } from "@/lib/permissions";
+import { can, canAny, isInternal, isOwner, isStaffMember, isTeamMember, type Actor, type Permission } from "@/lib/permissions";
 import { enforceDurableAuthLimit } from "@/lib/auth/rate-limit";
 import { enforceRateLimit, type RateLimitRule } from "@/lib/rate-limit";
 
@@ -17,6 +17,13 @@ type Options = {
   internal?: boolean;
   /** Also allow ADMIN/STAFF (staff workspace: client data and website maintenance). */
   staff?: boolean;
+  /**
+   * Any employee account (Owner, Super Admin, Staff, Digital Marketer). Combine with
+   * `permission` / `anyPermission` — a team member holds only what was granted.
+   */
+  team?: boolean;
+  /** At least one of these permissions (the Owner holds all). */
+  anyPermission?: Permission[];
   /** Restrict to the OWNER role (role checked on the server; not a delegable permission). */
   ownerOnly?: boolean;
   /** Restrict to CLIENT users. */
@@ -101,6 +108,8 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       if (auth === "required" && !actor) throw Errors.unauthorized();
       if (options.internal && !(isOwner(actor) || (options.staff && isStaffMember(actor)))) throw Errors.forbidden();
       if (options.staff && !options.internal && !isInternal(actor)) throw Errors.forbidden();
+      if (options.team && !isTeamMember(actor)) throw Errors.forbidden();
+      if (options.anyPermission && !canAny(actor, options.anyPermission)) throw Errors.forbidden();
       if (options.ownerOnly && !isOwner(actor)) throw Errors.forbidden();
       if (options.clientOnly && actor?.role !== "CLIENT") throw Errors.forbidden();
       if (options.permission && !can(actor, options.permission)) throw Errors.forbidden();

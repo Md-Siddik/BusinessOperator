@@ -1,0 +1,3 @@
+Welcome to your ExploreTechify workspace (demo document).
+
+This file demonstrates secure, organization-scoped document storage.
