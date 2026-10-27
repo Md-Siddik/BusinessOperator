@@ -35,9 +35,9 @@
       "cta": "Se denne model",
       "models": {
         "monthly": {
-          "title": "Månedligt partnerskab",
-          "text": "Dedikeret, løbende digital og teknisk support til et forudsigeligt månedligt beløb — som en forlængelse af dit eget team.",
-          "points": ["Løbende support", "Aftalt månedligt omfang", "Langsigtet samarbejde"]
+          "title": "Månedslønnet service",
+          "text": "Ansæt os som din egen medarbejder: du betaler en fast månedsløn, og vi arbejder for din virksomhed hver måned med de digitale og tekniske opgaver, du har brug for.",
+          "points": ["Fast månedsløn", "Fungerer som din egen medarbejder", "Løbende opgaver hver måned"]
         },
         "growth": {
           "title": "Vækstpartnerskab",
@@ -80,18 +80,18 @@
     "otherModels": "Andre samarbejdsformer",
     "models": {
       "monthly": {
-        "title": "Månedligt partnerskab",
-        "subtitle": "Løbende digital og operationel support til en forudsigelig månedlig pris — ét team, der kender din virksomhed og holder den digitale side kørende.",
+        "title": "Månedslønnet service",
+        "subtitle": "Ansæt ExploreTechify som en medarbejder på fast månedsløn — vi arbejder for din virksomhed hver måned og holder den digitale og operationelle side kørende.",
         "sections": [
-          { "title": "Hvad et månedligt partnerskab betyder", "text": "I stedet for at starte et nyt projekt, hver gang noget skal gøres, arbejder du løbende sammen med ExploreTechify. Vi aftaler sammen et månedligt omfang og udfører det aftalte arbejde hver måned som ét ansvarligt team." },
+          { "title": "Sådan fungerer månedslønsmodellen", "text": "Det fungerer præcis som at ansætte en medarbejder. Du betaler en fast månedsløn, og hver måned arbejder vi med din virksomheds opgaver som dit eget dedikerede teammedlem — uden et nyt tilbud eller projekt, hver gang noget skal gøres. Vi aftaler sammen, hvilke typer opgaver rollen dækker." },
           { "title": "Typisk løbende support", "items": ["Opdateringer, indholdsændringer og vedligeholdelse af hjemmesiden", "Opfølgning på SEO og digital tilstedeværelse", "Virksomheds-e-mail, konti og brugeradministration", "Support til CRM og forretningssystemer", "Administrativ support til rekruttering og HR", "Forbedring af automatiseringer og teknisk support", "Løbende rapportering om det udførte arbejde"] },
           { "title": "Omfang, ansvar, prioriteter og kommunikation", "text": "Før vi starter, aftaler vi skriftligt, hvad det månedlige omfang dækker, hvem der har ansvaret for hvad på hver side, hvordan prioriteter fastsættes, og hvordan og hvor ofte vi kommunikerer. Ønsker uden for det aftalte omfang drøftes med dig, før der påbegyndes ekstra arbejde." },
-          { "title": "Månedlig pris og fakturering", "text": "Den månedlige pris er baseret på det aftalte omfang og fastsættes i et skriftligt tilbud, før arbejdet begynder. Der findes ingen standardprisliste — pris, faktureringsinterval og betalingsbetingelser aftales individuelt med dig." },
+          { "title": "Månedsløn og fakturering", "text": "Månedslønnen er baseret på den aftalte arbejdsmængde og fastsættes i et skriftligt tilbud, før arbejdet begynder. Ligesom en medarbejders løn er det et fast beløb hver måned. Der findes ingen standardprisliste — løn, faktureringsinterval og betalingsbetingelser aftales individuelt med dig." },
           { "title": "Tilpasning, når virksomheden ændrer sig", "text": "Dine behov ændrer sig over tid. Omfanget kan gennemgås sammen med aftalte mellemrum og justeres op eller ned, og enhver ændring af omfang eller pris aftales skriftligt." }
         ],
         "ctaTitle": "Tal med os om dine løbende behov",
-        "ctaText": "Fortæl os, hvad du har brug for hjælp til i dag. Vi foreslår et praktisk månedligt omfang — helt uforpligtende.",
-        "cta": "Drøft et månedligt partnerskab"
+        "ctaText": "Fortæl os, hvad du har brug for hjælp til i dag. Vi foreslår en månedsløn, der passer til arbejdsmængden — helt uforpligtende.",
+        "cta": "Ansæt os på månedsløn"
       },
       "growth": {
         "title": "Vækstpartnerskab",
@@ -137,7 +137,7 @@
     "eyebrow": "Kontakt", "title": "Lad os samarbejde", "subtitle": "Fortæl os om din virksomhed og dit behov. Vi svarer med et praktisk forslag til, hvor I kan starte.", "asideTitle": "Hvad sker der nu",
     "asideSteps": ["Vi gennemgår din besked og din nuværende online tilstedeværelse.", "Vi svarer inden for én arbejdsdag med spørgsmål eller et forslag.", "Hvis det passer, aftaler vi en kort samtale for at forstå din virksomhed."],
     "form": { "engagement": "Foretrukken samarbejdsform", "engagements": {
-      "monthly": "Månedligt partnerskab",
+      "monthly": "Månedslønnet service",
       "growth": "Vækstpartnerskab",
       "project": "Opgavebaseret samarbejde",
       "notSure": "Ikke sikker endnu"

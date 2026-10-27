@@ -35,9 +35,9 @@
       "cta": "Tutustu malliin",
       "models": {
         "monthly": {
-          "title": "Kuukausikumppanuus",
-          "text": "Omistautunutta, jatkuvaa digitaalista ja teknistä tukea ennustettavalla kuukausimaksulla — kuin oman tiimisi jatke.",
-          "points": ["Jatkuva tuki", "Sovittu kuukausittainen laajuus", "Pitkäaikainen yhteistyö"]
+          "title": "Kuukausipalkkainen palvelu",
+          "text": "Palkkaa meidät kuin oma työntekijä: maksat kiinteää kuukausipalkkaa, ja teemme joka kuukausi yrityksellesi tarvitsemasi digitaaliset ja tekniset tehtävät.",
+          "points": ["Kiinteä kuukausipalkka", "Toimii kuin oma työntekijäsi", "Jatkuvat tehtävät joka kuukausi"]
         },
         "growth": {
           "title": "Kasvukumppanuus",
@@ -80,18 +80,18 @@
     "otherModels": "Muut yhteistyömallit",
     "models": {
       "monthly": {
-        "title": "Kuukausikumppanuus",
-        "subtitle": "Jatkuvaa digitaalista ja operatiivista tukea ennakoitavalla kuukausihinnalla — yksi tiimi, joka tuntee yrityksesi ja pitää digitaalisen puolen toiminnassa.",
+        "title": "Kuukausipalkkainen palvelu",
+        "subtitle": "Palkkaa ExploreTechify kuin työntekijä kiinteällä kuukausipalkalla — työskentelemme yrityksesi hyväksi joka kuukausi ja pidämme digitaalisen ja operatiivisen puolen toiminnassa.",
         "sections": [
-          { "title": "Mitä kuukausikumppanuus tarkoittaa", "text": "Sen sijaan, että aloittaisit uuden projektin aina kun jotain pitää tehdä, teet yhteistyötä ExploreTechifyn kanssa jatkuvasti. Sovimme yhdessä kuukausittaisen laajuuden ja hoidamme sovitut työt joka kuukausi yhtenä vastuullisena tiiminä." },
+          { "title": "Näin kuukausipalkkamalli toimii", "text": "Se toimii aivan kuin työntekijän palkkaaminen. Maksat kiinteää kuukausipalkkaa, ja joka kuukausi hoidamme yrityksesi tehtäviä omana sitoutuneena tiimin jäsenenäsi — ilman uutta tarjousta tai projektia aina, kun jotain pitää tehdä. Sovimme yhdessä, millaisia tehtäviä rooli kattaa." },
           { "title": "Tyypillistä jatkuvaa tukea", "items": ["Verkkosivujen päivitykset, sisältömuutokset ja ylläpito", "Hakukoneoptimoinnin ja digitaalisen näkyvyyden seuranta", "Yrityssähköposti, tilit ja käyttäjähallinta", "CRM- ja liiketoimintajärjestelmien tuki", "Rekrytoinnin ja HR-hallinnon tuki", "Automaatioiden kehittäminen ja tekninen tuki", "Säännöllinen raportointi tehdystä työstä"] },
           { "title": "Laajuus, vastuut, prioriteetit ja viestintä", "text": "Ennen aloitusta sovimme kirjallisesti, mitä kuukausittainen laajuus kattaa, kuka vastaa mistäkin kummallakin puolella, miten prioriteetit asetetaan sekä miten ja kuinka usein viestimme. Sovitun laajuuden ulkopuoliset pyynnöt käydään kanssasi läpi ennen kuin lisätyö aloitetaan." },
-          { "title": "Kuukausihinta ja laskutus", "text": "Kuukausihinta perustuu sovittuun laajuuteen, ja se kirjataan kirjalliseen tarjoukseen ennen työn aloittamista. Vakiohinnastoa ei ole — hinta, laskutusväli ja maksuehdot sovitaan kanssasi yksilöllisesti." },
+          { "title": "Kuukausipalkka ja laskutus", "text": "Kuukausipalkka perustuu sovittuun työmäärään, ja se kirjataan kirjalliseen tarjoukseen ennen työn aloittamista. Kuten työntekijän palkka, se on joka kuukausi kiinteä summa. Vakiohinnastoa ei ole — palkka, laskutusväli ja maksuehdot sovitaan kanssasi yksilöllisesti." },
           { "title": "Mukautuminen yrityksen muuttuessa", "text": "Tarpeesi muuttuvat ajan myötä. Laajuutta voidaan tarkastella yhdessä sovituin väliajoin ja kasvattaa tai pienentää, ja kaikki laajuuden tai hinnan muutokset sovitaan kirjallisesti." }
         ],
         "ctaTitle": "Keskustellaan jatkuvista tarpeistasi",
-        "ctaText": "Kerro, missä tarvitset apua tänään. Ehdotamme käytännöllistä kuukausittaista laajuutta — ilman sitoumuksia.",
-        "cta": "Keskustele kuukausikumppanuudesta"
+        "ctaText": "Kerro, missä tarvitset apua tänään. Ehdotamme työmäärään sopivaa kuukausipalkkaa — ilman sitoumuksia.",
+        "cta": "Palkkaa meidät kuukausipalkalla"
       },
       "growth": {
         "title": "Kasvukumppanuus",
@@ -137,7 +137,7 @@
     "eyebrow": "Yhteystiedot", "title": "Tehdään yhteistyötä", "subtitle": "Kerro yrityksestäsi ja tarpeistasi. Vastaamme käytännöllisellä ehdotuksella siitä, mistä kannattaa aloittaa.", "asideTitle": "Mitä seuraavaksi tapahtuu",
     "asideSteps": ["Käymme läpi viestisi ja nykyisen näkyvyytesi verkossa.", "Vastaamme yhden arkipäivän kuluessa kysymyksillä tai ehdotuksella.", "Jos yhteistyö sopii, sovimme lyhyen puhelun yrityksesi ymmärtämiseksi."],
     "form": { "engagement": "Toivottu yhteistyömalli", "engagements": {
-      "monthly": "Kuukausikumppanuus",
+      "monthly": "Kuukausipalkkainen palvelu",
       "growth": "Kasvukumppanuus",
       "project": "Tehtäväkohtainen yhteistyö",
       "notSure": "En ole vielä varma"

@@ -2,6 +2,7 @@
  * Central brand configuration. Never hard-code the domain or contact details
  * elsewhere — import from here. Values can be overridden via environment.
  */
+
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 
 export const siteConfig = {

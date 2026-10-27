@@ -29,7 +29,7 @@ async function outcome(run: () => Promise<unknown>) {
 
 describe("Engagement model pages", () => {
   it.each([
-    ["monthly", "Monthly Partnership", "Discuss a Monthly Partnership", "/contact?engagement=monthly"],
+    ["monthly", "Monthly Salary-Based Service", "Hire Us on a Monthly Salary", "/contact?engagement=monthly"],
     ["task-based", "Task-Based Engagement", "Submit a Project Inquiry", "/contact?engagement=project"],
     ["growth-partnership", "Growth Partnership", "Discuss a Growth Partnership", "/contact?engagement=growth"],
   ])("/how-we-work/%s renders a real page with Home navigation and a working CTA", async (slug, title, cta, contact) => {

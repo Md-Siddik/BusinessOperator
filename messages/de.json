@@ -35,9 +35,9 @@
       "cta": "Dieses Modell ansehen",
       "models": {
         "monthly": {
-          "title": "Monatliche Partnerschaft",
-          "text": "Engagierte, laufende digitale und technische Unterstützung zu einer planbaren monatlichen Gebühr — wie eine Erweiterung Ihres eigenen Teams.",
-          "points": ["Laufende Unterstützung", "Vereinbarter monatlicher Umfang", "Langfristige Zusammenarbeit"]
+          "title": "Service auf Monatsgehalt-Basis",
+          "text": "Stellen Sie uns ein wie einen eigenen Mitarbeiter: Sie zahlen ein festes Monatsgehalt, und wir arbeiten jeden Monat für Ihr Unternehmen an den digitalen und technischen Aufgaben, die Sie brauchen.",
+          "points": ["Festes Monatsgehalt", "Arbeitet wie Ihr eigener Mitarbeiter", "Laufende Aufgaben jeden Monat"]
         },
         "growth": {
           "title": "Wachstumspartnerschaft",
@@ -80,18 +80,18 @@
     "otherModels": "Weitere Modelle der Zusammenarbeit",
     "models": {
       "monthly": {
-        "title": "Monatliche Partnerschaft",
-        "subtitle": "Laufende digitale und operative Unterstützung zu einer planbaren monatlichen Gebühr – ein Team, das Ihr Unternehmen kennt und die digitale Seite am Laufen hält.",
+        "title": "Service auf Monatsgehalt-Basis",
+        "subtitle": "Stellen Sie ExploreTechify wie einen Mitarbeiter mit festem Monatsgehalt ein – wir arbeiten jeden Monat für Ihr Unternehmen und halten die digitale und operative Seite am Laufen.",
         "sections": [
-          { "title": "Was eine monatliche Partnerschaft bedeutet", "text": "Statt jedes Mal ein neues Projekt zu starten, wenn etwas zu tun ist, arbeiten Sie dauerhaft mit ExploreTechify zusammen. Wir vereinbaren gemeinsam einen monatlichen Umfang und erledigen die vereinbarten Aufgaben jeden Monat als ein verantwortliches Team." },
+          { "title": "So funktioniert das Monatsgehalt-Modell", "text": "Es funktioniert genau wie die Einstellung eines Mitarbeiters. Sie zahlen ein festes Monatsgehalt, und jeden Monat arbeiten wir als Ihr eigenes, festes Teammitglied an den Aufgaben Ihres Unternehmens – ohne jedes Mal ein neues Angebot oder Projekt. Gemeinsam vereinbaren wir, welche Aufgaben die Rolle umfasst." },
           { "title": "Typische laufende Unterstützung", "items": ["Website-Aktualisierungen, Inhaltsänderungen und Wartung", "SEO und Pflege der digitalen Präsenz", "Geschäfts-E-Mail, Konten und Benutzerverwaltung", "Unterstützung für CRM und Geschäftssysteme", "Unterstützung bei Recruiting- und HR-Verwaltung", "Verbesserung von Automatisierungen und technischer Support", "Regelmäßige Berichte über die erledigte Arbeit"] },
           { "title": "Umfang, Verantwortlichkeiten, Prioritäten und Kommunikation", "text": "Vor dem Start vereinbaren wir schriftlich, was der monatliche Umfang abdeckt, wer auf beiden Seiten wofür verantwortlich ist, wie Prioritäten gesetzt werden und wie und wie oft wir kommunizieren. Anfragen außerhalb des vereinbarten Umfangs besprechen wir mit Ihnen, bevor zusätzliche Arbeit beginnt." },
-          { "title": "Monatliche Gebühr und Abrechnung", "text": "Die monatliche Gebühr richtet sich nach dem vereinbarten Umfang und wird vor Arbeitsbeginn in einem schriftlichen Angebot festgehalten. Es gibt keine Standardpreisliste – Gebühr, Abrechnungsrhythmus und Zahlungsbedingungen werden individuell mit Ihnen vereinbart." },
+          { "title": "Monatsgehalt und Abrechnung", "text": "Das Monatsgehalt richtet sich nach dem vereinbarten Arbeitsumfang und wird vor Arbeitsbeginn in einem schriftlichen Angebot festgehalten. Wie das Gehalt eines Mitarbeiters ist es jeden Monat ein fester Betrag. Es gibt keine Standardpreisliste – Gehalt, Abrechnungsrhythmus und Zahlungsbedingungen werden individuell mit Ihnen vereinbart." },
           { "title": "Anpassung an Veränderungen in Ihrem Unternehmen", "text": "Ihre Anforderungen ändern sich mit der Zeit. Der Umfang kann in vereinbarten Abständen gemeinsam überprüft und nach oben oder unten angepasst werden; jede Änderung von Umfang oder Gebühr wird schriftlich vereinbart." }
         ],
         "ctaTitle": "Besprechen Sie Ihren laufenden Bedarf",
-        "ctaText": "Erzählen Sie uns, wobei Sie heute Unterstützung brauchen. Wir schlagen einen praktischen monatlichen Umfang vor – unverbindlich.",
-        "cta": "Monatliche Partnerschaft besprechen"
+        "ctaText": "Erzählen Sie uns, wobei Sie heute Unterstützung brauchen. Wir schlagen ein Monatsgehalt vor, das zum Arbeitsumfang passt – unverbindlich.",
+        "cta": "Uns auf Monatsgehalt einstellen"
       },
       "growth": {
         "title": "Wachstumspartnerschaft",
@@ -137,7 +137,7 @@
     "eyebrow": "Kontakt", "title": "Lassen Sie uns zusammenarbeiten", "subtitle": "Erzählen Sie uns von Ihrem Unternehmen und Ihrem Bedarf. Wir antworten mit einem praktischen Vorschlag für den Einstieg.", "asideTitle": "Wie es weitergeht",
     "asideSteps": ["Wir prüfen Ihre Nachricht und Ihre aktuelle Online-Präsenz.", "Wir antworten innerhalb eines Werktags mit Fragen oder einem Vorschlag.", "Wenn es passt, vereinbaren wir ein kurzes Gespräch, um Ihr Geschäft zu verstehen."],
     "form": { "engagement": "Bevorzugtes Modell der Zusammenarbeit", "engagements": {
-      "monthly": "Monatliche Partnerschaft",
+      "monthly": "Service auf Monatsgehalt-Basis",
       "growth": "Wachstumspartnerschaft",
       "project": "Aufgabenbasierte Zusammenarbeit",
       "notSure": "Noch unsicher"

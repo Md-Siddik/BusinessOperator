@@ -35,9 +35,9 @@
       "cta": "Se denne modellen",
       "models": {
         "monthly": {
-          "title": "Månedlig partnerskap",
-          "text": "Dedikert, løpende digital og teknisk støtte for en forutsigbar månedlig pris — som en forlengelse av ditt eget team.",
-          "points": ["Løpende støtte", "Avtalt månedlig omfang", "Langsiktig samarbeid"]
+          "title": "Månedslønnet tjeneste",
+          "text": "Ansett oss som din egen medarbeider: du betaler en fast månedslønn, og vi jobber for virksomheten din hver måned med de digitale og tekniske oppgavene du trenger.",
+          "points": ["Fast månedslønn", "Fungerer som din egen ansatte", "Løpende oppgaver hver måned"]
         },
         "growth": {
           "title": "Vekstpartnerskap",
@@ -80,18 +80,18 @@
     "otherModels": "Andre samarbeidsformer",
     "models": {
       "monthly": {
-        "title": "Månedlig partnerskap",
-        "subtitle": "Løpende digital og operativ støtte til en forutsigbar månedlig pris — ett team som kjenner virksomheten din og holder den digitale siden i gang.",
+        "title": "Månedslønnet tjeneste",
+        "subtitle": "Ansett ExploreTechify som en medarbeider på fast månedslønn — vi jobber for virksomheten din hver måned og holder den digitale og operative siden i gang.",
         "sections": [
-          { "title": "Hva et månedlig partnerskap betyr", "text": "I stedet for å starte et nytt prosjekt hver gang noe må gjøres, jobber du med ExploreTechify løpende. Vi blir sammen enige om et månedlig omfang og utfører det avtalte arbeidet hver måned som ett ansvarlig team." },
+          { "title": "Slik fungerer månedslønnsmodellen", "text": "Det fungerer akkurat som å ansette en medarbeider. Du betaler en fast månedslønn, og hver måned jobber vi med virksomhetens oppgaver som ditt eget dedikerte teammedlem — uten nytt tilbud eller prosjekt hver gang noe må gjøres. Vi blir sammen enige om hvilke typer oppgaver rollen dekker." },
           { "title": "Typisk løpende støtte", "items": ["Oppdateringer, innholdsendringer og vedlikehold av nettsiden", "Oppfølging av SEO og digital tilstedeværelse", "Bedrifts-e-post, kontoer og brukeradministrasjon", "Støtte for CRM og forretningssystemer", "Administrativ støtte til rekruttering og HR", "Forbedring av automatiseringer og teknisk støtte", "Jevnlig rapportering om utført arbeid"] },
           { "title": "Omfang, ansvar, prioriteringer og kommunikasjon", "text": "Før vi starter, avtaler vi skriftlig hva det månedlige omfanget dekker, hvem som har ansvar for hva på hver side, hvordan prioriteringer settes og hvordan og hvor ofte vi kommuniserer. Forespørsler utenfor det avtalte omfanget diskuteres med deg før noe ekstra arbeid starter." },
-          { "title": "Månedlig pris og fakturering", "text": "Den månedlige prisen er basert på det avtalte omfanget og fastsettes i et skriftlig tilbud før arbeidet starter. Det finnes ingen standard prisliste — pris, faktureringsintervall og betalingsvilkår avtales individuelt med deg." },
+          { "title": "Månedslønn og fakturering", "text": "Månedslønnen er basert på den avtalte arbeidsmengden og fastsettes i et skriftlig tilbud før arbeidet starter. Som lønnen til en ansatt er det et fast beløp hver måned. Det finnes ingen standard prisliste — lønn, faktureringsintervall og betalingsvilkår avtales individuelt med deg." },
           { "title": "Tilpasning når virksomheten endrer seg", "text": "Behovene dine endrer seg over tid. Omfanget kan gjennomgås sammen med avtalte mellomrom og justeres opp eller ned, og enhver endring i omfang eller pris avtales skriftlig." }
         ],
         "ctaTitle": "Snakk med oss om de løpende behovene dine",
-        "ctaText": "Fortell oss hva du trenger hjelp med i dag. Vi foreslår et praktisk månedlig omfang — helt uforpliktende.",
-        "cta": "Diskuter et månedlig partnerskap"
+        "ctaText": "Fortell oss hva du trenger hjelp med i dag. Vi foreslår en månedslønn som passer arbeidsmengden — helt uforpliktende.",
+        "cta": "Ansett oss på månedslønn"
       },
       "growth": {
         "title": "Vekstpartnerskap",
@@ -137,7 +137,7 @@
     "eyebrow": "Kontakt", "title": "La oss samarbeide", "subtitle": "Fortell oss om bedriften din og hva du trenger. Vi svarer med et praktisk forslag til hvor dere kan starte.", "asideTitle": "Hva skjer videre",
     "asideSteps": ["Vi går gjennom meldingen og dagens tilstedeværelse på nett.", "Vi svarer innen én virkedag med spørsmål eller et forslag.", "Hvis det passer, avtaler vi en kort samtale for å forstå bedriften din."],
     "form": { "engagement": "Ønsket samarbeidsform", "engagements": {
-      "monthly": "Månedlig partnerskap",
+      "monthly": "Månedslønnet tjeneste",
       "growth": "Vekstpartnerskap",
       "project": "Oppdragsbasert samarbeid",
       "notSure": "Ikke sikker ennå"
