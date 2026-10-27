@@ -98,12 +98,37 @@ const STEPS: { id: string; run: (log: (m: string) => void) => Promise<void> }[] 
      */
     async run(log) {
       const { ensureGrantsRecorded } = await import("@/features/access/service");
-      const ids = await User.find({ role: { $in: ["ADMIN", "STAFF", "DIGITAL_MARKETER"] }, permissionGrants: { $exists: false } }).distinct("_id");
+      const ids = await User.find({ role: { $in: ["ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"] }, permissionGrants: { $exists: false } }).distinct("_id");
       for (const id of ids) await ensureGrantsRecorded(id);
       await LeadAssignment.collection.createIndex({ companyId: 1, recipientId: 1 }, { unique: true });
       await LeadAssignment.collection.createIndex({ recipientId: 1, status: 1, sentAt: -1 });
       await User.collection.createIndex({ "permissionGrants.grantedBy": 1 }, { sparse: true });
       log(`access: recorded existing permissions as grants for ${ids.length} account(s); lead-assignment indexes created`);
+    },
+  },
+  {
+    id: "2026-10-company-type-v1",
+    /**
+     * Company Type (Startup / Established Company / Needs Review). Every existing company is
+     * classified by the shared rules in lib/company-classification — records are only given the
+     * new `companyType` field; nothing else changes and nothing is deleted. Companies already
+     * stored came from the daily new-registration feeds, which `discoveredVia` now records.
+     */
+    async run(log) {
+      await Company.collection.createIndex({ "companyType.value": 1, countryCode: 1, "directContact.has": -1 });
+      await Company.collection.createIndex({ "companyType.at": 1 });
+      const tagged = await Company.updateMany({ discoveredVia: { $exists: false } }, { $set: { discoveredVia: "NEW_REGISTRATIONS" } });
+      const { reclassifyCompanies } = await import("@/features/companies/classification");
+      const r = await reclassifyCompanies();
+      log(`company type: ${r.total} classified (startup ${r.counts.STARTUP}, established ${r.counts.ESTABLISHED}, needs review ${r.counts.NEEDS_REVIEW}); ${tagged.modifiedCount} tagged as new registrations`);
+    },
+  },
+  {
+    id: "2026-10-manager-role-v1",
+    /** Manager accounts start with recorded (empty) grants: default deny, like every other team role. */
+    async run(log) {
+      const r = await User.updateMany({ role: "MANAGER", permissionGrants: { $exists: false } }, { $set: { permissionGrants: [], permissions: [] } });
+      log(`manager role: ${r.modifiedCount} account(s) initialised with no access`);
     },
   },
 ];

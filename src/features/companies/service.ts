@@ -4,7 +4,8 @@ import { z } from "zod";
 import { COUNTRIES, COUNTRY_CODES, getCountry } from "@/config/countries";
 import { INDUSTRIES } from "@/config/industries";
 import { LEAD_STAGES, stagesFrom, type LeadStage } from "@/lib/constants";
-import { CONTACT_FILTERS, ELIGIBILITY_STATES, PENDING_RESEARCH_STATUSES, RELEVANCE_VALUES, RESEARCH_STATUSES, contactQuality, type ContactFilter } from "@/lib/company-fields";
+import { CONTACT_FILTERS, CONTACT_STATUSES, ELIGIBILITY_STATES, PENDING_RESEARCH_STATUSES, RELEVANCE_VALUES, RESEARCH_STATUSES, contactQuality, contactStatusFilter, type ContactFilter } from "@/lib/company-fields";
+import { COMPANY_TYPE_PARAMS, INACTIVE_STATUS, type CompanyTypeParam } from "@/lib/company-classification";
 import { companyVisibilityFilter } from "@/lib/data-mode";
 import { DATE_PRESETS, isDay, localRangeUtc, resolveDayRange, type DayRange } from "@/lib/dates/country-time";
 import {
@@ -25,7 +26,7 @@ import {
 } from "@/models";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
-import { can, isInternal, type Actor } from "@/lib/permissions";
+import { can, isInternal, isTeamMember, type Actor } from "@/lib/permissions";
 import { escapeRegex } from "@/lib/utils";
 import { optionalPhone, optionalUrl, paginate, parseObjectId } from "@/lib/validation";
 import { getSetting } from "@/features/settings/service";
@@ -33,9 +34,33 @@ import { scoreCompany } from "./scoring";
 
 export const ALL = "ALL";
 
-/** Throws unless the actor may read company intelligence. Clients never can. */
+/** Throws unless the actor may read company intelligence (Owner, or a team member granted it). Clients never can. */
 export function assertCanReadCompanies(actor: Actor | null) {
-  if (!actor || !isInternal(actor) || !can(actor, "companies.read")) throw Errors.forbidden();
+  if (!actor || !isTeamMember(actor) || !can(actor, "companies.read")) throw Errors.forbidden();
+}
+
+/** Company Type filter. Unclassified records count as Needs Review (never guessed into a category). */
+export function companyTypeFilter(t: CompanyTypeParam): FilterQuery<CompanyDoc> {
+  const value = COMPANY_TYPE_PARAMS[t];
+  return value === "NEEDS_REVIEW" ? { "companyType.value": { $nin: ["STARTUP", "ESTABLISHED"] } } : { "companyType.value": value };
+}
+
+export const OLD_COMPANY_MONTHS = 6;
+
+/**
+ * Old company Intelligence. "old": registered at least 6 months before `now` (incorporation date
+ * when published, otherwise the registry's registration date) AND a published registry status that
+ * is not closed / dissolved / inactive — an old date alone never counts as operating.
+ * "unverified": records that can't be verified yet (no status, or no date at all) and aren't
+ * known to be closed; kept visible separately, never presented as verified.
+ */
+export function oldCompanyFilter(age: "old" | "unverified", now = new Date()): FilterQuery<CompanyDoc> {
+  const cutoff = new Date(now);
+  cutoff.setMonth(cutoff.getMonth() - OLD_COMPANY_MONTHS);
+  const registeredBefore = { $or: [{ incorporationDate: { $lte: cutoff } }, { incorporationDate: null, registrationDate: { $lte: cutoff } }] };
+  if (age === "old") return { $and: [registeredBefore, { status: { $nin: [null, ""], $not: INACTIVE_STATUS } }] };
+  const noDate = { incorporationDate: null, registrationDate: null, status: { $not: INACTIVE_STATUS } };
+  return { $or: [{ $and: [registeredBefore, { status: { $in: [null, ""] } }] }, noDate] };
 }
 
 /** Resolve a country query value to a DB filter. "ALL" must be explicit — there is no implicit mixed feed. */
@@ -90,7 +115,7 @@ const MILESTONE_STAGE: Record<(typeof MILESTONES)[number], LeadStage> = {
 export const NOT_CONTACTED_STAGES: LeadStage[] = ["NEW", "RESEARCHING", "CONTACT_AVAILABLE", "QUALIFIED", "QUOTATION_DRAFTED", "READY_FOR_OUTREACH"];
 
 /** Secondary orderings — the direct-contact group always comes first. */
-export const COMPANY_SORTS = ["contact", "registration", "fit", "completeness", "score", "industry", "name", "email", "phone"] as const;
+export const COMPANY_SORTS = ["contact", "registration", "fit", "completeness", "score", "industry", "name", "email", "phone", "type", "updated"] as const;
 export type CompanySort = (typeof COMPANY_SORTS)[number];
 export const COMPANY_SORT_LABELS: Record<CompanySort, string> = {
   contact: "Contact quality, fit, newest (default)",
@@ -102,6 +127,8 @@ export const COMPANY_SORT_LABELS: Record<CompanySort, string> = {
   name: "Company name",
   email: "Email first",
   phone: "Phone first",
+  type: "Company type",
+  updated: "Last updated",
 };
 
 const day = z.string().refine(isDay, "Use YYYY-MM-DD").optional();
@@ -147,6 +174,11 @@ export const companyQuerySchema = z.object({
   followUpDue: yesNo,
   eligibility: z.enum(ELIGIBILITY_STATES).optional(),
   research: z.enum(RESEARCH_STATUSES).optional(),
+  /** Company Type (shared classification): startup | established | review. */
+  type: z.enum(Object.keys(COMPANY_TYPE_PARAMS) as [CompanyTypeParam, ...CompanyTypeParam[]]).optional(),
+  contactStatus: z.enum(CONTACT_STATUSES).optional(),
+  /** Old company Intelligence: "old" = verified operating companies registered ≥ 6 months ago; "unverified" = their records still missing a status or date. */
+  age: z.enum(["old", "unverified"]).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   pageSize: z.coerce.number().int().min(5).max(200).default(50),
 });
@@ -202,6 +234,9 @@ export function buildCompanyFilter(actor: Actor, q: CompanyQuery, now = new Date
   if (q.followUpDue === "yes") and.push({ "lead.nextFollowUpAt": { $lte: now } });
   if (q.eligibility) and.push(q.eligibility === "NEEDS_REVIEW" ? { $or: [{ "eligibility.status": "NEEDS_REVIEW" }, { "eligibility.status": { $exists: false } }] } : { "eligibility.status": q.eligibility });
   if (q.research) and.push({ "research.status": q.research });
+  if (q.type) and.push(companyTypeFilter(q.type));
+  if (q.age) and.push(oldCompanyFilter(q.age, now));
+  if (q.contactStatus) and.push(contactStatusFilter(q.contactStatus) as FilterQuery<CompanyDoc>);
   if (q.minCompleteness !== undefined) and.push({ completeness: { $gte: q.minCompleteness } });
   for (const field of ["website", "email", "phone"] as const) {
     if (q[field] === "yes") and.push(present(field));
@@ -237,6 +272,10 @@ export function buildCompanyFilter(actor: Actor, q: CompanyQuery, now = new Date
 export function sortFor(sort: CompanySort): Record<string, 1 | -1> {
   const first = { "directContact.has": -1 } as const;
   switch (sort) {
+    case "type":
+      return { ...first, "companyType.value": -1, "directContact.quality": -1, _id: 1 };
+    case "updated":
+      return { ...first, updatedAt: -1, _id: 1 };
     case "registration":
       return { ...first, registrationDay: -1, _id: 1 };
     case "fit":
@@ -260,7 +299,7 @@ export function sortFor(sort: CompanySort): Record<string, 1 | -1> {
 
 /** Fields shown in the daily table and drawer. Never includes sourceData. */
 export const LIST_FIELDS =
-  "companyName registrationNumber countryCode countryName registrationDay registrationDateType eventType firstSeenAt contactFoundAt legalForm status industry industryCode industryDescription industryCodeSystem businessActivity address city region postalCode email phone mobile website contactFormUrl contactPerson contactSources contactFlags directContact completeness fullyContactable marketingProtected research.status research.nextRetryAt research.attempts eligibility serviceFit.score serviceFit.suggestions lead.stage lead.score lead.relevance lead.saved lead.assignedTo lead.nextFollowUpAt lead.lastContactedAt signals.hiring digitalOpportunity isDemo source sourceName sourceType dataFreshness sourceFetchedAt sourcePublishedAt sourceUrl";
+  "companyName registrationNumber countryCode countryName registrationDay registrationDateType eventType firstSeenAt contactFoundAt legalForm status industry industryCode industryDescription industryCodeSystem businessActivity address city region postalCode email phone mobile website contactFormUrl contactPerson contactSources contactFlags directContact completeness fullyContactable marketingProtected research.status research.nextRetryAt research.attempts eligibility serviceFit.score serviceFit.suggestions lead.stage lead.score lead.relevance lead.saved lead.assignedTo lead.nextFollowUpAt lead.lastContactedAt signals.hiring digitalOpportunity isDemo source sourceName sourceType dataFreshness sourceFetchedAt sourcePublishedAt sourceUrl companyType.value companyType.reason companyType.manual employees incorporationDate discoveredVia contactLastVerifiedAt updatedAt";
 
 export async function listCompanies(actor: Actor, input: unknown) {
   assertCanReadCompanies(actor);
@@ -271,6 +310,22 @@ export async function listCompanies(actor: Actor, input: unknown) {
     Company.countDocuments(filter),
   ]);
   return paginate(items, total, q.page, q.pageSize);
+}
+
+/** Counts per Company Type for the category tabs (same filters, ignoring the type itself). */
+export async function countByCompanyType(actor: Actor, input: unknown) {
+  assertCanReadCompanies(actor);
+  const q = companyQuerySchema.parse(input);
+  const filter = buildCompanyFilter(actor, { ...q, type: undefined });
+  const rows = await Company.aggregate<{ _id: string | null; n: number }>([{ $match: filter }, { $group: { _id: "$companyType.value", n: { $sum: 1 } } }]);
+  const out = { all: 0, startup: 0, established: 0, review: 0 };
+  for (const r of rows) {
+    out.all += r.n;
+    if (r._id === "STARTUP") out.startup += r.n;
+    else if (r._id === "ESTABLISHED") out.established += r.n;
+    else out.review += r.n;
+  }
+  return out;
 }
 
 /** Previous / next company in the same country and registration day (for reviewing a day's list one by one). */
@@ -434,7 +489,7 @@ export async function qualifyCompany(actor: Actor, id: string, input: unknown) {
  * data minimisation). Optionally suppress its addresses so re-imports are never contacted.
  */
 export async function deleteCompany(actor: Actor, id: string, opts: { suppress?: boolean } = {}) {
-  if (!can(actor, "companies.edit")) throw Errors.forbidden();
+  if (!can(actor, "companies.delete")) throw Errors.forbidden();
   const company = await Company.findById(parseObjectId(id)).lean<CompanyDoc>();
   if (!company) throw Errors.notFound();
   const contacts = await Contact.find({ companyId: company._id, type: "EMAIL" }).select("value").lean<{ value: string }[]>();

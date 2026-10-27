@@ -239,7 +239,7 @@ export type IngestResult = { imported: number; updated: number; skipped: number;
  * with classification → shared-contact detection → direct-contact ranking →
  * research queued for new companies (never blocks their appearance).
  */
-export async function ingestCompanies(provider: CompanyRegistryProvider, code: string, input: NormalizedCompany[], opts: { onProgress?: (m: string) => void } = {}): Promise<IngestResult> {
+export async function ingestCompanies(provider: CompanyRegistryProvider, code: string, input: NormalizedCompany[], opts: { onProgress?: (m: string) => void; discoveredVia?: "NEW_REGISTRATIONS" | "ESTABLISHED_COLLECTION" } = {}): Promise<IngestResult> {
   const out: IngestResult = { imported: 0, updated: 0, skipped: 0, failed: 0, errors: [], records: [], newIds: [], days: [] };
   const byId = new Map<string, NormalizedCompany>();
   for (const n of input) {
@@ -256,7 +256,7 @@ export async function ingestCompanies(provider: CompanyRegistryProvider, code: s
   for (let i = 0; i < records.length; i += 500) {
     const chunk = records.slice(i, i + 500);
     const existing = await Company.find({ countryCode: code, source: provider.id, sourceId: { $in: chunk.map((r) => r.identity.sourceId) } })
-      .select("+sourceHash sourceId email phone mobile website address contactPerson contactSources eligibility")
+      .select("+sourceHash sourceId email phone mobile website address contactPerson contactSources eligibility companyType.manual")
       .lean<(ExistingCompany & { sourceId: string })[]>();
     const existingById = new Map(existing.map((e) => [e.sourceId, e]));
     const ops: AnyBulkWriteOperation[] = [];
@@ -275,7 +275,7 @@ export async function ingestCompanies(provider: CompanyRegistryProvider, code: s
           update: {
             $set: set,
             ...(Object.keys(unset).length && { $unset: unset }),
-            $setOnInsert: { countryCode: code, source: provider.id, sourceId: n.identity.sourceId, firstSeenAt: now, lead: { stage: "NEW", score: 0, saved: false } },
+            $setOnInsert: { countryCode: code, source: provider.id, sourceId: n.identity.sourceId, firstSeenAt: now, discoveredVia: opts.discoveredVia ?? "NEW_REGISTRATIONS", lead: { stage: "NEW", score: 0, saved: false } },
           },
           upsert: true,
         },
