@@ -70,7 +70,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   ];
   if (canIntel) {
     groups.push({
-      title: "Company Intelligence",
+      title: "Start up company Intelligence",
       collapsible: true,
       defaultOpen: false,
       items: [
@@ -87,6 +87,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         { href: "/dashboard/companies/all", label: "All Countries", icon: "globe", flag: "🌍" },
         { href: "/dashboard/sources", label: "Data Sources", icon: "sources" },
         { href: "/dashboard/coverage", label: "Coverage", icon: "verify" },
+      ],
+    });
+    // Same workspace and countries, limited to operating companies registered 6+ months ago.
+    groups.push({
+      title: "Old company Intelligence",
+      collapsible: true,
+      defaultOpen: false,
+      items: [
+        ...orderedCountries.map((c) => ({ href: `/dashboard/old-companies/${c.slug}`, label: c.name, icon: "globe", flag: c.flag, demo: c.isDemo })),
+        { href: "/dashboard/old-companies/all", label: "All Countries", icon: "globe", flag: "🌍" },
       ],
     });
   }
