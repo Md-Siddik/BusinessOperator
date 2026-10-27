@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Lock } from "lucide-react";
 import { LANGUAGES } from "@/config/languages";
-import { requireWorkspacePage, type WorkspaceBase } from "@/lib/auth/session";
+import { requireTeamPage, requireWorkspacePage, type WorkspaceBase } from "@/lib/auth/session";
 import { can, type Actor } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/utils/format";
 import { LEAD_STAGES, LEAD_STAGE_LABELS } from "@/lib/constants";
@@ -37,7 +37,8 @@ function allowed(actor: Actor, tab: string) {
 }
 
 export async function SettingsTabPage({ base, params }: { base: WorkspaceBase; params: Promise<{ tab: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  // Own profile & security is open to every team member; the other tabs need their permission.
+  const actor = base === "/staff" ? await requireTeamPage() : await requireWorkspacePage(base);
   const { tab } = await params;
   // The staff workspace only maintains the website (general, languages) and the own profile.
   if (!SETTINGS_TABS.some((t) => t.id === tab) || (base === "/staff" && !(STAFF_SETTINGS_TABS as readonly string[]).includes(tab))) notFound();
@@ -229,7 +230,7 @@ export async function SettingsTabPage({ base, params }: { base: WorkspaceBase; p
   return (
     <div className="space-y-6">
       <PageHeader eyebrow="Settings" title={label} />
-      <SettingsTabs active={tab} base={base} />
+      <SettingsTabs active={tab} base={base} only={base === "/staff" && !can(actor, "content.manage") ? ["security"] : undefined} />
       <Card>
         <CardHeader title={label} />
         <CardContent className="py-5">{body}</CardContent>

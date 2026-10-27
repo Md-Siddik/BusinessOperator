@@ -20,7 +20,7 @@ function flat(sp: SP): Record<string, string | undefined> {
  * Server-rendered, server-filtered, paginated opportunity list (shared by Hiring,
  * Service & Project, Verification queue, Saved, Notes). `fixed` params cannot be changed by the URL.
  */
-export async function OpportunityListPage({ basePath, searchParams, fixed = {}, emptyHint, header }: { basePath: string; searchParams: SP; fixed?: Record<string, string>; emptyHint?: ReactNode; header?: ReactNode }) {
+export async function OpportunityListPage({ basePath, searchParams, fixed = {}, emptyHint, header, readOnly, detailBase }: { basePath: string; searchParams: SP; fixed?: Record<string, string>; emptyHint?: ReactNode; header?: ReactNode; readOnly?: boolean; detailBase?: string }) {
   const actor = await getActor();
   const params = flat(searchParams);
   const input = { ...params, ...fixed };
@@ -35,20 +35,20 @@ export async function OpportunityListPage({ basePath, searchParams, fixed = {}, 
           Unsupported value for: {res.ignored.join(", ")}. The list below is shown without those filters.
         </Alert>
       )}
-      <OpportunityFilters basePath={basePath} params={params} fixedType={fixed.type as OpportunityType | undefined} dateDescription={res.dateWindow?.description} />
+      <OpportunityFilters basePath={basePath} params={params} fixedType={fixed.type as OpportunityType | undefined} dateDescription={res.dateWindow?.description} readOnly={readOnly} hidden={readOnly && fixed.type ? { type: fixed.type } : undefined} />
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 px-4 py-3">
           <p className="text-sm text-ink-600">
             <span className="font-semibold text-ink-900">{res.total.toLocaleString("en-GB")}</span> opportunit{res.total === 1 ? "y" : "ies"} · canonical records only (duplicates folded)
           </p>
-          {res.total > 0 && (
+          {res.total > 0 && !readOnly && (
             <a href={exportHref} className={buttonClasses("outline", "sm")}>
               <Download className="h-4 w-4" aria-hidden /> Export CSV
             </a>
           )}
         </div>
         {rows.length ? (
-          <OpportunityTable rows={rows} />
+          <OpportunityTable rows={rows} readOnly={readOnly} detailBase={detailBase} />
         ) : (
           <EmptyState icon={SearchX} title="No verified opportunities available for this filter yet." description={emptyHint ?? "Records appear only after a configured source has been synchronized. Check Sources & integrations for each provider's status."} />
         )}

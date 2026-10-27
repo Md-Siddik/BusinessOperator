@@ -8,14 +8,14 @@ import { can, isClient, isInternal, type Actor } from "@/lib/permissions";
 import { objectId, paginate, parseObjectId } from "@/lib/validation";
 import { notifyUsers } from "@/features/notifications/service";
 
-/** Lightweight projects — client: own org; projects.manage: all; staff: projects they're assigned to. */
+/** Lightweight projects — client: own org; projects.manage: all; staff with projects.assigned: projects they're assigned to. */
 export function projectAccessFilter(actor: Actor): FilterQuery<ProjectDoc> {
   if (isClient(actor)) {
     if (!actor.organizationId) throw Errors.forbidden();
     return { organizationId: new Types.ObjectId(actor.organizationId) };
   }
   if (can(actor, "projects.manage")) return {};
-  if (isInternal(actor)) return { assignedStaff: new Types.ObjectId(actor.id) };
+  if (isInternal(actor)) return can(actor, "projects.assigned") ? { assignedStaff: new Types.ObjectId(actor.id) } : { _id: { $in: [] } };
   throw Errors.forbidden();
 }
 

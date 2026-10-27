@@ -34,8 +34,11 @@ describe("RBAC", () => {
   });
   it("owner-dashboard permissions stored on an old ADMIN/STAFF account are never effective", () => {
     // Website maintenance (incl. public service management) only — never company intelligence, CRM, outreach, users or system settings.
-    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual(["analytics.view", "chat.manage", "clients.manage", "content.manage", "projects.manage", "services.manage", "tickets.manage", "users.manage"]);
-    expect(effectivePermissions("STAFF", ["companies.read", "outreach.manage"])).toEqual([]);
+    // Accounts from before per-person grants keep exactly their old access; work assigned to them
+    // (conversations / tickets / projects) is now a named permission instead of implicit.
+    const ASSIGNED = ["conversations.assigned", "projects.assigned", "tickets.assigned"];
+    expect([...effectivePermissions("ADMIN", [...PERMISSIONS])].sort()).toEqual([...ASSIGNED, "analytics.view", "chat.manage", "clients.manage", "content.manage", "projects.manage", "services.manage", "tickets.manage", "users.manage"].sort());
+    expect([...effectivePermissions("STAFF", ["companies.read", "outreach.manage"])].sort()).toEqual(ASSIGNED);
   });
   it("only the owner assigns privileged roles; Super Admin can assign STAFF", () => {
     expect(canAssignRole(actor("OWNER"), "ADMIN")).toBe(true);
@@ -43,7 +46,7 @@ describe("RBAC", () => {
     expect(canAssignRole(actor("ADMIN", [...PERMISSIONS]), "STAFF")).toBe(true);
   });
   it("ignores unknown stored permissions", () => {
-    expect(effectivePermissions("ADMIN", ["tickets.manage", "hack.everything"])).toEqual(["tickets.manage"]);
+    expect(effectivePermissions("ADMIN", ["tickets.manage", "hack.everything"])).toEqual(["tickets.manage", "conversations.assigned", "tickets.assigned", "projects.assigned"]);
   });
 });
 

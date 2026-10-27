@@ -19,7 +19,7 @@ import { InquiryStatus } from "@/components/app/client-admin";
 const ENGAGEMENT_LABELS: Record<string, string> = { monthly: "Monthly partnership", growth: "Growth partnership", project: "Task-based", notSure: "Not sure yet" };
 
 export async function ClientsPage({ base, searchParams }: { base: WorkspaceBase; searchParams: Promise<{ tab?: string; status?: string; q?: string; page?: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, "clients.manage");
   const sp = await searchParams;
   const tab = sp.tab === "inquiries" && can(actor, "clients.manage") ? "inquiries" : "clients";
   const pendingCount = await Organization.countDocuments({ status: "PENDING_APPROVAL" });

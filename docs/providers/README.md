@@ -2,7 +2,7 @@
 
 ExploreTechify retrieves **company registrations** and **business contact data** from real, legitimate sources only. It never sends email, SMS or messages through a provider. Communication is manual: you copy contacts, open websites, prepare quotation drafts and record follow-ups.
 
-Per-jurisdiction research covering all 56 European jurisdictions: [`docs/coverage/jurisdictions.md`](../coverage/jurisdictions.md). It is generated from `src/config/jurisdictions.ts`.
+Per-jurisdiction research covering all 70 jurisdictions (56 European plus North America, Asia, the Middle East and Oceania): [`docs/coverage/jurisdictions.md`](../coverage/jurisdictions.md). It is generated from `src/config/jurisdictions.ts`.
 
 ## Registration sources
 
@@ -26,6 +26,11 @@ The "Status (4 Oct 2026)" column uses these levels: **Documented** → **Configu
 | 🇩🇰 Denmark | `cvr` | CVR system-to-system | **Documented.** Needs credentials. | Continuous (to be measured) | Email, phone, website (reklamebeskyttelse honoured) | [denmark.md](denmark.md) |
 | 🇸🇪 Sweden | — | SCB Business Register API | **Needs approval** (client certificate). No adapter yet. | Nightly (per SCB) | Not yet verified | [sweden.md](sweden.md) |
 | 🇸🇰 Slovakia | — | RPO API (Statistical Office) | **Under research.** The endpoint did not respond in testing. | Daily (per publisher) | — | [coverage](../coverage/jurisdictions.md) |
+| 🇵🇱 Poland | `krs-pl` | KRS open API — `/Biuletyn/{date}` + `/OdpisAktualny/{krs}` | **Real-data tested** (27 Oct 2026). Live, no key. | Same day | Email, website (when registered) | [outside-core-europe.md](outside-core-europe.md#-poland--krs-pl) |
+| 🇺🇸 United States | `us-state-open-data` | NY / CO / CT Secretary of State open data (Socrata) | **Real-data tested** (27 Oct 2026). Live, no key. | Daily, 1–3 day lag | CT business email | [outside-core-europe.md](outside-core-europe.md#-united-states--us-state-open-data) |
+| 🇨🇦 Canada | `corporations-canada` | Corporations Canada federal corporations CSV | **Real-data tested** (27 Oct 2026). Live, no key. | Daily | None | [outside-core-europe.md](outside-core-europe.md#-canada--corporations-canada) |
+| 🇦🇺 Australia | `asic-au` | ASIC Company Dataset, data.gov.au DataStore | **Real-data tested** (27 Oct 2026). Live, no key. | Daily, 1–2 days | None | [outside-core-europe.md](outside-core-europe.md#-australia--asic-au) |
+| 🇯🇵 Japan | `nta-jp` | NTA Corporate Number Web-API v4 | **Documented.** Needs a free application ID; not run live. | Daily (per NTA) | None | [outside-core-europe.md](outside-core-europe.md#-japan--nta-jp-credentials-required-not-run-live) |
 | Any jurisdiction | `opencorporates-xx` | OpenCorporates (commercial fallback) | **Documented.** Needs a token and a licence check per jurisdiction. | Unknown | None | [contact-data.md](contact-data.md#opencorporates) |
 
 ## Contact-data providers (retrieval only)

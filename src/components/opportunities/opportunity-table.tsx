@@ -40,8 +40,11 @@ export type OpportunityRow = {
   lastNoteAt?: string | null;
 };
 
-/** Opportunity results with bulk save / review actions. Every timestamp names what it is. */
-export function OpportunityTable({ rows }: { rows: OpportunityRow[] }) {
+/**
+ * Opportunity results with bulk save / review actions. Every timestamp names what it is.
+ * `readOnly` (delegated viewers): no selection, saving or review — and links go to `detailBase`.
+ */
+export function OpportunityTable({ rows, readOnly, detailBase = "/dashboard/opportunities" }: { rows: OpportunityRow[]; readOnly?: boolean; detailBase?: string }) {
   const router = useRouter();
   const toast = useToast();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -84,6 +87,7 @@ export function OpportunityTable({ rows }: { rows: OpportunityRow[] }) {
 
   return (
     <div>
+      {!readOnly && (
       <div className="flex flex-wrap items-center gap-2 border-b border-ink-100 px-4 py-2.5" role="toolbar" aria-label="Bulk actions">
         <label className="flex items-center gap-2 text-sm text-ink-700">
           <input type="checkbox" className="h-4 w-4 accent-brand-600" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(rows.map((r) => r._id)))} aria-label="Select all on this page" />
@@ -111,17 +115,18 @@ export function OpportunityTable({ rows }: { rows: OpportunityRow[] }) {
           </>
         )}
       </div>
+      )}
       <ul className="divide-y divide-ink-100">
         {rows.map((r) => {
           const tz = zoneFor(r.countryCode);
           const direct = r.contactRoutes.includes("DIRECT_APPLICATION") || r.contactRoutes.includes("PROCUREMENT_SUBMISSION");
           return (
             <li key={r._id} className="flex gap-3 px-4 py-3.5 hover:bg-ink-50/50">
-              <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-brand-600" checked={selected.has(r._id)} onChange={() => toggle(r._id)} aria-label={`Select ${r.title ?? "opportunity"}`} />
+              {!readOnly && <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-brand-600" checked={selected.has(r._id)} onChange={() => toggle(r._id)} aria-label={`Select ${r.title ?? "opportunity"}`} />}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                   <div className="min-w-0">
-                    <Link href={`/dashboard/opportunities/${r._id}`} className="text-sm font-semibold text-ink-900 hover:text-brand-700 hover:underline">
+                    <Link href={`${detailBase}/${r._id}`} className="text-sm font-semibold text-ink-900 hover:text-brand-700 hover:underline">
                       {r.title || "(untitled)"}
                     </Link>
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-ink-600">
@@ -137,9 +142,9 @@ export function OpportunityTable({ rows }: { rows: OpportunityRow[] }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <ActivityBadge activity={r.activity} />
-                    <button type="button" onClick={() => toggleSaved(r)} disabled={busy === r._id} className="rounded-lg p-1.5 text-ink-500 hover:bg-ink-100 hover:text-ink-900" aria-label={r.saved ? "Remove from saved" : "Save"} aria-pressed={!!r.saved}>
+                    {!readOnly && <button type="button" onClick={() => toggleSaved(r)} disabled={busy === r._id} className="rounded-lg p-1.5 text-ink-500 hover:bg-ink-100 hover:text-ink-900" aria-label={r.saved ? "Remove from saved" : "Save"} aria-pressed={!!r.saved}>
                       {r.saved ? <BookmarkCheck className="h-4 w-4 text-brand-600" aria-hidden /> : <Bookmark className="h-4 w-4" aria-hidden />}
-                    </button>
+                    </button>}
                   </div>
                 </div>
 

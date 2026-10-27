@@ -18,7 +18,8 @@ import { internalUserIdsWith, markGroupRead, notifyUsers } from "@/features/noti
  * Conversation access, enforced in every query:
  *  - CLIENT: conversations of their own organization only
  *  - OWNER, or internal users with chat.manage: all conversations
- *  - other STAFF/ADMIN: conversations assigned to them or where they participate
+ *  - STAFF/ADMIN with conversations.assigned: conversations assigned to them or where they participate
+ *  - other STAFF/ADMIN: none (default deny)
  */
 export function conversationAccessFilter(actor: Actor): FilterQuery<ConversationDoc> {
   if (isClient(actor)) {
@@ -27,6 +28,7 @@ export function conversationAccessFilter(actor: Actor): FilterQuery<Conversation
   }
   if (!isInternal(actor)) throw Errors.forbidden();
   if (can(actor, "chat.manage")) return {};
+  if (!can(actor, "conversations.assigned")) return { _id: { $in: [] } };
   const me = new Types.ObjectId(actor.id);
   return { $or: [{ assignedTo: me }, { "participants.userId": me }] };
 }
@@ -36,6 +38,7 @@ export function canSeeConversationEvent(actor: Actor, e: { organizationId: strin
   if (isClient(actor)) return actor.organizationId === e.organizationId;
   if (!isInternal(actor)) return false;
   if (can(actor, "chat.manage")) return true;
+  if (!can(actor, "conversations.assigned")) return false;
   return e.assignedTo === actor.id || e.participantIds.includes(actor.id);
 }
 
@@ -132,6 +135,8 @@ export async function listConversations(actor: Actor, input: unknown) {
 
 /** Badge count: conversations with unread messages for this actor. */
 export async function unreadConversationCount(actor: Actor) {
+  // Team members without conversation access (e.g. Digital Marketers) simply have nothing unread.
+  if (!isClient(actor) && !(isInternal(actor) && (can(actor, "chat.manage") || can(actor, "conversations.assigned")))) return 0;
   const me = new Types.ObjectId(actor.id);
   const access = conversationAccessFilter(actor);
   const msgMatch: FilterQuery<MessageDoc> = { senderId: { $ne: me }, readBy: { $ne: me } };

@@ -11,7 +11,7 @@ import { Errors } from "@/lib/errors";
 import { can, type Actor } from "@/lib/permissions";
 import { getEnabledCountries, getRunningSync, type CountryView } from "@/features/countries/service";
 import { DATA_FRESHNESS_LABELS, type DataFreshness } from "@/features/registry/types";
-import { sortCountries, type CountryCoverage } from "@/lib/integration-state";
+import { sortCountries, type Continent, type CountryCoverage, type FeedTimeliness } from "@/lib/integration-state";
 import { ALL, assertCanReadCompanies, buildCompanyFilter, companyQuerySchema, registrationDayFilter, sortFor } from "./service";
 
 type DayStats = { total: number; withEmail: number; withPhone: number; withWebsite: number; withPerson: number; fullyContactable: number; withDirect: number };
@@ -87,6 +87,11 @@ export type CountryCard = {
   paid: boolean;
   /** New registrations of the last COVERAGE_DAYS days and their contact availability (from snapshots). */
   coverage: CountryCoverage;
+  /** Verified availability of new registrations at the source, and the window in words. */
+  timeliness: FeedTimeliness;
+  updateWindow: string;
+  continent: Continent;
+  latestPublicationAt?: Date | null;
 };
 
 /** Window used to rank countries by recent data and contact coverage. */
@@ -171,6 +176,10 @@ export async function listCountryCards(actor: Actor): Promise<CountryCard[]> {
         adapterReady: !!c.provider && !c.provider.catalogueState && c.provider.capabilities.supportsDailyRegistrations,
         paid: c.provider?.accessType === "COMMERCIAL",
         coverage: coverageOf(c),
+        timeliness: c.jurisdiction.timeliness,
+        updateWindow: c.jurisdiction.updateWindow,
+        continent: c.jurisdiction.continent,
+        latestPublicationAt: c.latestPublicationAt,
       };
     }),
   );

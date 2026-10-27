@@ -44,7 +44,7 @@ export const SETTINGS_TABS = [
 /** Settings the staff workspace may open: website content and the user's own profile. */
 export const STAFF_SETTINGS_TABS = ["general", "languages", "security"] as const;
 
-export function SettingsTabs({ active, base = "/dashboard" }: { active: string; base?: "/dashboard" | "/staff" }) {
-  const tabs = base === "/staff" ? SETTINGS_TABS.filter((t) => (STAFF_SETTINGS_TABS as readonly string[]).includes(t.id)) : SETTINGS_TABS;
+export function SettingsTabs({ active, base = "/dashboard", only }: { active: string; base?: "/dashboard" | "/staff"; only?: string[] }) {
+  const tabs = (base === "/staff" ? SETTINGS_TABS.filter((t) => (STAFF_SETTINGS_TABS as readonly string[]).includes(t.id)) : SETTINGS_TABS).filter((t) => !only || only.includes(t.id));
   return <LinkTabs active={active} tabs={tabs.map((t) => ({ ...t, href: `${base}/settings/${t.id}` }))} />;
 }

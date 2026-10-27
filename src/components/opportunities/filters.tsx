@@ -53,7 +53,8 @@ const yesNo: [string, string][] = [
  * Server-rendered GET filter form (works without JavaScript; URLs are shareable).
  * The date filter always names the timestamp it applies to.
  */
-export function OpportunityFilters({ basePath, params, fixedType, dateDescription, hidden = {} }: { basePath: string; params: Params; fixedType?: OpportunityType; dateDescription?: string | null; hidden?: Params }) {
+/** `readOnly` (delegated viewers) hides filters on the Owner's private workflow: saves, review, CRM links, archive. */
+export function OpportunityFilters({ basePath, params, fixedType, dateDescription, hidden = {}, readOnly }: { basePath: string; params: Params; fixedType?: OpportunityType; dateDescription?: string | null; hidden?: Params; readOnly?: boolean }) {
   const advancedOpen = ["source", "employer", "label", "category", "direct", "contact", "saved", "review", "linked", "company", "jobCategory", "archived", "provider"].some((k) => params[k]);
   return (
     <form method="get" action={basePath} className="space-y-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-soft" aria-label="Filter opportunities">
@@ -141,9 +142,9 @@ export function OpportunityFilters({ basePath, params, fixedType, dateDescriptio
           <Select name="category" label="Service category" value={params.category} options={SERVICE_CATEGORIES.map((c) => [c, SERVICE_CATEGORY_LABELS[c]])} />
           <Select name="direct" label="Direct application / submission link" value={params.direct} options={yesNo} all="Any" />
           <Select name="contact" label="Contact information" value={params.contact} options={yesNo} all="Any" />
-          <Select name="saved" label="Saved" value={params.saved} options={yesNo} all="Any" />
-          <Select name="review" label="Review status" value={params.review} options={REVIEW_STATUSES.map((r) => [r, REVIEW_STATUS_LABELS[r]])} />
-          <Select name="linked" label="Linked to a company record" value={params.linked} options={yesNo} all="Any" />
+          {!readOnly && <Select name="saved" label="Saved" value={params.saved} options={yesNo} all="Any" />}
+          {!readOnly && <Select name="review" label="Review status" value={params.review} options={REVIEW_STATUSES.map((r) => [r, REVIEW_STATUS_LABELS[r]])} />}
+          {!readOnly && <Select name="linked" label="Linked to a company record" value={params.linked} options={yesNo} all="Any" />}
           <div className="min-w-0">
             <label htmlFor="f-company" className={lbl}>
               Company name
@@ -156,7 +157,7 @@ export function OpportunityFilters({ basePath, params, fixedType, dateDescriptio
             </label>
             <input id="f-jobCategory" name="jobCategory" defaultValue={params.jobCategory ?? ""} className={sel} />
           </div>
-          <Select
+          {!readOnly && <Select
             name="archived"
             label="Archived"
             value={params.archived ?? "exclude"}
@@ -166,7 +167,7 @@ export function OpportunityFilters({ basePath, params, fixedType, dateDescriptio
               ["include", "Include archived"],
               ["only", "Archived only"],
             ]}
-          />
+          />}
         </div>
       </details>
 

@@ -3,7 +3,7 @@ import { Types, type FilterQuery } from "mongoose";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
-import { isOwner, type Actor } from "@/lib/permissions";
+import { can, isOwner, isTeamMember, type Actor } from "@/lib/permissions";
 import { parseObjectId } from "@/lib/validation";
 import { todayIn, addDays, isDay } from "@/lib/dates/country-time";
 import { getOpportunityCountry, OPPORTUNITY_COUNTRIES, OPPORTUNITY_COUNTRY_CODES } from "@/config/opportunity-countries";
@@ -46,6 +46,28 @@ import { checkOpportunity, enqueueFeedSync, ensureProviderFeeds, verifyEmployerF
 export function assertOwner(actor: Actor | null | undefined): asserts actor is Actor {
   if (!actor) throw Errors.unauthorized();
   if (!isOwner(actor)) throw Errors.forbidden();
+}
+
+/**
+ * Read access: the Owner, or a team member holding "View Opportunity Intelligence"
+ * (granted by the Owner or a scoped delegate). Every other action stays Owner-only.
+ */
+export function assertCanViewOpportunities(actor: Actor | null | undefined): asserts actor is Actor {
+  if (!actor) throw Errors.unauthorized();
+  if (isOwner(actor)) return;
+  if (!isTeamMember(actor) || !can(actor, "opportunities.view")) throw Errors.forbidden();
+}
+
+/** The Owner's private workflow on an opportunity (saves, review, notes, Company Intelligence link). */
+const OWNER_PRIVATE_FIELDS = ["saved", "savedAt", "reviewStatus", "manualVerification", "notes", "lastNoteAt", "companyLink", "crmSyncedAt", "feedId"] as const;
+const OWNER_ONLY_QUERY_KEYS = ["saved", "notes", "review", "linked", "archived"] as const;
+
+/** Strip Owner-private fields for delegated viewers. */
+export function forViewer<T extends object>(actor: Actor, doc: T): T {
+  if (isOwner(actor)) return doc;
+  const copy = { ...doc } as Record<string, unknown>;
+  for (const k of OWNER_PRIVATE_FIELDS) delete copy[k];
+  return copy as T;
 }
 
 /* ───────────────────────── Query & filters ───────────────────────── */
@@ -187,8 +209,10 @@ export function parseOpportunityQuery(input: unknown, opts: { lenient?: boolean 
 }
 
 export async function listOpportunities(actor: Actor | null, input: unknown, opts: { lenient?: boolean } = {}) {
-  assertOwner(actor);
-  const { query: q, ignored } = parseOpportunityQuery(input, opts);
+  assertCanViewOpportunities(actor);
+  // Delegated viewers can't filter on the Owner's private workflow (saves, notes, review, CRM links, archive).
+  const raw = !isOwner(actor) && input && typeof input === "object" ? Object.fromEntries(Object.entries(input).filter(([k]) => !(OWNER_ONLY_QUERY_KEYS as readonly string[]).includes(k))) : input;
+  const { query: q, ignored } = parseOpportunityQuery(raw, opts);
   const now = new Date();
   const filter = buildOpportunityFilter(q, now);
   const [total, docs] = await Promise.all([
@@ -204,7 +228,7 @@ export async function listOpportunities(actor: Actor | null, input: unknown, opt
   const dupCounts = groups.length ? await Opportunity.aggregate<{ _id: string; n: number }>([{ $match: { dupGroup: { $in: groups } } }, { $group: { _id: "$dupGroup", n: { $sum: 1 } } }]) : [];
   const dupMap = new Map(dupCounts.map((d) => [d._id, d.n - 1]));
   return {
-    items: docs.map((d) => ({ ...d, duplicateCount: d.dupGroup ? (dupMap.get(d.dupGroup) ?? 0) : 0 })) as OpportunityListItem[],
+    items: docs.map((d) => forViewer(actor, { ...d, duplicateCount: d.dupGroup ? (dupMap.get(d.dupGroup) ?? 0) : 0 })) as OpportunityListItem[],
     total,
     page: q.page,
     pageSize: q.pageSize,
@@ -236,7 +260,7 @@ export type OpportunityStats = {
 
 /** Every number is a count over stored records with the documented definition (constants.METRIC_DEFINITIONS). */
 export async function getOpportunityStats(actor: Actor | null, opts: { periodDays?: number; country?: string; type?: OpportunityType } = {}): Promise<OpportunityStats> {
-  assertOwner(actor);
+  assertCanViewOpportunities(actor);
   const periodDays = Math.min(Math.max(opts.periodDays ?? 7, 1), 365);
   const now = new Date();
   const since = new Date(now.getTime() - periodDays * 86_400_000);
@@ -284,9 +308,15 @@ export async function getOpportunityStats(actor: Actor | null, opts: { periodDay
 /* ───────────────────────── Detail & owner actions ───────────────────────── */
 
 export async function getOpportunityDetail(actor: Actor | null, id: string) {
-  assertOwner(actor);
+  assertCanViewOpportunities(actor);
   const doc = await Opportunity.findById(parseObjectId(id)).lean<OpportunityDoc>();
   if (!doc) throw Errors.notFound();
+  if (!isOwner(actor)) {
+    // Delegated, read-only view: source facts only — no Owner notes, saves, review or Company Intelligence link.
+    const events = await OpportunityEvent.find({ opportunityId: doc._id }).sort({ at: -1 }).limit(50).lean<OpportunityEventDoc[]>();
+    const provider = getOpportunityProvider(doc.providerId);
+    return { opportunity: forViewer(actor, doc), duplicates: [] as OpportunityDoc[], events, company: null, feed: null, provider: provider ? summarizeOpportunityProvider(provider) : null };
+  }
   const [group, events, company, feed] = await Promise.all([
     doc.dupGroup ? Opportunity.find({ dupGroup: doc.dupGroup, _id: { $ne: doc._id } }).select("providerId sourceClass sourcePublisher sourceUrl applyUrl publishedAt firstSeenAt lastSeenAt activity sourceState isCanonical dedupeMethod deadline").lean<OpportunityDoc[]>() : Promise.resolve([]),
     OpportunityEvent.find({ opportunityId: doc._id }).sort({ at: -1 }).limit(100).lean<OpportunityEventDoc[]>(),

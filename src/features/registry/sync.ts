@@ -95,7 +95,7 @@ async function prepare(req: SyncRequest): Promise<Prepared> {
   } else {
     // Incremental: re-check the last successful day (late updates) through today.
     const lastDay = country.lastSuccessAt ? todayIn(def.timezone, country.lastSuccessAt) : null;
-    from = lastDay ? addDays(lastDay, -1) : addDays(today, -(country.backfillDays ?? 7));
+    from = lastDay ? addDays(lastDay, -Math.max(1, provider.lookbackDays ?? 1)) : addDays(today, -(country.backfillDays ?? 7));
     if (daysBetween(from, today) > MAX_INCREMENTAL_DAYS) from = addDays(today, -MAX_INCREMENTAL_DAYS);
   }
   if (to > today) to = today;

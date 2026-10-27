@@ -16,7 +16,7 @@ export type MessagesSearchParams = Promise<{ client?: string; new?: string }>;
  * ?client=<organizationId> shows one client's conversations; &new=1 opens a new message to that client.
  */
 export async function MessagesPage({ base, searchParams }: { base: WorkspaceBase; searchParams?: MessagesSearchParams }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, ["chat.manage", "conversations.assigned"]);
   const sp = (await searchParams) ?? {};
   const clientId = sp.client && Types.ObjectId.isValid(sp.client) ? sp.client : undefined;
   const [conversations, staff, orgs, availability] = await Promise.all([

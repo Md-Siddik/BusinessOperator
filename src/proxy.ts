@@ -9,7 +9,7 @@ import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
  *     "/de/...", "/no/..." etc. pass through.
  *  2. Coarse auth gating per area (signature check only). Real authorization
  *     happens server-side on every page and API call:
- *       /dashboard → OWNER · /staff → ADMIN, STAFF · /portal → CLIENT
+ *       /dashboard → OWNER · /staff → ADMIN, STAFF, DIGITAL_MARKETER · /portal → CLIENT
  */
 const APP_PREFIXES = ["/dashboard", "/staff", "/portal"];
 const NON_LOCALIZED = ["/api", "/_next", "/dashboard", "/staff", "/portal", "/favicon", "/icon", "/apple-icon", "/robots.txt", "/sitemap.xml", "/opengraph-image", "/manifest"];
@@ -18,6 +18,7 @@ const STAFF_SECTIONS = ["inquiries", "profile", "clients", "messages", "tickets"
 
 /** Owner-only modules (also enforced by their pages, APIs and services). */
 const OWNER_ONLY_SECTIONS = ["/dashboard/opportunities", "/dashboard/website-analytics"];
+const TEAM_WORKSPACE_ROLES = ["ADMIN", "STAFF", "DIGITAL_MARKETER"];
 
 function homeFor(role: string) {
   return role === "OWNER" ? "/dashboard" : role === "CLIENT" ? "/portal" : "/staff";
@@ -45,7 +46,7 @@ export async function proxy(request: NextRequest) {
       const target = STAFF_SECTIONS.includes(section) ? `/staff${pathname.slice("/dashboard".length)}${search}` : "/staff";
       return NextResponse.redirect(new URL(target, request.url));
     }
-    if (area === "staff" && session.role !== "ADMIN" && session.role !== "STAFF") {
+    if (area === "staff" && !TEAM_WORKSPACE_ROLES.includes(session.role)) {
       if (session.role === "OWNER") return NextResponse.redirect(new URL(`/dashboard${pathname.slice("/staff".length)}${search}`, request.url));
       return NextResponse.redirect(new URL(homeFor(session.role), request.url));
     }

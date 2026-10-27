@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useWorkspaceBase } from "@/hooks/use-workspace-base";
 import { useState, type FormEvent } from "react";
-import { Ban, CheckCircle2, Plus, Upload, UserPlus } from "lucide-react";
+import { Ban, CheckCircle2, Plus, Trash2, Upload, UserCog, UserPlus } from "lucide-react";
 import { SERVICE_CATEGORIES } from "@/config/services";
 import { CLIENT_SERVICE_STATUSES, CONTACT_REQUEST_STATUSES, DOCUMENT_CATEGORIES, PROJECT_STATUSES } from "@/lib/constants";
 import { apiFetch, ApiError } from "@/lib/api/client";
+import { ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/permissions/catalog";
 import { humanize } from "@/lib/utils/format";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/form";
@@ -91,6 +92,56 @@ export function AddClientUser({ orgId }: { orgId: string }) {
         </form>
       </Modal>
     </>
+  );
+}
+
+const TEAM_ROLES: Role[] = ["STAFF", "DIGITAL_MARKETER", "ADMIN", "OWNER"];
+
+/** Owner-only actions on one client user: make them a team member with a role, or delete the account. */
+export function ClientUserActions({ user }: { user: { id: string; name: string } }) {
+  const { pending, run } = useRun();
+  const [open, setOpen] = useState(false);
+  const [role, setRole] = useState<Role>("STAFF");
+  function convert(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    void run("convert", () => apiFetch(`/api/admin/users/${user.id}/convert`, { body: { role } }), `${user.name} is now ${ROLE_LABELS[role]} — manage their access in Users & access`).then((r) => r && setOpen(false));
+  }
+  function remove() {
+    if (!confirm(`Permanently delete ${user.name}'s account? They are signed out and can't sign in again. The organization's records stay. This can't be undone.`)) return;
+    void run("delete", () => apiFetch(`/api/admin/users/${user.id}`, { method: "DELETE" }), `${user.name}'s account was deleted`);
+  }
+  return (
+    <div className="flex gap-1.5">
+      <Button size="xs" variant="outline" onClick={() => setOpen(true)}>
+        <UserCog className="h-3.5 w-3.5" aria-hidden /> Make team member
+      </Button>
+      <Button size="xs" variant="ghost" loading={pending === "delete"} onClick={remove} aria-label={`Delete ${user.name}'s account`}>
+        <Trash2 className="h-3.5 w-3.5 text-red-600" aria-hidden />
+      </Button>
+      <Modal open={open} onClose={() => setOpen(false)} title={`Make ${user.name} a team member`} description="They leave this client organization (its records stay), are signed out, and sign in to the team workspace with the role you choose. They get the role's suggested starting access — adjust it in Users & access." size="sm">
+        <form onSubmit={convert} className="space-y-4">
+          <Field label="Role" hint={ROLE_DESCRIPTIONS[role]}>
+            {(p) => (
+              <Select {...p} value={role} onChange={(e) => setRole(e.target.value as Role)}>
+                {TEAM_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {ROLE_LABELS[r]}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={pending === "convert"}>
+              Change to {ROLE_LABELS[role]}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 }
 

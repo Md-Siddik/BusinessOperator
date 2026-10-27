@@ -12,6 +12,7 @@ import { ALL, COMPANY_SORTS, COMPANY_SORT_LABELS, listCompanies, type CompanyVie
 import { getRegistrationOverview, listCountryCards, type RegistrationOverview } from "@/features/companies/registrations";
 import { getEnabledCountries, type CountryView } from "@/features/countries/service";
 import { toCompanyRow } from "@/features/companies/rows";
+import { activeAssignmentCounts } from "@/features/marketer/service";
 import { DATA_FRESHNESS_LABELS, SOURCE_TYPE_LABELS } from "@/features/registry/types";
 import { cn } from "@/lib/utils";
 import { ConnectionDot, FreshnessBadge } from "./quality";
@@ -217,7 +218,9 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
   const view = overview.view;
   const dr = overview.range;
   const isToday = dr.singleDay === dr.today;
-  const rows = list.items.map(toCompanyRow);
+  const canSendToMarketer = isOwner(actor) && can(actor, "leads.sendToMarketer");
+  const sentCounts = canSendToMarketer ? await activeAssignmentCounts(list.items.map((c) => c._id)) : new Map<string, number>();
+  const rows = list.items.map((c) => ({ ...toCompanyRow(c), sentToMarketers: sentCounts.get(String(c._id)) ?? 0 }));
   const capabilities: Record<string, SourceCapabilities> = {};
   for (const v of await getEnabledCountries()) {
     const caps = v.provider?.capabilities;
@@ -358,7 +361,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
                   <span className="text-6xl font-semibold leading-none tracking-tight tabular-nums text-ink-900">{sel.known ? formatNumber(sel.total) : "—"}</span>
                   <span className="text-lg font-medium text-ink-700">received registration{sel.total === 1 ? "" : "s"}</span>
                 </p>
-                {!sel.known && <p className="mt-2 text-sm text-ink-500">{isToday ? "Today hasn't been synced yet." : "This period hasn't been synced."} {canSync ? "Use “Sync today” to fetch it now." : "It syncs automatically."}</p>}
+                {!sel.known && <p className="mt-2 text-sm text-ink-500">No verified data available — {isToday ? "today hasn't been synced yet." : "this period hasn't been synced."} {canSync ? "Use “Sync today” to fetch it now." : "It syncs automatically."}</p>}
                 {sel.known && sel.coveredDays < sel.totalDays && <p className="mt-2 text-xs text-amber-700">Covers {sel.coveredDays} of {sel.totalDays} days — the rest haven&apos;t been synced.</p>}
                 {sel.known && !sel.complete && <p className="mt-2 text-xs text-amber-700">The source reported more records than one sync imports; counts may be incomplete.</p>}
               </div>
@@ -384,7 +387,12 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
                 </p>
               </>
             )}
-            {view?.provider?.limitations && <p className="mt-3 text-xs text-ink-500">{view.provider.limitations}</p>}
+            {view && (
+              <p className="mt-3 text-xs text-ink-600">
+                <span className="font-medium">Update window:</span> {view.jurisdiction.updateWindow}. Counts are by the registry&apos;s own registration date ({view.timezone.replace("_", " ")}); companies published late are added to their real registration day, never to the day they were fetched.
+              </p>
+            )}
+            {view?.provider?.limitations && <p className="mt-1 text-xs text-ink-500">{view.provider.limitations}</p>}
           </section>
           <Timeline data={overview.timeline} selectedDay={dr.singleDay} hrefFor={(d) => qs({ range: "custom", from: d, to: d })} />
         </div>
@@ -402,7 +410,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
           <CompanyFilters industries={INDUSTRIES.map((i) => ({ value: i, label: INDUSTRY_LABELS[i] }))} sorts={COMPANY_SORTS.map((s) => ({ value: s, label: COMPANY_SORT_LABELS[s] }))} />
           {rows.length ? (
             <>
-              <RegistrationsTable rows={rows} capabilities={capabilities} canQualify={canQualify} showCountry={code === ALL} emailContext={emailContext} />
+              <RegistrationsTable rows={rows} capabilities={capabilities} canQualify={canQualify} canSendToMarketer={canSendToMarketer} showCountry={code === ALL} emailContext={emailContext} />
               <Pagination
                 page={list.page}
                 pageCount={list.pageCount}
@@ -416,7 +424,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
           ) : (
             <EmptyState
               icon={Building2}
-              title={page && Number(page) > 1 ? "No more companies" : Object.keys(params).some((k) => !["range", "from", "to", "sort"].includes(k)) ? "No companies match these filters" : sel.known ? `No companies registered ${dr.label}` : "Nothing synced for this period yet"}
+              title={page && Number(page) > 1 ? "No more companies" : Object.keys(params).some((k) => !["range", "from", "to", "sort"].includes(k)) ? "No companies match these filters" : sel.known ? `No companies registered ${dr.label}` : "No verified data available for this period yet"}
               description={
                 sel.known || mode !== "daily"
                   ? "Try another date or clear the filters."

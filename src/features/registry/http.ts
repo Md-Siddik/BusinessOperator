@@ -45,6 +45,13 @@ const sleep = (ms: number, signal?: AbortSignal) =>
     });
   });
 
+/** undici reports every network failure as "fetch failed"; the cause says which one (DNS, reset, TLS…). */
+function withCause(err: Error) {
+  const cause = err.cause as { code?: string; message?: string } | undefined;
+  const detail = cause?.code ?? cause?.message;
+  return detail && !err.message.includes(detail) ? `${err.message}: ${detail}` : err.message;
+}
+
 export function circuitState(name: string) {
   const c = circuits.get(name);
   return { open: !!c && c.openUntil > Date.now(), failures: c?.failures ?? 0, openUntil: c?.openUntil };
@@ -108,7 +115,7 @@ export function createHttpClient(opts: HttpClientOptions) {
         if (init.signal?.aborted) throw new ProviderHttpError("Aborted");
         if (attempt >= maxRetries) {
           recordFailure();
-          const reason = err instanceof Error ? (err.name === "TimeoutError" ? "timed out" : err.message) : String(err);
+          const reason = err instanceof Error ? (err.name === "TimeoutError" ? "timed out" : withCause(err)) : String(err);
           throw new ProviderHttpError(`${opts.name} is unreachable (${reason})`, undefined, true);
         }
         await sleep(500 * 2 ** attempt, init.signal);

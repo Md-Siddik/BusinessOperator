@@ -16,7 +16,7 @@ import { EmptyState } from "@/components/ui/feedback";
 import { ProjectEditor } from "@/components/app/client-admin";
 
 export async function ProjectsPage({ base, searchParams }: { base: WorkspaceBase; searchParams: Promise<{ status?: string; organizationId?: string; page?: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, ["projects.manage", "projects.assigned"]);
   const sp = await searchParams;
   const [result, orgs, staff] = await Promise.all([
     listProjects(actor, { status: sp.status, organizationId: sp.organizationId, page: Number(sp.page ?? 1) || 1 }),

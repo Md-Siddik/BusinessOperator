@@ -110,6 +110,8 @@ export async function seedDatabase({ reset = false, log = console.info as Log } 
   const admin = await mkUser({ email: creds.admin, name: "Anders Admin", role: "ADMIN" });
   const staff = await mkUser({ email: creds.staff, name: "Sara Staff", role: "STAFF" });
   const staff2 = await mkUser({ email: "staff2@demo.exploretechify.local", name: "Mikkel Staff", role: "STAFF" });
+  // Digital Marketer: starts with no access (default deny) — the Owner grants "View Assigned Client Leads".
+  await mkUser({ email: "marketer@demo.exploretechify.local", name: "Maya Marketer", role: "DIGITAL_MARKETER", permissions: [], permissionGrants: [] as never });
   const ownerActor = toActor(owner);
   const adminActor = toActor(admin);
   const internal = [owner, admin, staff, staff2];
@@ -337,7 +339,7 @@ export async function seedDatabase({ reset = false, log = console.info as Log } 
   await AuditLog.create({ actorId: owner._id, actorEmail: owner.email, actorRole: "OWNER", action: "seed.completed", metadata: { demo: true } });
 
   log("Demo data ready.");
-  log(`Sign in with ${creds.owner} / ${creds.admin} / ${creds.staff} / ${creds.client} and the DEMO_PASSWORD${creds.password ? "" : ` (${password})`}.`);
+  log(`Sign in with ${creds.owner} / ${creds.admin} / ${creds.staff} / marketer@demo.exploretechify.local / ${creds.client} and the DEMO_PASSWORD${creds.password ? "" : ` (${password})`}.`);
   return { password };
 }
 

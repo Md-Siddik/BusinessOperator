@@ -14,7 +14,7 @@ import { ProjectEditor } from "@/components/app/client-admin";
 import { ProjectTasks } from "@/components/app/project-tasks";
 
 export async function ProjectDetailPage({ base, params }: { base: WorkspaceBase; params: Promise<{ id: string }> }) {
-  const actor = await requireWorkspacePage(base);
+  const actor = await requireWorkspacePage(base, ["projects.manage", "projects.assigned"]);
   const { id } = await params;
   let data;
   try {

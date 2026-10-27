@@ -3,67 +3,50 @@ import { AppShell, type NavGroup } from "@/components/app/app-shell";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LiveCountsProvider } from "@/components/app/live-counts";
 import { NotificationBell, UserMenu } from "@/components/app/topbar-widgets";
-import { requireStaffPage } from "@/lib/auth/session";
-import { can } from "@/lib/permissions";
+import { requireTeamPage } from "@/lib/auth/session";
+import { isDigitalMarketer, ROLE_LABELS } from "@/lib/permissions";
+import { hasConversationAccess, teamNavigation } from "@/lib/permissions/navigation";
 import { unreadConversationCount } from "@/features/chat/service";
 import { unreadNotificationCount } from "@/features/notifications/service";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: { default: "Staff workspace", template: "%s · Staff workspace" } };
+export const metadata = { title: { default: "Team workspace", template: "%s · Team workspace" } };
 
 /**
- * Staff workspace (ADMIN / STAFF): client data and website maintenance only.
- * The owner dashboard (company intelligence, CRM, outreach, analytics, opportunities,
- * users, system settings) is never reachable from here — pages and APIs enforce it server-side.
+ * Team workspace (Super Admin, Staff, Digital Marketer). The navigation shows only what the
+ * account has been granted (default deny); pages and APIs enforce the same permissions
+ * server-side. The owner dashboard (Company Intelligence and Owner tools) is never reachable here.
  */
 export default async function StaffLayout({ children }: { children: ReactNode }) {
-  const actor = await requireStaffPage();
-  const [messages, notifications] = await Promise.all([unreadConversationCount(actor), unreadNotificationCount(actor.id)]);
+  const actor = await requireTeamPage();
+  const chat = hasConversationAccess(actor);
+  const [messages, notifications] = await Promise.all([chat ? unreadConversationCount(actor) : Promise.resolve(0), unreadNotificationCount(actor.id)]);
 
-  const clientItems = [
-    ...(can(actor, "clients.manage") ? [{ href: "/staff/clients", label: "Clients", icon: "clients" }, { href: "/staff/inquiries", label: "Client Inquiries", icon: "queue" }] : []),
-    ...(can(actor, "users.manage") ? [{ href: "/staff/users", label: "Staff management", icon: "users" }] : []),
-    ...(can(actor, "analytics.view") ? [{ href: "/staff/reports", label: "Reports", icon: "analytics" }] : []),
-    { href: "/staff/messages", label: "Messages", icon: "messages", badge: "messages" as const },
-    { href: "/staff/tickets", label: "Requests & tickets", icon: "tickets" },
-    { href: "/staff/projects", label: "Projects", icon: "projects" },
-  ];
-  const websiteItems = [
-    { href: "/staff/services", label: "Services & case studies", icon: "services", exact: true },
-    ...(can(actor, "services.manage") ? [{ href: "/staff/service-management", label: "Service management", icon: "templates" }] : []),
-    ...(can(actor, "content.manage") ? [{ href: "/staff/settings/general", match: "/staff/settings/general", label: "Website settings", icon: "settings" }, { href: "/staff/settings/languages", match: "/staff/settings/languages", label: "Languages & translations", icon: "globe" }] : []),
-  ];
-  const groups: NavGroup[] = [
-    { items: [{ href: "/staff", label: "Overview", icon: "overview", exact: true }] },
-    { title: "Client data", collapsible: true, items: clientItems },
-    { title: "Website", collapsible: true, items: websiteItems },
-    {
-      title: "Account",
-      collapsible: true,
-      items: [
-        { href: "/staff/notifications", label: "Notifications", icon: "notifications", badge: "notifications" },
-        { href: "/staff/settings/security", match: "/staff/settings/security", label: "Profile & security", icon: "profile" },
-      ],
-    },
-  ];
+  const groups: NavGroup[] = teamNavigation(actor).map((g) => ({
+    id: g.id,
+    title: g.title,
+    collapsible: !!g.title,
+    items: g.items.map((i) => ({ href: i.href, label: i.label, icon: i.icon, exact: i.exact, match: i.match, badge: i.badge })),
+  }));
+  const workspace = isDigitalMarketer(actor) ? "Marketing workspace" : "Team workspace";
 
   const topbar = (
     <div className="flex flex-1 items-center justify-between gap-3">
-      <p className="truncate text-sm font-medium text-ink-700">Staff workspace</p>
+      <p className="truncate text-sm font-medium text-ink-700">{workspace}</p>
       <div className="flex items-center gap-1">
         <NotificationBell allHref="/staff/notifications" />
-        <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/staff/settings/security" />
+        <UserMenu name={actor.name} email={actor.email} role={ROLE_LABELS[actor.role]} profileHref="/staff/settings/security" />
       </div>
     </div>
   );
 
   return (
     <LiveCountsProvider initial={{ messages, notifications }}>
-      <AppShell groups={groups} brandLabel="Staff workspace" homeHref="/staff" topbar={topbar}>
+      <AppShell groups={groups} brandLabel={workspace} homeHref="/staff" topbar={topbar}>
         <>
           {children}
-          {/* Live chat: answer client conversations from the message icon. */}
-          <ChatWidget />
+          {/* Live chat: answer client conversations from the message icon (only with conversation access). */}
+          {chat && <ChatWidget />}
         </>
       </AppShell>
     </LiveCountsProvider>
