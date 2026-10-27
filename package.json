@@ -14,9 +14,12 @@
     "seed:reset": "tsx --conditions=react-server scripts/seed.ts --reset",
     "registry:verify": "tsx --conditions=react-server scripts/verify-providers.ts",
     "registry:sync": "tsx --conditions=react-server scripts/registry-sync.ts",
+    "registry:established": "tsx --conditions=react-server scripts/established-collection.ts",
     "migrate": "tsx --conditions=react-server scripts/migrate.ts",
     "db:migrate-to-atlas": "tsx scripts/migrate-to-atlas.ts",
     "coverage:report": "tsx scripts/coverage-report.ts",
+    "coverage:contacts": "tsx --conditions=react-server scripts/contact-coverage.ts",
+    "email:check": "tsx --conditions=react-server scripts/email-deliverability.ts",
     "geoip:update": "node scripts/geoip-update.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },

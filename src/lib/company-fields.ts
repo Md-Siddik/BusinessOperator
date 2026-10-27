@@ -201,20 +201,123 @@ export function isWebmail(email: string) {
   return WEBMAIL_DOMAINS.includes(email.split("@")[1]?.toLowerCase() ?? "");
 }
 
-/** Format a stored phone number for display (+47 123 45 678 for Norway, otherwise "+CC rest"). */
+/**
+ * International dialing codes of the countries Company Intelligence covers (plus common
+ * neighbours), longest first so "+358" never matches as "+35". Display only — stored values
+ * stay E.164 ("+4791234567") so copy, tel: links and exports keep the exact number.
+ */
+const CALLING_CODES = ["420", "421", "353", "354", "358", "370", "371", "372", "852", "886", "966", "971", "974", "30", "31", "32", "33", "34", "36", "39", "40", "41", "43", "44", "45", "46", "47", "48", "49", "61", "64", "65", "81", "82", "1"].sort((a, b) => b.length - a.length);
+
+const group = (s: string, sizes: number[]) => {
+  const out: string[] = [];
+  let i = 0;
+  for (const n of sizes) {
+    if (i >= s.length) break;
+    out.push(s.slice(i, i + n));
+    i += n;
+  }
+  if (i < s.length) out.push(s.slice(i));
+  return out.join(" ");
+};
+
+/** National digit grouping per calling code (common conventions; unknown lengths fall back to 3-digit groups). */
+function groupNational(cc: string, n: string) {
+  switch (cc) {
+    case "1": // NANP: (area) exchange-line
+      return n.length === 10 ? `${n.slice(0, 3)} ${n.slice(3, 6)} ${n.slice(6)}` : null;
+    case "61": // Australia: mobiles 4xx xxx xxx, 13/1300/1800 numbers, landlines x xxxx xxxx
+      if (n.length === 9 && n.startsWith("4")) return group(n, [3, 3, 3]);
+      if (/^1[38]00/.test(n) && n.length === 10) return group(n, [4, 3, 3]);
+      if (n.length === 9) return group(n, [1, 4, 4]);
+      return null;
+    case "47":
+      return n.length === 8 ? group(n, [3, 2, 3]) : null;
+    case "45":
+      return n.length === 8 ? group(n, [2, 2, 2, 2]) : null;
+    case "44": // UK: London 20 xxxx xxxx, mobiles 7xxx xxxxxx, others xxxx xxxxxx
+      if (n.length !== 10) return null;
+      if (n.startsWith("20")) return group(n, [2, 4, 4]);
+      return group(n, [4, 6]);
+    case "33":
+      return n.length === 9 ? group(n, [1, 2, 2, 2, 2]) : null;
+    case "48":
+    case "420":
+    case "421":
+      return n.length === 9 ? group(n, [3, 3, 3]) : null;
+    case "353":
+      return n.length === 9 ? (n.startsWith("8") ? group(n, [2, 3, 4]) : group(n, [1, 3, 4])) : null;
+    case "81":
+      return n.length === 10 ? group(n, [2, 4, 4]) : null;
+    default:
+      return null;
+  }
+}
+
+/** Format a stored E.164 phone number for display: "+47 912 34 567", "+1 212 555 0100", "+61 2 9374 4000". */
 export function formatPhone(value: string | undefined | null) {
   if (!value) return "";
-  const m = value.match(/^\+(\d+)$/);
+  const m = value.match(/^\+(\d{7,15})$/);
   if (!m) return value;
   const d = m[1]!;
-  if (d.startsWith("47") && d.length === 10) return `+47 ${d.slice(2, 5)} ${d.slice(5, 7)} ${d.slice(7)}`;
-  if (d.startsWith("45") && d.length === 10) return `+45 ${d.slice(2, 4)} ${d.slice(4, 6)} ${d.slice(6, 8)} ${d.slice(8)}`;
-  for (const cc of ["358", "46", "49", "33", "44"]) if (d.startsWith(cc)) return `+${cc} ${d.slice(cc.length)}`;
-  return value;
+  const cc = CALLING_CODES.find((c) => d.startsWith(c));
+  if (!cc) return value;
+  const national = d.slice(cc.length);
+  return `+${cc} ${groupNational(cc, national) ?? group(national, Array(Math.ceil(national.length / 3)).fill(3))}`;
 }
 
 /** Display form of a website: "example.no" (no scheme, no trailing slash). */
 export function displayWebsite(value: string | undefined | null) {
   if (!value) return "";
   return value.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "");
+}
+
+/* ───────────── Contact Status (one value per company) ───────────── */
+
+/**
+ * Plain-language contact status, derived from the provenance store (never stored separately):
+ *  VERIFIED               — a usable direct email whose deliverability was checked, or a phone whose reachability was confirmed
+ *  UNVERIFIED             — a usable, source-supported direct email or phone that hasn't been verified yet
+ *  NEEDS_REVIEW           — no usable direct contact yet, but found values wait in the review queue
+ *  NOT_PUBLICLY_AVAILABLE — research has run and found no public business email or phone (not proof none exists)
+ *  PENDING                — not researched yet
+ */
+export const CONTACT_STATUSES = ["VERIFIED", "UNVERIFIED", "NEEDS_REVIEW", "NOT_PUBLICLY_AVAILABLE", "PENDING"] as const;
+export type ContactStatus = (typeof CONTACT_STATUSES)[number];
+export const CONTACT_STATUS_LABELS: Record<ContactStatus, string> = {
+  VERIFIED: "Verified",
+  UNVERIFIED: "Unverified",
+  NEEDS_REVIEW: "Needs Review",
+  NOT_PUBLICLY_AVAILABLE: "Not Publicly Available",
+  PENDING: "Research pending",
+};
+
+type ContactStatusInput = {
+  direct: { has: boolean; emailVerification?: string | null; phoneVerification?: string | null; pendingVerification?: boolean };
+  research: { status?: string | null; attempts?: number | null };
+  pendingReview?: boolean;
+};
+
+export function contactStatusOf(c: ContactStatusInput): ContactStatus {
+  if (c.direct.has) return c.direct.emailVerification === "DELIVERABLE" || c.direct.phoneVerification === "REACHABILITY_CONFIRMED" ? "VERIFIED" : "UNVERIFIED";
+  if (c.direct.pendingVerification || c.pendingReview) return "NEEDS_REVIEW";
+  const status = c.research.status ?? "NOT_STARTED";
+  if ((c.research.attempts ?? 0) > 0 && status !== "NOT_STARTED" && status !== "SEARCHING") return "NOT_PUBLICLY_AVAILABLE";
+  return "PENDING";
+}
+
+/** The same rules as database filters (server-side filtering before pagination). */
+export function contactStatusFilter(s: ContactStatus): Record<string, unknown> {
+  const verified = { $or: [{ "directContact.emailVerification": "DELIVERABLE" }, { "directContact.phoneVerification": "REACHABILITY_CONFIRMED" }] };
+  switch (s) {
+    case "VERIFIED":
+      return { "directContact.has": true, ...verified };
+    case "UNVERIFIED":
+      return { "directContact.has": true, "directContact.emailVerification": { $ne: "DELIVERABLE" }, "directContact.phoneVerification": { $ne: "REACHABILITY_CONFIRMED" } };
+    case "NEEDS_REVIEW":
+      return { "directContact.has": { $ne: true }, "directContact.pendingVerification": true };
+    case "NOT_PUBLICLY_AVAILABLE":
+      return { "directContact.has": { $ne: true }, "directContact.pendingVerification": { $ne: true }, "research.attempts": { $gt: 0 }, "research.status": { $nin: ["NOT_STARTED", "SEARCHING"] } };
+    case "PENDING":
+      return { "directContact.has": { $ne: true }, "directContact.pendingVerification": { $ne: true }, $or: [{ "research.attempts": { $in: [0, null] } }, { "research.status": { $in: ["NOT_STARTED", "SEARCHING", null] } }] };
+  }
 }

@@ -10,17 +10,17 @@ export * from "./catalog";
  *  - Everyone else holds only what was explicitly granted (default deny). Grants are stored
  *    with their provenance on the account (`permissionGrants`, see features/access).
  *  - A grant only counts when the catalog says the permission is eligible for the role;
- *    Owner-only entries (Company Intelligence, Owner tools) never count for anyone else.
+ *    Owner-only entries (Owner tools, CRM / outreach / registry syncs) never count for anyone else.
  *
- * Workspaces: OWNER → /dashboard · ADMIN, STAFF, DIGITAL_MARKETER → /staff · CLIENT → /portal.
+ * Workspaces: OWNER → /dashboard · ADMIN, MANAGER, STAFF, DIGITAL_MARKETER → /staff · CLIENT → /portal.
  */
 export { ROLES };
 export type { Role, Permission };
 
-/** Client-service team (OWNER, ADMIN, STAFF) — the roles that work with client data. */
-export const INTERNAL_ROLES: Role[] = ["OWNER", "ADMIN", "STAFF"];
-/** Every employee account, including Digital Marketers (who never see client data unless granted). */
-export const TEAM_ROLES: Role[] = ["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"];
+/** Client-service team (OWNER, ADMIN, MANAGER, STAFF) — the roles that may work with client data when granted. */
+export const INTERNAL_ROLES: Role[] = ["OWNER", "ADMIN", "MANAGER", "STAFF"];
+/** Every employee account, including Digital Marketers (who never see client data). */
+export const TEAM_ROLES: Role[] = ["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"];
 
 /** Role templates double as the access of accounts that predate per-user grants (see `effectivePermissions`). */
 export const ROLE_DEFAULT_PERMISSIONS = ROLE_TEMPLATES;
@@ -54,14 +54,14 @@ export function isInternal(actor: Pick<Actor, "role"> | null | undefined): boole
   return !!actor && INTERNAL_ROLES.includes(actor.role);
 }
 
-/** Any employee account (Owner, Super Admin, Staff, Digital Marketer). */
+/** Any employee account (Owner, Admin, Manager, Staff, Digital Marketer). */
 export function isTeamMember(actor: Pick<Actor, "role"> | null | undefined): boolean {
   return !!actor && TEAM_ROLES.includes(actor.role);
 }
 
-/** ADMIN or STAFF — client-service users of the team workspace. */
+/** ADMIN, MANAGER or STAFF — client-service users of the team workspace. */
 export function isStaffMember(actor: Pick<Actor, "role"> | null | undefined): boolean {
-  return actor?.role === "ADMIN" || actor?.role === "STAFF";
+  return actor?.role === "ADMIN" || actor?.role === "MANAGER" || actor?.role === "STAFF";
 }
 
 export function isDigitalMarketer(actor: Pick<Actor, "role"> | null | undefined): boolean {
@@ -69,7 +69,7 @@ export function isDigitalMarketer(actor: Pick<Actor, "role"> | null | undefined)
 }
 
 /**
- * Owner-only areas (Company Intelligence, Owner tools) are gated on the account's actual
+ * Owner-only areas (Owner tools, CRM / outreach) are gated on the account's actual
  * role — never on a grantable permission — so they can't be delegated through any editor or API.
  */
 export function isOwner(actor: Pick<Actor, "role"> | null | undefined): boolean {
@@ -117,7 +117,7 @@ export function canAny(actor: Actor | null | undefined, permissions: Permission[
   return permissions.some((p) => can(actor, p));
 }
 
-/** Owner assigns every role; a Super Admin with "Manage staff accounts" may create / assign STAFF only. */
+/** Owner assigns every role; an Admin with "Manage staff accounts" may create / assign STAFF only. */
 export function canAssignRole(actor: Actor, targetRole: Role): boolean {
   if (targetRole === "CLIENT") return false;
   return (actor.role === "OWNER" && (ROLES as readonly string[]).includes(targetRole)) || (actor.role === "ADMIN" && can(actor, "users.manage") && targetRole === "STAFF");

@@ -64,7 +64,7 @@ export async function saveProject(actor: Actor, id: string | null, input: unknow
   if (!can(actor, "projects.manage")) throw Errors.forbidden();
   const data = projectSchema.parse(input);
   if (!(await Organization.exists({ _id: data.organizationId }))) throw Errors.badRequest("Client not found");
-  const staffCount = await User.countDocuments({ _id: { $in: data.assignedStaff }, role: { $in: ["OWNER", "ADMIN", "STAFF"] } });
+  const staffCount = await User.countDocuments({ _id: { $in: data.assignedStaff }, role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] } });
   if (staffCount !== data.assignedStaff.length) throw Errors.badRequest("Assigned staff must be internal users.");
   let project;
   if (id) {

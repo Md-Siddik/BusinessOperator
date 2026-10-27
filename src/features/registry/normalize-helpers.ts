@@ -33,11 +33,20 @@ export function cleanPhone(value: unknown, countryCode: string): string | undefi
   if (!v) return undefined;
   let digits = v.replace(/[^\d+]/g, "");
   if (digits.startsWith("00")) digits = `+${digits.slice(2)}`;
+  // US / Canada (NANP) dial "011" for international numbers.
+  if ((countryCode === "US" || countryCode === "CA") && digits.startsWith("011")) digits = `+${digits.slice(3)}`;
   if (!digits.startsWith("+")) {
     const dial = DIAL_CODES[countryCode];
     if (!dial) return v;
-    // National numbers with a trunk prefix (0) drop it after the country code.
-    digits = `+${dial}${digits.replace(/^0/, "")}`;
+    if (dial === "1") {
+      // NANP: 10 digits, optionally written with the leading "1" (1-800-…, 1 212 …). No trunk 0.
+      if (digits.length === 11 && digits.startsWith("1")) digits = digits.slice(1);
+      if (digits.length !== 10 || /^[01]/.test(digits)) return v;
+      digits = `+1${digits}`;
+    } else {
+      // National numbers with a trunk prefix (0) drop it after the country code.
+      digits = `+${dial}${digits.replace(/^0/, "")}`;
+    }
   }
   return /^\+\d{7,15}$/.test(digits) ? digits : v;
 }

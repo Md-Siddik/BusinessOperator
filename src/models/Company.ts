@@ -1,6 +1,7 @@
 import { Schema, type InferSchemaType } from "mongoose";
 import { LEAD_STAGES } from "@/lib/constants";
 import { CONTACT_SOURCE_KINDS, ELIGIBILITY_STATES, RELEVANCE_VALUES, RESEARCH_STATUSES } from "@/lib/company-fields";
+import { COMPANY_TYPES } from "@/lib/company-classification";
 import { defineModel, ObjectId, type Id } from "./_helpers";
 
 /**
@@ -154,6 +155,23 @@ const companySchema = new Schema(
       },
     },
 
+    /**
+     * Startup / Established Company / Needs Review — the single shared classification
+     * (lib/company-classification). Absent = not classified yet (treated as Needs Review).
+     * `manual` decisions are never overwritten by the automatic re-evaluation.
+     */
+    companyType: {
+      value: { type: String, enum: COMPANY_TYPES },
+      reason: String,
+      basis: { type: [String], default: undefined },
+      foundedYear: Number,
+      at: Date,
+      manual: Boolean,
+      by: { type: ObjectId, ref: "User" },
+    },
+    /** How the record entered the platform: the daily new-registration feed or the established-company collection. */
+    discoveredVia: { type: String, enum: ["NEW_REGISTRATIONS", "ESTABLISHED_COLLECTION"] },
+
     // Address
     address: String,
     postalCode: String,
@@ -247,6 +265,9 @@ companySchema.index({ "lead.assignedTo": 1 });
 companySchema.index({ "lead.nextFollowUpAt": 1 });
 companySchema.index({ createdAt: -1 });
 companySchema.index({ "prospectPage.token": 1 }, { sparse: true });
+// Company Type tabs / filters (Company Intelligence, Digital Marketer) and re-evaluation.
+companySchema.index({ "companyType.value": 1, countryCode: 1, "directContact.has": -1 });
+companySchema.index({ "companyType.at": 1 });
 
 export type CompanyDoc = InferSchemaType<typeof companySchema> & { _id: Id; createdAt: Date; updatedAt: Date };
 export type ScoreItem = { ruleId: string; label: string; points: number };

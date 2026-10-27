@@ -4,7 +4,8 @@ import { getCountry } from "@/config/countries";
 import { INDUSTRY_LABELS, type IndustryKey } from "@/config/industries";
 import { Company, DailyRegistrationSnapshot, RegistrySync, SuppressionEntry, type CompanyDoc, type DailyRegistrationSnapshotDoc, type RegistrySyncDoc } from "@/models";
 import { audit } from "@/lib/audit";
-import { CONTACT_SOURCE_LABELS, PENDING_RESEARCH_STATUSES, type ContactSourceKind } from "@/lib/company-fields";
+import { CONTACT_SOURCE_LABELS, CONTACT_STATUS_LABELS, PENDING_RESEARCH_STATUSES, contactStatusOf, type ContactSourceKind } from "@/lib/company-fields";
+import { COMPANY_TYPE_LABELS, companyTypeOf } from "@/lib/company-classification";
 import { companyVisibilityFilter } from "@/lib/data-mode";
 import { addDays, eachDay, resolveDayRange, startOfMonth, todayIn, type Day, type DayRange } from "@/lib/dates/country-time";
 import { Errors } from "@/lib/errors";
@@ -335,6 +336,8 @@ export async function exportCompanies(actor: Actor, input: unknown) {
   const withheld = (c: CompanyDoc) => c.eligibility?.status === "DO_NOT_CONTACT" || c.eligibility?.status === "RESTRICTED" || c.marketingProtected;
   const header = [
     "Company",
+    "Company type",
+    "Company type basis",
     "Registration number",
     "Registration date",
     "Country",
@@ -355,6 +358,7 @@ export async function exportCompanies(actor: Actor, input: unknown) {
     "Contact person",
     "Contact person role",
     "Contact completeness %",
+    "Contact status",
     "Direct contact",
     "Email verification",
     "Research status",
@@ -364,6 +368,7 @@ export async function exportCompanies(actor: Actor, input: unknown) {
     "Source",
     "Data freshness",
     "Last fetched",
+    "Contact last verified",
     "Source record",
     "Demo data",
   ];
@@ -375,6 +380,8 @@ export async function exportCompanies(actor: Actor, input: unknown) {
     lines.push(
       [
         c.companyName,
+        COMPANY_TYPE_LABELS[companyTypeOf(c.companyType)],
+        c.companyType?.reason ?? "Not classified yet",
         c.registrationNumber,
         c.registrationDay,
         c.countryName ?? c.countryCode,
@@ -395,6 +402,7 @@ export async function exportCompanies(actor: Actor, input: unknown) {
         c.contactPerson?.name,
         c.contactPerson?.role,
         c.completeness,
+        CONTACT_STATUS_LABELS[contactStatusOf({ direct: { has: !!c.directContact?.has, emailVerification: c.directContact?.emailVerification, phoneVerification: c.directContact?.phoneVerification, pendingVerification: !!c.directContact?.pendingVerification }, research: { status: c.research?.status, attempts: c.research?.attempts } })],
         c.directContact?.has ? "yes" : "no",
         c.directContact?.emailVerification ?? "",
         c.research?.status ?? "NOT_STARTED",
@@ -404,6 +412,7 @@ export async function exportCompanies(actor: Actor, input: unknown) {
         c.sourceName ?? c.source,
         c.dataFreshness ? DATA_FRESHNESS_LABELS[c.dataFreshness as DataFreshness] : "",
         c.sourceFetchedAt,
+        c.contactLastVerifiedAt,
         c.sourceUrl,
         c.isDemo ? "yes" : "",
       ]

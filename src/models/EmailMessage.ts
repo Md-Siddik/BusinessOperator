@@ -10,6 +10,8 @@ import { defineModel, ObjectId, type Id } from "./_helpers";
 const emailMessageSchema = new Schema(
   {
     kind: { type: String, enum: EMAIL_KINDS, required: true },
+    /** Transactional sub-type for delivery monitoring: VERIFICATION (codes), ACCOUNT, NOTIFICATION. */
+    category: { type: String, enum: ["VERIFICATION", "ACCOUNT", "NOTIFICATION"] },
     campaignId: { type: ObjectId, ref: "EmailCampaign" },
     companyId: { type: ObjectId, ref: "Company" },
     templateId: { type: ObjectId, ref: "EmailTemplate" },
@@ -66,6 +68,7 @@ emailMessageSchema.index({ countryCode: 1, kind: 1, status: 1 });
 emailMessageSchema.index({ to: 1 });
 emailMessageSchema.index({ idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } });
 emailMessageSchema.index({ kind: 1, to: 1, createdAt: -1 });
+emailMessageSchema.index({ kind: 1, category: 1, createdAt: -1 });
 emailMessageSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, partialFilterExpression: { expiresAt: { $type: "date" } } });
 
 export type EmailMessageDoc = InferSchemaType<typeof emailMessageSchema> & { _id: Id; createdAt: Date; updatedAt: Date };

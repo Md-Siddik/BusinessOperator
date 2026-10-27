@@ -34,7 +34,7 @@ function rememberCountry(code: string) {
 export type CountryOptionLite = { code: string; slug: string; name: string; flag: string; today: number | null };
 
 /** Country + date selectors that sit in the page header. */
-export function CountryDateBar({ countries, current, fixedPath, range, from, to, allowAll = true, defaultRange = "today" }: { countries: CountryOptionLite[]; current: string; fixedPath?: boolean; range: string; from?: string; to?: string; allowAll?: boolean; defaultRange?: string }) {
+export function CountryDateBar({ countries, current, fixedPath, range, from, to, allowAll = true, defaultRange = "today", pathPrefix = "/dashboard/companies" }: { countries: CountryOptionLite[]; current: string; fixedPath?: boolean; range: string; from?: string; to?: string; allowAll?: boolean; defaultRange?: string; /** Country pages live under this path (Old company Intelligence uses its own). */ pathPrefix?: string }) {
   const { go, search, router } = useParamsNav();
   const [custom, setCustom] = useState(range === "custom");
   const [cFrom, setCFrom] = useState(from ?? "");
@@ -45,7 +45,7 @@ export function CountryDateBar({ countries, current, fixedPath, range, from, to,
     if (fixedPath) {
       const params = new URLSearchParams(search.toString());
       params.delete("page");
-      router.push(`/dashboard/companies/${code === "ALL" ? "all" : code.toLowerCase()}${params.size ? `?${params}` : ""}`);
+      router.push(`${pathPrefix}/${code === "ALL" ? "all" : code.toLowerCase()}${params.size ? `?${params}` : ""}`);
     } else go({ country: code });
   }
 

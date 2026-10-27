@@ -140,7 +140,7 @@ export async function updateTicket(actor: Actor, id: string, input: unknown) {
     throw Errors.forbidden("Only managers can reassign.");
   }
   if (data.assignedTo) {
-    const ok = await User.exists({ _id: data.assignedTo, role: { $in: ["OWNER", "ADMIN", "STAFF"] }, status: "ACTIVE" });
+    const ok = await User.exists({ _id: data.assignedTo, role: { $in: ["OWNER", "ADMIN", "MANAGER", "STAFF"] }, status: "ACTIVE" });
     if (!ok) throw Errors.badRequest("Assignee must be an active internal user.");
   }
   const set: Record<string, unknown> = { ...data };

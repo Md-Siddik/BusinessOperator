@@ -7,6 +7,7 @@ import { imapErrorMessage, withInbox, zohoImapConfig } from "@/lib/email/imap";
 import { isOwner, type Actor } from "@/lib/permissions";
 import { AppError, Errors } from "@/lib/errors";
 import { notifyUsers } from "@/features/notifications/service";
+import { looksLikeBounce, parseBounce, recordBounce } from "@/lib/email/deliverability";
 
 /**
  * Client Mail — OWNER ONLY. Reads the Zoho INBOX live over IMAP; message bodies are
@@ -173,24 +174,47 @@ export async function pollMailbox(log: (m: string) => void = () => undefined) {
   const saved = await Checkpoint.findOne({ key: CHECKPOINT }).lean<{ value: string }>();
   const [savedValidity, savedUid] = (saved?.value ?? "").split(":");
 
-  const { validity, lastUid, fresh } = await withInbox(config, async (client) => {
+  const { validity, lastUid, fresh, bounces } = await withInbox(config, async (client) => {
     const box = client.mailbox;
-    if (!box) return { validity: "", lastUid: 0, fresh: [] as MailSummary[] };
+    if (!box) return { validity: "", lastUid: 0, fresh: [] as MailSummary[], bounces: [] as { recipient: string; diagnostic?: string }[] };
     const validity = String(box.uidValidity);
     const lastUid = Math.max(0, Number(box.uidNext) - 1);
-    if (validity !== savedValidity || !savedUid) return { validity, lastUid, fresh: [] as MailSummary[] };
+    if (validity !== savedValidity || !savedUid) return { validity, lastUid, fresh: [] as MailSummary[], bounces: [] };
     const after = Number(savedUid);
     const fresh: MailSummary[] = [];
+    const bounceUids: number[] = [];
     if (lastUid > after) {
       for await (const m of client.fetch(`${after + 1}:*`, { uid: true, envelope: true }, { uid: true })) {
         const from = m.envelope?.from?.[0];
         // "n:*" always returns the newest message, even when it is older than n.
         if (m.uid <= after || !from?.address || own.has(from.address.toLowerCase())) continue;
-        fresh.push({ uid: m.uid, from: { name: from.name || undefined, address: from.address.toLowerCase() }, subject: m.envelope?.subject || "(no subject)", seen: false, hasAttachments: false });
+        const subject = m.envelope?.subject || "(no subject)";
+        if (looksLikeBounce(from.address, subject)) bounceUids.push(m.uid);
+        fresh.push({ uid: m.uid, from: { name: from.name || undefined, address: from.address.toLowerCase() }, subject, seen: false, hasAttachments: false });
       }
     }
-    return { validity, lastUid: Math.max(lastUid, after), fresh };
+    // Delivery failures returned to the mailbox (DSN): read them to learn which recipient bounced.
+    const bounces: { recipient: string; diagnostic?: string }[] = [];
+    for (const uid of bounceUids.slice(-20)) {
+      try {
+        const msg = await client.fetchOne(String(uid), { source: { start: 0, maxLength: 200_000 } }, { uid: true });
+        const parsed = msg && msg.source ? parseBounce(msg.source.toString("utf8"), [...own]) : null;
+        if (parsed) bounces.push(parsed);
+      } catch {
+        /* unreadable bounce — the notification below still tells the Owner */
+      }
+    }
+    return { validity, lastUid: Math.max(lastUid, after), fresh, bounces };
   });
+
+  for (const b of bounces) {
+    try {
+      const r = await recordBounce(b.recipient, b.diagnostic);
+      log(`bounce recorded (${r.hard ? "hard" : "soft"}${r.kind ? `, ${r.kind.toLowerCase()}` : ""}${r.contacts ? `, ${r.contacts} contact(s) marked bounced` : ""})`);
+    } catch (err) {
+      log(`bounce could not be recorded — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 
   if (fresh.length) {
     const owners = (await User.find({ role: "OWNER", status: "ACTIVE" }).select("_id").lean<{ _id: Types.ObjectId }[]>()).map((u) => String(u._id));

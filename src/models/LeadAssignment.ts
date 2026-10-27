@@ -4,11 +4,17 @@ import { defineModel, ObjectId, type Id } from "./_helpers";
 export const LEAD_ASSIGNMENT_STATUSES = ["ACTIVE", "WITHDRAWN"] as const;
 export type LeadAssignmentStatus = (typeof LEAD_ASSIGNMENT_STATUSES)[number];
 
+/** The marketer's own outreach progress on this lead. Missing = NOT_REACHED. */
+export const OUTREACH_STATUSES = ["NOT_REACHED", "MESSAGED", "GOT_RESPONSE"] as const;
+export type OutreachStatus = (typeof OUTREACH_STATUSES)[number];
+
 const historySchema = new Schema(
   {
-    action: { type: String, enum: ["SENT", "RESENT", "WITHDRAWN"], required: true },
+    action: { type: String, enum: ["SENT", "RESENT", "WITHDRAWN", "OUTREACH"], required: true },
     actorId: { type: ObjectId, ref: "User", required: true },
     at: { type: Date, required: true },
+    /** For OUTREACH entries: the status chosen. */
+    outreachStatus: { type: String, enum: OUTREACH_STATUSES },
   },
   { _id: false },
 );
@@ -28,6 +34,8 @@ const leadAssignmentSchema = new Schema(
     status: { type: String, enum: LEAD_ASSIGNMENT_STATUSES, default: "ACTIVE" },
     sentAt: { type: Date, required: true },
     withdrawnAt: Date,
+    outreachStatus: { type: String, enum: OUTREACH_STATUSES },
+    outreachStatusAt: Date,
     history: { type: [historySchema], default: [] },
   },
   { timestamps: true },

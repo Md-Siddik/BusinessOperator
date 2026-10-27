@@ -2,7 +2,7 @@ import { connectToDatabase } from "@/lib/db/connect";
 import { getSessionUser } from "@/lib/auth/session";
 import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { channels, getRealtime, type RealtimeEvent } from "@/lib/realtime";
-import { can, isClient, isInternal } from "@/lib/permissions";
+import { isClient, isOwner } from "@/lib/permissions";
 import { canSeeConversationEvent } from "@/features/chat/service";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +39,8 @@ export async function GET(req: Request) {
       const unsubs = [
         rt.subscribe(channels.user(actor.id), send),
         isClient(actor) ? rt.subscribe(channels.organization(actor.organizationId!), onConversationEvent) : rt.subscribe(channels.internal, onConversationEvent),
-        // Company-intelligence events never reach clients.
-        ...(isInternal(actor) && can(actor, "companies.read") ? [rt.subscribe(channels.intel, send)] : []),
+        // Owner workspace live updates (new registrations, research progress) — Owner only.
+        ...(isOwner(actor) ? [rt.subscribe(channels.intel, send)] : []),
       ];
       controller.enqueue(encoder.encode(`retry: 5000\n: connected\n\n`));
       const heartbeat = setInterval(() => {

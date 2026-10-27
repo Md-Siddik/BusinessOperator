@@ -95,7 +95,7 @@ export function AddClientUser({ orgId }: { orgId: string }) {
   );
 }
 
-const TEAM_ROLES: Role[] = ["STAFF", "DIGITAL_MARKETER", "ADMIN", "OWNER"];
+const TEAM_ROLES: Role[] = ["STAFF", "MANAGER", "DIGITAL_MARKETER", "ADMIN", "OWNER"];
 
 /** Owner-only actions on one client user: make them a team member with a role, or delete the account. */
 export function ClientUserActions({ user }: { user: { id: string; name: string } }) {

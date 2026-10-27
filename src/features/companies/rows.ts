@@ -1,5 +1,6 @@
 import { INDUSTRY_LABELS, type IndustryKey } from "@/config/industries";
-import type { ContactSourceKind, Relevance } from "@/lib/company-fields";
+import { contactStatusOf, type ContactSourceKind, type Relevance } from "@/lib/company-fields";
+import { companyTypeOf } from "@/lib/company-classification";
 import type { CompanyDoc } from "@/models";
 import type { CompanyRow } from "@/components/intel/types";
 
@@ -74,5 +75,10 @@ export function toCompanyRow(c: CompanyDoc): CompanyRow {
     eligibility: c.eligibility?.status ?? "NEEDS_REVIEW",
     fitScore: c.serviceFit?.score ?? 0,
     suggestedService: (c.serviceFit?.suggestions ?? []).find((x) => x.status === "ACCEPTED")?.packageName ?? (c.serviceFit?.suggestions ?? []).find((x) => x.status !== "REJECTED")?.packageName ?? undefined,
+    companyType: { value: companyTypeOf(c.companyType), reason: c.companyType?.reason ?? undefined, manual: !!c.companyType?.manual },
+    contactStatus: contactStatusOf({ direct: { has: !!c.directContact?.has, emailVerification: c.directContact?.emailVerification, phoneVerification: c.directContact?.phoneVerification, pendingVerification: !!c.directContact?.pendingVerification }, research: { status: c.research?.status, attempts: c.research?.attempts } }),
+    employees: c.employees ?? undefined,
+    foundedDay: iso(c.incorporationDate)?.slice(0, 10) ?? c.registrationDay ?? undefined,
+    updatedAt: iso(c.updatedAt),
   };
 }

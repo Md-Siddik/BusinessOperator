@@ -63,6 +63,25 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
   if (queued) log(`research backfill: ${queued} companies queued`);
   const retries = await scheduleDueRetries();
   if (retries) log(`research retries: ${retries} due companies queued`);
+  try {
+    // Company Type ages with the company (startup → needs review → established); manual decisions are kept.
+    const { reclassifyStale } = await import("@/features/companies/classification");
+    const r = await reclassifyStale();
+    if (r.changed) log(`company type: ${r.changed} of ${r.total} re-evaluated companies changed type`);
+  } catch (err) {
+    log(`company type: re-evaluation failed — ${err instanceof Error ? err.message : String(err)}`);
+  }
+  if (process.env.ESTABLISHED_COLLECTION !== "off") {
+    // Established companies from the same official sources (bounded, once a day per country). Isolated from the daily syncs.
+    try {
+      const { collectEstablished } = await import("./established");
+      for (const r of await collectEstablished()) {
+        if (r.days.length || r.error) log(`established ${r.country}: ${r.error ? `failed — ${r.error}` : `${r.kept} kept of ${r.fetched} (${r.imported} new) on ${r.days.join(", ")}`}`);
+      }
+    } catch (err) {
+      log(`established: run failed — ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
   const { dispatchDueFollowUpReminders } = await import("@/features/crm/service");
   await dispatchDueFollowUpReminders();
   if (process.env.OPPORTUNITY_SCHEDULER !== "off") {

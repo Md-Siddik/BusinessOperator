@@ -24,6 +24,11 @@ export const TEAM_NAV: TeamNavGroup[] = [
     items: [{ href: "/staff/client-leads", label: "Client leads", icon: "leads", requires: ["marketerLeads.view"] }],
   },
   {
+    id: "company-intelligence",
+    title: "Company Intelligence",
+    items: [{ href: "/staff/companies", label: "Companies", icon: "companies", requires: ["companies.read"] }],
+  },
+  {
     id: "opportunities",
     title: "Opportunity Intelligence",
     items: [{ href: "/staff/opportunities", label: "Opportunities", icon: "radar", requires: ["opportunities.view"] }],
@@ -53,7 +58,7 @@ export const TEAM_NAV: TeamNavGroup[] = [
   {
     id: "team",
     title: "Team",
-    items: [{ href: "/staff/users", label: "Users & access", icon: "users", requires: ["users.manage", "opportunities.grant", "marketerLeads.grant"] }],
+    items: [{ href: "/staff/users", label: "Users & access", icon: "users", requires: ["users.manage", "opportunities.grant", "marketerLeads.grant", "companies.grant"] }],
   },
   {
     id: "account",

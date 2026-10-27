@@ -13,7 +13,7 @@ import { expectRejects, makeOrg, makeUser } from "./helpers";
 
 /**
  * Access control: Digital Marketer handoff, per-person grants with provenance, scoped delegation,
- * cascade revocation and the Owner-only rule for Company Intelligence.
+ * cascade revocation and the Owner-only Company Intelligence workspace tools.
  * All records are isolated fixtures in the throw-away test database.
  */
 const session = vi.hoisted(() => ({ current: null as SessionUser | null }));
@@ -239,35 +239,42 @@ describe("4–5. Delegated marketer-lead access needs the scoped Owner grant", (
   });
 });
 
-describe("6. Company Intelligence is Owner-only — nobody else, by any route", () => {
-  it("the catalog marks every Company Intelligence entry non-delegable", () => {
-    expect(COMPANY_INTELLIGENCE_PERMISSIONS).toEqual(expect.arrayContaining(["companies.read", "companies.export", "companies.edit", "registry.sync", "leads.sendToMarketer"]));
-    for (const p of COMPANY_INTELLIGENCE_PERMISSIONS) {
+describe("6. Company Intelligence: data per person, Owner workspace tools never", () => {
+  const OWNER_TOOLS = COMPANY_INTELLIGENCE_PERMISSIONS.filter((p) => PERMISSION_DEFS[p].ownerOnly);
+
+  it("the catalog keeps CRM, outreach, registry syncs and lead handoff non-delegable; data access is grantable to eligible team roles", () => {
+    expect(OWNER_TOOLS).toEqual(expect.arrayContaining(["registry.sync", "leads.manage", "leads.sendToMarketer", "outreach.manage", "outreach.approve"]));
+    for (const p of OWNER_TOOLS) {
       expect(isGrantable(p)).toBe(false);
       expect(PERMISSION_DEFS[p].eligibleRoles).toEqual([]);
     }
+    for (const p of ["companies.read", "companies.edit", "companies.export", "companies.delete"] as Permission[]) {
+      expect(isGrantable(p)).toBe(true);
+      expect(PERMISSION_DEFS[p].eligibleRoles).not.toContain("CLIENT");
+    }
   });
 
-  it("forged grants are refused: Owner UI/API, payloads, account creation and role escalation", async () => {
-    for (const p of COMPANY_INTELLIGENCE_PERMISSIONS) await expectRejects(grant(owner.id, superAdmin, p), 403);
+  it("forged grants are refused: Owner-only tools, ineligible roles, account creation and role escalation", async () => {
+    for (const p of OWNER_TOOLS) await expectRejects(grant(owner.id, superAdmin, p), 403);
     await as(owner.id);
-    const forged = await accessChangeRoute(post(`/api/admin/users/${superAdmin}/access`, { permission: "companies.read", action: "grant" }), ctx({ id: superAdmin }));
+    const forged = await accessChangeRoute(post(`/api/admin/users/${superAdmin}/access`, { permission: "leads.manage", action: "grant" }), ctx({ id: superAdmin }));
     expect(forged.status).toBe(403);
     expect(((await forged.json()) as { error: { message: string } }).error.message).toMatch(/Owner-only/);
     expect((await accessChangeRoute(post(`/api/admin/users/${superAdmin}/access`, { permission: "everything.*", action: "grant" }), ctx({ id: superAdmin }))).status).toBe(400);
-    expect((await createUserRoute(post("/api/admin/users", { name: "Sneaky", email: "sneaky@test.local", role: "STAFF", password: "Strong-test-password-1", permissions: ["companies.read"] }), ctx())).status).toBe(403);
+    // Staff may view Company Intelligence when granted, but never export it.
+    expect((await createUserRoute(post("/api/admin/users", { name: "Sneaky", email: "sneaky@test.local", role: "STAFF", password: "Strong-test-password-1", permissions: ["companies.export"] }), ctx())).status).toBe(403);
     await as(superAdmin);
     expect((await patchUserRoute(req(`/api/admin/users/${superAdmin2}`, { method: "PATCH", body: JSON.stringify({ role: "OWNER" }) }), ctx({ id: superAdmin2 }))).status).toBe(403);
   });
 
-  it("a grant written straight into the database is never effective", async () => {
-    await User.collection.updateOne({ _id: new Types.ObjectId(superAdmin) }, { $push: { permissionGrants: { permission: "companies.read", grantedBy: null, origin: "OWNER", grantedAt: new Date() } as never }, $addToSet: { permissions: "companies.read" } });
-    expect(await holds(superAdmin, "companies.read")).toBe(false);
+  it("a grant written straight into the database is never effective for an Owner-only tool", async () => {
+    await User.collection.updateOne({ _id: new Types.ObjectId(superAdmin) }, { $push: { permissionGrants: { permission: "leads.manage", grantedBy: null, origin: "OWNER", grantedAt: new Date() } as never }, $addToSet: { permissions: "leads.manage" } });
+    expect(await holds(superAdmin, "leads.manage")).toBe(false);
     // Even a hand-built actor object claiming the permission is refused.
-    expect(can({ ...(await fresh(superAdmin)), permissions: [...PERMISSIONS] }, "companies.read")).toBe(false);
+    expect(can({ ...(await fresh(superAdmin)), permissions: [...PERMISSIONS] }, "leads.manage")).toBe(false);
   });
 
-  it("every Company Intelligence API answers 403 to every non-owner, without data", async () => {
+  it("the Owner workspace APIs answer 403 to every non-owner, without data — even with Company Intelligence granted", async () => {
     const calls: [string, () => Promise<Response>][] = [
       ["companies", () => companiesRoute(req("/api/companies"), ctx())],
       ["companies/export", () => companiesExportRoute(req("/api/companies/export"), ctx())],
@@ -496,7 +503,7 @@ describe("Owner deletes accounts and turns clients into team members", () => {
     const admin = await account(owner, "ADMIN", ["users.manage"]);
     await expectRejects(users.convertClientToTeamMember(await fresh(admin), String(user._id), { role: "STAFF" }), 403);
     await expectRejects(users.convertClientToTeamMember(owner, String(user._id), { role: "CLIENT" }), 400);
-    await expectRejects(users.convertClientToTeamMember(owner, String(user._id), { role: "DIGITAL_MARKETER", permissions: ["companies.read"] }), 403);
+    await expectRejects(users.convertClientToTeamMember(owner, String(user._id), { role: "DIGITAL_MARKETER", permissions: ["leads.manage"] }), 403);
   });
 });
 

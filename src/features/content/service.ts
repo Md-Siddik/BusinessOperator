@@ -65,7 +65,7 @@ export async function submitContactRequest(input: unknown, opts: { actor?: Actor
     if ((err as { code?: number }).code === 11000) return { ok: true };
     throw err;
   }
-  if (!owned) await sendTransactionalEmail({ to: data.email, toName: data.name, subject: "Verify your project inquiry email", sensitive: true,
+  if (!owned) await sendTransactionalEmail({ to: data.email, toName: data.name, subject: "Verify your project inquiry email", sensitive: true, category: "VERIFICATION",
     text: "Confirm your email so our team can send private replies and quotations: " + absoluteUrl("/verify-inquiry?id=" + doc._id + "&token=" + token) });
 
   // Optional follow-up (website analytics); never allowed to fail the enquiry.

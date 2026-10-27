@@ -12,7 +12,32 @@ import { isWebmail } from "@/lib/company-fields";
 const CONTACT_PATH = /(contact|kontakt|kontakta|yhteys|ota-yhteytta|contacto|contatti|contato|impressum|imprint|legal|mentions-legales|mentions|about|om-oss|om_oss|omoss|tietoa|uber-uns|ueber-uns|team|tiimi|people|a-propos|qui-sommes-nous|nous-contacter|o-nas|par-mums|chi-siamo)/i;
 const CONTACT_LABEL = /(contact|kontakt|yhteys|impressum|imprint|legal notice|mentions|about|om oss|tietoa meistä|über uns|team|à propos|nous contacter|o nás|par mums|kontakti)/i;
 
-export const TLDS: Record<string, string[]> = { NO: ["no"], SE: ["se"], DK: ["dk"], FI: ["fi"], DE: ["de"], FR: ["fr"], GB: ["co.uk", "uk"], IE: ["ie"], NL: ["nl"], EE: ["ee"], LV: ["lv"], CH: ["ch"], CZ: ["cz"] };
+/**
+ * Country domains tried for website discovery, most common first. Every candidate is still
+ * verified on the page itself (registration number or exact legal name) before it is used.
+ * US, CA and AU registries publish no website or email at all, so discovery is their main
+ * free route to a public business contact.
+ */
+export const TLDS: Record<string, string[]> = {
+  NO: ["no"],
+  SE: ["se"],
+  DK: ["dk"],
+  FI: ["fi"],
+  DE: ["de"],
+  FR: ["fr"],
+  GB: ["co.uk", "uk"],
+  IE: ["ie"],
+  NL: ["nl"],
+  EE: ["ee"],
+  LV: ["lv"],
+  CH: ["ch"],
+  CZ: ["cz"],
+  PL: ["pl", "com.pl"],
+  US: ["com"],
+  CA: ["ca", "com"],
+  AU: ["com.au", "au"],
+  JP: ["co.jp", "jp"],
+};
 
 /** Quotes differ between registers and websites (SIA "Vastium" vs SIA „Vastium“ vs SIA Vastium). */
 const normName = (s: string) =>
@@ -191,7 +216,7 @@ export async function researchWebsite(rawUrl: string, company: { companyName: st
 }
 
 /** Plausible own-domain candidates from the legal name (verified before use). */
-const LEGAL_SUFFIX = /\b(as|asa|enk|nuf|da|ans|sa|ab|hb|kb|aps|a\/s|ivs|i\/s|oy|oyj|tmi|ky|gmbh|ug|ag|kg|ohg|sas|sasu|sarl|eurl|sci|ltd|limited|llp|plc|cic|bv|nv|vof|ou|oü|as)\.?$/i;
+const LEGAL_SUFFIX = /\b(as|asa|enk|nuf|da|ans|sa|ab|hb|kb|aps|a\/s|ivs|i\/s|oy|oyj|tmi|ky|gmbh|ug|ag|kg|ohg|sas|sasu|sarl|eurl|sci|ltd|limited|llp|plc|cic|bv|nv|vof|ou|oü|as|inc|incorporated|llc|pllc|lllp|lp|corp|corporation|co|company|pty|proprietary|ulc|ltee|ltée|kk)\.?$/i;
 /** Country-specific legal forms that the single-word suffix rule cannot catch. */
 const LEGAL_FORM_AFFIX: Record<string, RegExp[]> = {
   // Multi-part forms split into letters: "s.r.o.", "spol. s r.o.", "a.s.", "v.o.s.", "k.s.", "z.s.".
@@ -199,6 +224,10 @@ const LEGAL_FORM_AFFIX: Record<string, RegExp[]> = {
   // The legal form comes first: SIA "Vastium", AS "…", IK "…".
   LV: [/^\s*(sia|as|ik|ks|ps|zs)\s+/i],
   CH: [/[,\s]+(gmbh|ag|sa|sàrl|sarl|sagl|genossenschaft|société coopérative|in liquidation)\.?\s*$/i],
+  // "sp. z o.o.", "S.A.", "sp.k.", "sp.j." (spółka …)
+  PL: [/[,\s]+(sp\.?\s*z\s*o\.?\s*o\.?|s\.?\s?a\.?|sp\.?\s?[kjp]\.?|spółka\s+(z\s+ograniczoną\s+odpowiedzialnością|akcyjna|komandytowa|jawna|cywilna))\s*$/i],
+  // Japanese corporate designations in romanised names.
+  JP: [/^\s*(kabushiki\s+kaisha|godo\s+kaisha)\s+|[,\s]+(kabushiki\s+kaisha|godo\s+kaisha|co\.?,?\s*ltd\.?)\s*$/i],
 };
 
 export function domainCandidates(name: string, countryCode: string) {

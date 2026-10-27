@@ -1,3 +1,5 @@
+import type { CompanyType } from "@/lib/company-classification";
+import type { ContactStatus } from "@/lib/company-fields";
 import type { ContactSourceKind, Relevance } from "@/lib/company-fields";
 
 /** Serializable company row for the daily list, drawer and cards (no raw source data). */
@@ -50,6 +52,12 @@ export type CompanyRow = {
   eligibility: string;
   fitScore: number;
   suggestedService?: string;
+  /** Shared Company Type classification (lib/company-classification). */
+  companyType: { value: CompanyType; reason?: string; manual: boolean };
+  contactStatus: ContactStatus;
+  employees?: number;
+  foundedDay?: string;
+  updatedAt?: string;
   /** Active Digital Marketer assignments (Owner view only). */
   sentToMarketers?: number;
 };

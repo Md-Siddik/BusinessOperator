@@ -111,7 +111,7 @@ export async function requestPasswordReset(input: unknown, ip?: string) {
   const { token, hash } = createOpaqueToken();
   await User.updateOne({ _id: user._id }, { $set: { passwordResetTokenHash: hash, passwordResetExpiresAt: new Date(Date.now() + 3_600_000) } });
   const mail = transactionalTemplates.passwordReset(user.name, absoluteUrl(`/reset-password?token=${token}`));
-  await sendTransactionalEmail({ to: user.email, toName: user.name, ...mail, sensitive: true });
+  await sendTransactionalEmail({ to: user.email, toName: user.name, ...mail, sensitive: true, category: "ACCOUNT" });
   await audit(null, "auth.password_reset_requested", { entityType: "User", entityId: String(user._id), ip });
   return { ok: true };
 }

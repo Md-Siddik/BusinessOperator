@@ -3,8 +3,8 @@ import { z } from "zod";
 import { AuditLog, Company, ContactRequest, Conversation, FollowUp, Notification, Organization, Project, ProjectTask, SupportTicket, User, type AuditLogDoc, type UserDoc } from "@/models";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
-import { canAssignRole, can, effectivePermissions, PERMISSIONS, ROLE_TEMPLATES, type Actor, type Permission, type Role } from "@/lib/permissions";
-import { applyRoleChange, changeAccess, grantDecision, grantInitialAccess, revalidateGrantsIssuedBy } from "@/features/access/service";
+import { canAssignRole, can, effectivePermissions, PERMISSIONS, type Actor, type Permission, type Role } from "@/lib/permissions";
+import { applyRoleChange, changeAccess, getRoleTemplates, grantDecision, grantInitialAccess, revalidateGrantsIssuedBy } from "@/features/access/service";
 import { hashPassword } from "@/lib/auth/password";
 import { escapeRegex } from "@/lib/utils";
 import { emailSchema, paginate, parseObjectId, passwordSchema } from "@/lib/validation";
@@ -16,7 +16,7 @@ function requireUsersManage(actor: Actor) {
 export async function listInternalUsersAdmin(actor: Actor, opts: { q?: string; page?: number } = {}) {
   requireUsersManage(actor);
   const page = opts.page ?? 1;
-  const filter: Record<string, unknown> = { role: { $in: actor.role === "OWNER" ? ["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"] : ["STAFF"] } };
+  const filter: Record<string, unknown> = { role: { $in: actor.role === "OWNER" ? ["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"] : ["STAFF"] } };
   if (opts.q) filter.$or = [{ name: new RegExp(escapeRegex(opts.q), "i") }, { email: new RegExp(escapeRegex(opts.q), "i") }];
   const [items, total] = await Promise.all([
     User.find(filter).select("name email role status permissions permissionGrants lastLoginAt createdAt isDemo").sort({ role: 1, name: 1 }).skip((page - 1) * 50).limit(50).lean<UserDoc[]>(),
@@ -28,14 +28,14 @@ export async function listInternalUsersAdmin(actor: Actor, opts: { q?: string; p
 export const createUserSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: emailSchema,
-  role: z.enum(["ADMIN", "STAFF", "DIGITAL_MARKETER"]),
+  role: z.enum(["ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"]),
   /** Required for a new account; ignored when an existing account is linked (its password is never changed). */
   password: passwordSchema.optional(),
-  /** Initial access. Every entry is checked like an individual grant (Company Intelligence is always refused). */
+  /** Initial access. Every entry is checked like an individual grant (Owner-only entries are always refused). */
   permissions: z.array(z.enum(PERMISSIONS)).optional(),
 });
 
-const TEAM_ROLES_LIST = ["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"];
+const TEAM_ROLES_LIST = ["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"];
 
 export type EmployeeCandidate =
   | { status: "NEW"; message: string }
@@ -77,7 +77,8 @@ export async function createInternalUser(actor: Actor, input: unknown) {
   if (!canAssignRole(actor, data.role)) throw Errors.forbidden(data.role === "ADMIN" ? "Only the owner can create admins." : "Only the owner can create this kind of account.");
   if (!data.password) throw Errors.badRequest("Set an initial password for the new account.", { fieldErrors: { password: ["Required for a new account"] } });
   // Without an explicit list, the role's suggested starting access applies — limited to what this actor may grant.
-  const requested: Permission[] = data.permissions ?? ROLE_TEMPLATES[data.role].filter((p) => grantDecision(actor, { id: "new", role: data.role }, p).ok);
+  const templates = await getRoleTemplates();
+  const requested: Permission[] = data.permissions ?? templates[data.role].filter((p) => grantDecision(actor, { id: "new", role: data.role }, p).ok);
   for (const p of requested) {
     const d = grantDecision(actor, { id: "new", role: data.role }, p);
     if (!d.ok) throw Errors.forbidden(d.reason);
@@ -111,7 +112,7 @@ async function linkExistingEmployee(actor: Actor, email: string, candidate: Extr
 }
 
 export const updateUserSchema = z.object({
-  role: z.enum(["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"]).optional(),
+  role: z.enum(["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"]).optional(),
   status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
   /** Full desired permission list (older clients). Applied as individual, policy-checked grants and revocations. */
   permissions: z.array(z.enum(PERMISSIONS)).optional(),
@@ -199,7 +200,7 @@ export async function deleteUserAccount(actor: Actor, userId: string) {
 }
 
 export const convertClientSchema = z.object({
-  role: z.enum(["OWNER", "ADMIN", "STAFF", "DIGITAL_MARKETER"]),
+  role: z.enum(["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER"]),
   /** Starting access; defaults to the role's suggested template. */
   permissions: z.array(z.enum(PERMISSIONS)).optional(),
 });
@@ -216,7 +217,7 @@ export async function convertClientToTeamMember(actor: Actor, userId: string, in
   const target = await User.findById(id).select("name role organizationId").lean<UserDoc>();
   if (!target || target.role !== "CLIENT") throw Errors.notFound();
   if (!canAssignRole(actor, data.role)) throw Errors.forbidden("Only the owner can assign this role.");
-  const requested: Permission[] = data.permissions ?? ROLE_TEMPLATES[data.role].filter((p) => grantDecision(actor, { id: userId, role: data.role }, p).ok);
+  const requested: Permission[] = data.permissions ?? (await getRoleTemplates())[data.role].filter((p) => grantDecision(actor, { id: userId, role: data.role }, p).ok);
   for (const p of requested) {
     const d = grantDecision(actor, { id: userId, role: data.role }, p);
     if (!d.ok) throw Errors.forbidden(d.reason);

@@ -30,7 +30,7 @@ export async function inviteAuthorizedAccounts() {
     }
     if (!user) throw new Error("Invitation identity could not be created.");
     await User.updateOne({ _id: user._id }, { $set: { invitationTokenHash: hash, invitationExpiresAt: new Date(Date.now() + 86400000) } });
-    const mail = await sendTransactionalEmail({ to: account.email, subject: "Set up your ExploreTechify account", sensitive: true,
+    const mail = await sendTransactionalEmail({ to: account.email, subject: "Set up your ExploreTechify account", sensitive: true, category: "ACCOUNT",
       text: "You have been invited as " + account.name + ". Choose your own password using this single-use link (expires in 24 hours): " + absoluteUrl("/accept-invitation?token=" + token) + ". After setup, sign in with your email and password." });
     await audit(null, "account.invited", { entityType: "User", entityId: String(user._id), metadata: { email: account.email, role: account.role, emailAccepted: mail.accepted } });
     results.push({ email: account.email, status: mail.accepted ? "Invitation accepted by email provider; delivery unconfirmed." : "Invitation saved; email failed. Re-run --invite after fixing email." });

@@ -1,11 +1,13 @@
 import "server-only";
 import { Types, type PipelineStage } from "mongoose";
 import { z } from "zod";
-import { Company, CrmActivity, LeadAssignment, User, type CompanyDoc, type LeadAssignmentDoc, type UserDoc } from "@/models";
+import { Company, CrmActivity, LeadAssignment, OUTREACH_STATUSES, User, type CompanyDoc, type LeadAssignmentDoc, type OutreachStatus, type UserDoc } from "@/models";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
 import { can, effectivePermissions, isOwner, type Actor, type Role } from "@/lib/permissions";
 import { escapeRegex } from "@/lib/utils";
+import { companyTypeOf, COMPANY_TYPE_PARAMS, type CompanyType, type CompanyTypeParam } from "@/lib/company-classification";
+import { formatPhone } from "@/lib/company-fields";
 import { safeExternalUrl } from "@/lib/utils/url";
 import { objectId, paginate, parseObjectId } from "@/lib/validation";
 
@@ -138,10 +140,12 @@ export async function activeAssignmentCounts(companyIds: (string | Types.ObjectI
 
 /* ───────────────────────── Marketer's own table ───────────────────────── */
 
-export const MARKETER_LEAD_SORTS = ["sent", "company", "contact"] as const;
+export const MARKETER_LEAD_SORTS = ["sent", "company", "contact", "type"] as const;
 
 export const marketerLeadQuerySchema = z.object({
   q: z.string().trim().max(120).optional(),
+  /** Company Type from the shared classification (the same value Company Intelligence shows). */
+  type: z.enum(Object.keys(COMPANY_TYPE_PARAMS) as [CompanyTypeParam, ...CompanyTypeParam[]]).optional(),
   sort: z.enum(MARKETER_LEAD_SORTS).default("sent"),
   dir: z.enum(["asc", "desc"]).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
@@ -154,10 +158,17 @@ export type MarketerLeadRow = {
   contactPerson?: string;
   contactRole?: string;
   phone?: string;
+  phoneDisplay?: string;
   website?: { href: string; display: string };
   countryCode?: string;
   sentAt: string;
+  companyType: { value: CompanyType; reason?: string; manual: boolean };
+  /** The marketer's own outreach progress (missing = NOT_REACHED). */
+  outreachStatus: OutreachStatus;
+  outreachStatusAt?: string;
 };
+
+export type MarketerLeadStats = { total: number; recent: number; withPhone: number; withWebsite: number; startup: number; established: number; review: number };
 
 /**
  * Leads assigned to the signed-in Digital Marketer. Requires "View Assigned Client Leads";
@@ -168,12 +179,18 @@ export async function listMarketerLeads(actor: Actor, input: unknown) {
   if (actor.role !== "DIGITAL_MARKETER" || !can(actor, "marketerLeads.view")) throw Errors.forbidden();
   const q = marketerLeadQuerySchema.parse(input);
   const dir = q.dir === "asc" ? 1 : q.dir === "desc" ? -1 : q.sort === "sent" ? -1 : 1;
-  const sortStage: Record<string, 1 | -1> = q.sort === "company" ? { "company.companyName": dir, _id: 1 } : q.sort === "contact" ? { "company.contactPerson.name": dir, _id: 1 } : { sentAt: dir, _id: 1 };
-  const pipeline: PipelineStage[] = [
+  const sortStage: Record<string, 1 | -1> =
+    q.sort === "company" ? { "company.companyName": dir, _id: 1 } : q.sort === "contact" ? { "company.contactPerson.name": dir, _id: 1 } : q.sort === "type" ? { "company.companyType.value": dir, sentAt: -1, _id: 1 } : { sentAt: dir, _id: 1 };
+  const base: PipelineStage[] = [
     { $match: { recipientId: new Types.ObjectId(actor.id), status: "ACTIVE" } },
-    { $lookup: { from: Company.collection.name, localField: "companyId", foreignField: "_id", as: "company", pipeline: [{ $project: { companyName: 1, contactPerson: 1, phone: 1, mobile: 1, website: 1, countryCode: 1 } }] } },
+    { $lookup: { from: Company.collection.name, localField: "companyId", foreignField: "_id", as: "company", pipeline: [{ $project: { companyName: 1, contactPerson: 1, phone: 1, mobile: 1, website: 1, countryCode: 1, "companyType.value": 1, "companyType.reason": 1, "companyType.manual": 1 } }] } },
     { $unwind: "$company" },
   ];
+  const pipeline: PipelineStage[] = [...base];
+  if (q.type) {
+    const value = COMPANY_TYPE_PARAMS[q.type];
+    pipeline.push({ $match: value === "NEEDS_REVIEW" ? { "company.companyType.value": { $nin: ["STARTUP", "ESTABLISHED"] } } : { "company.companyType.value": value } });
+  }
   if (q.q) {
     const rx = new RegExp(escapeRegex(q.q), "i");
     const digits = q.q.replace(/\D/g, "");
@@ -186,18 +203,73 @@ export async function listMarketerLeads(actor: Actor, input: unknown) {
     pipeline.push({ $match: { $or: or } });
   }
   pipeline.push({ $sort: sortStage }, { $facet: { items: [{ $skip: (q.page - 1) * q.pageSize }, { $limit: q.pageSize }], total: [{ $count: "n" }] } });
-  const [res] = await LeadAssignment.aggregate<{ items: (LeadAssignmentDoc & { company: CompanyDoc })[]; total: { n: number }[] }>(pipeline);
-  const items: MarketerLeadRow[] = (res?.items ?? []).map((a) => ({
-    id: String(a._id),
-    companyName: a.company.companyName,
-    contactPerson: a.company.contactPerson?.name ?? undefined,
-    contactRole: a.company.contactPerson?.role ?? undefined,
-    phone: a.company.phone ?? a.company.mobile ?? undefined,
-    website: safeExternalUrl(a.company.website) ?? undefined,
-    countryCode: a.company.countryCode,
-    sentAt: new Date(a.sentAt).toISOString(),
-  }));
-  return { ...paginate(items, res?.total[0]?.n ?? 0, q.page, q.pageSize), sort: q.sort, dir: dir === 1 ? ("asc" as const) : ("desc" as const), q: q.q ?? "" };
+  const since = new Date(Date.now() - 7 * 86_400_000);
+  const [[res], [stats]] = await Promise.all([
+    LeadAssignment.aggregate<{ items: (LeadAssignmentDoc & { company: CompanyDoc })[]; total: { n: number }[] }>(pipeline),
+    // Summary cards: all of this marketer's active leads (independent of search / type filter).
+    LeadAssignment.aggregate<MarketerLeadStats>([
+      ...base,
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          recent: { $sum: { $cond: [{ $gte: ["$sentAt", since] }, 1, 0] } },
+          withPhone: { $sum: { $cond: [{ $or: [{ $gt: [{ $strLenCP: { $ifNull: ["$company.phone", ""] } }, 0] }, { $gt: [{ $strLenCP: { $ifNull: ["$company.mobile", ""] } }, 0] }] }, 1, 0] } },
+          withWebsite: { $sum: { $cond: [{ $gt: [{ $strLenCP: { $ifNull: ["$company.website", ""] } }, 0] }, 1, 0] } },
+          startup: { $sum: { $cond: [{ $eq: ["$company.companyType.value", "STARTUP"] }, 1, 0] } },
+          established: { $sum: { $cond: [{ $eq: ["$company.companyType.value", "ESTABLISHED"] }, 1, 0] } },
+        },
+      },
+      { $project: { _id: 0, total: 1, recent: 1, withPhone: 1, withWebsite: 1, startup: 1, established: 1, review: { $subtract: ["$total", { $add: ["$startup", "$established"] }] } } },
+    ]),
+  ]);
+  const items: MarketerLeadRow[] = (res?.items ?? []).map((a) => {
+    const phone = a.company.phone ?? a.company.mobile ?? undefined;
+    return {
+      id: String(a._id),
+      companyName: a.company.companyName,
+      contactPerson: a.company.contactPerson?.name ?? undefined,
+      contactRole: a.company.contactPerson?.role ?? undefined,
+      phone,
+      phoneDisplay: phone ? formatPhone(phone) : undefined,
+      website: safeExternalUrl(a.company.website) ?? undefined,
+      countryCode: a.company.countryCode,
+      sentAt: new Date(a.sentAt).toISOString(),
+      companyType: { value: companyTypeOf(a.company.companyType), reason: a.company.companyType?.reason ?? undefined, manual: !!a.company.companyType?.manual },
+      outreachStatus: (a.outreachStatus as OutreachStatus | undefined) ?? "NOT_REACHED",
+      outreachStatusAt: a.outreachStatusAt ? new Date(a.outreachStatusAt).toISOString() : undefined,
+    };
+  });
+  return {
+    ...paginate(items, res?.total[0]?.n ?? 0, q.page, q.pageSize),
+    sort: q.sort,
+    dir: dir === 1 ? ("asc" as const) : ("desc" as const),
+    q: q.q ?? "",
+    type: q.type ?? null,
+    stats: stats ?? { total: 0, recent: 0, withPhone: 0, withWebsite: 0, startup: 0, established: 0, review: 0 },
+  };
+}
+
+export const outreachStatusSchema = z.object({ outreachStatus: z.enum(OUTREACH_STATUSES) });
+
+/**
+ * The signed-in marketer sets the outreach status of one of their own active leads. Scoped to
+ * the assignment (company + this marketer), so it never changes another lead or another
+ * marketer's progress. Recorded in the assignment history and the audit log.
+ */
+export async function updateLeadOutreachStatus(actor: Actor, assignmentId: string, input: unknown) {
+  if (actor.role !== "DIGITAL_MARKETER" || !can(actor, "marketerLeads.view")) throw Errors.forbidden();
+  const { outreachStatus } = outreachStatusSchema.parse(input);
+  const now = new Date();
+  const me = new Types.ObjectId(actor.id);
+  const a = await LeadAssignment.findOneAndUpdate(
+    { _id: parseObjectId(assignmentId), recipientId: me, status: "ACTIVE" },
+    { $set: { outreachStatus, outreachStatusAt: now }, $push: { history: { action: "OUTREACH", actorId: me, at: now, outreachStatus } } },
+    { new: true },
+  ).lean<LeadAssignmentDoc>();
+  if (!a) throw Errors.notFound("Lead not found");
+  await audit(actor, "lead.outreach_status_changed", { entityType: "Company", entityId: String(a.companyId), countryCode: a.countryCode ?? undefined, metadata: { assignmentId: String(a._id), outreachStatus } });
+  return { id: String(a._id), outreachStatus, outreachStatusAt: now.toISOString() };
 }
 
 /** Number of active leads for the signed-in marketer (only with "View Assigned Client Leads"). */

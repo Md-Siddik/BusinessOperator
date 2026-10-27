@@ -19,7 +19,7 @@ export default async function Page() {
     <div className="space-y-6">
       <PageHeader title="Users & access" description="You can change only the permissions the Owner has allowed you to manage. Owner grants can only be removed by the Owner." />
       <AccessPolicyNote delegate />
-      <AccessManager initialUsers={JSON.parse(JSON.stringify(users))} viewerRole={actor.role} abilities={accountAbilities(actor)} />
+      <AccessManager initialUsers={JSON.parse(JSON.stringify(users))} viewerRole={actor.role} abilities={await accountAbilities(actor)} />
     </div>
   );
 }

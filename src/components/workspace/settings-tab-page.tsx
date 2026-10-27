@@ -6,6 +6,7 @@ import { can, type Actor } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/utils/format";
 import { LEAD_STAGES, LEAD_STAGE_LABELS } from "@/lib/constants";
 import { getEmailProvider, defaultFromAddress } from "@/lib/email/provider";
+import { checkSenderDomain, transactionalHealth } from "@/lib/email/deliverability";
 import { User, RegistrySync, type RegistrySyncDoc, type UserDoc } from "@/models";
 import { getSetting } from "@/features/settings/service";
 import { listCountries } from "@/features/countries/service";
@@ -179,8 +180,73 @@ export async function SettingsTabPage({ base, params }: { base: WorkspaceBase; p
     );
   } else if (tab === "email") {
     const provider = getEmailProvider();
+    const [dnsReport, health] = await Promise.all([checkSenderDomain(defaultFromAddress()).catch(() => null), transactionalHealth(7).catch(() => null)]);
+    const tone = { pass: "success", warn: "warning", missing: "danger", error: "neutral" } as const;
     body = (
       <div className="space-y-6">
+        {dnsReport && (
+          <section className="rounded-xl border border-ink-200 p-4">
+            <p className="text-sm font-semibold text-ink-900">Sending domain authentication — {dnsReport.domain}</p>
+            <p className="mt-1 text-xs text-ink-500">Checked live in DNS just now. All three should pass for verification codes to reach the inbox reliably (Gmail and Yahoo require SPF, DKIM and DMARC).</p>
+            <ul className="mt-3 space-y-2">
+              {dnsReport.checks.map((c) => (
+                <li key={c.name} className="rounded-lg bg-ink-50 px-3 py-2 text-sm">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Badge tone={tone[c.status]}>{c.status === "pass" ? "Pass" : c.status === "warn" ? "Check" : c.status === "missing" ? "Missing" : "Not checked"}</Badge>
+                    <span className="font-medium text-ink-900">{c.name}</span>
+                    <span className="text-ink-600">{c.detail}</span>
+                  </span>
+                  {c.found && <code className="mt-1 block break-all text-[11px] text-ink-500">{c.found}</code>}
+                  {c.fix && <p className="mt-1 break-all text-xs text-ink-700">Fix: <code className="rounded bg-white px-1">{c.fix}</code></p>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {health && (
+          <section className="rounded-xl border border-ink-200 p-4">
+            <p className="text-sm font-semibold text-ink-900">Transactional delivery — last {health.days} days</p>
+            <p className="mt-1 text-xs text-ink-500">“Accepted” means the provider took the message; inbox placement is decided by the recipient&apos;s mailbox provider. Bounces are read from the mailbox when delivery fails.</p>
+            <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {(
+                [
+                  ["Emails", health.total],
+                  ["Accepted", health.sent],
+                  ["Failed", health.failed],
+                  ["Bounced", health.bounced],
+                  ["Codes failed", `${health.codes.failed} / ${health.codes.total}`],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-ink-50 px-3 py-2">
+                  <dt className="text-xs text-ink-500">{label}</dt>
+                  <dd className="text-lg font-semibold tabular-nums text-ink-900">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            {health.recentFailures.length > 0 && (
+              <Table className="mt-3">
+                <THead>
+                  <TR>
+                    <TH>When</TH>
+                    <TH>To</TH>
+                    <TH>Type</TH>
+                    <TH>Reason</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {health.recentFailures.map((f, i) => (
+                    <TR key={i}>
+                      <TD className="whitespace-nowrap text-xs">{formatDateTime(f.at)}</TD>
+                      <TD className="text-xs">{f.to}</TD>
+                      <TD className="text-xs">{f.category.toLowerCase()} · {f.status.toLowerCase()}</TD>
+                      <TD className="text-xs text-ink-600">{f.reason || "—"}</TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            )}
+          </section>
+        )}
         <DescriptionList
           items={[
             { label: "Provider", value: <span className="flex items-center gap-2">{provider.id} {provider.isLive ? <Badge tone="success">Live</Badge> : <Badge tone="warning">Console — emails are logged, not delivered</Badge>}</span> },

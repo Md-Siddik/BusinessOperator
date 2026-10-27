@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { classifyIndustry } from "@/config/industries";
 import { countryName } from "@/config/countries";
 import { contactQuality, type ContactSourceKind } from "@/lib/company-fields";
+import { classifyCompany, companyTypeSet } from "@/lib/company-classification";
 import { dayToDate } from "@/lib/dates/country-time";
 import { formatAddress } from "./normalize-helpers";
 import type { CompanyRegistryProvider, NormalizedCompany, NormalizedPerson } from "./types";
@@ -22,6 +23,7 @@ export type ExistingCompany = {
   contactPerson?: PersonLike | null;
   contactSources?: Partial<Record<"email" | "phone" | "mobile" | "website" | "contactPerson", SourceMeta | null>> | null;
   eligibility?: { status?: string | null } | null;
+  companyType?: { manual?: boolean | null } | null;
 };
 
 const CONTACT_KEYS = ["email", "phone", "mobile", "website"] as const;
@@ -94,6 +96,16 @@ export function buildCompanyUpdate(n: NormalizedCompany, provider: CompanyRegist
   set.eventType = n.eventType ?? "NEW_ENTITY";
   put("registrationDateType", provider.registrationDateType);
   put("sourcePublishedAt", n.source.publishedAt);
+  // Company Type (shared classification) — a manual decision is never overwritten.
+  if (!existing?.companyType?.manual) {
+    set.companyType = companyTypeSet(
+      classifyCompany(
+        { incorporationDate: n.registration.incorporationDay, registrationDay: n.registration.registrationDay, eventType: set.eventType as string, status: n.registration.status, employees: n.employees },
+        now,
+      ),
+      now,
+    );
+  }
 
   // Contacts with provenance
   const merged: Record<string, string | undefined> = {};
