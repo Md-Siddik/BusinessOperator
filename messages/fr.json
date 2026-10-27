@@ -35,9 +35,9 @@
       "cta": "Découvrir ce modèle",
       "models": {
         "monthly": {
-          "title": "Partenariat mensuel",
-          "text": "Un accompagnement digital et technique dédié et continu, pour un forfait mensuel prévisible — comme une extension de votre propre équipe.",
-          "points": ["Accompagnement continu", "Périmètre mensuel convenu", "Collaboration à long terme"]
+          "title": "Service sur salaire mensuel",
+          "text": "Engagez-nous comme votre propre salarié : vous versez un salaire mensuel fixe, et nous travaillons chaque mois pour votre entreprise sur les tâches digitales et techniques dont vous avez besoin.",
+          "points": ["Salaire mensuel fixe", "Comme votre propre salarié", "Tâches suivies chaque mois"]
         },
         "growth": {
           "title": "Partenariat de croissance",
@@ -80,18 +80,18 @@
     "otherModels": "Autres modes de collaboration",
     "models": {
       "monthly": {
-        "title": "Partenariat mensuel",
-        "subtitle": "Un accompagnement digital et opérationnel continu, pour un forfait mensuel prévisible — une équipe qui connaît votre entreprise et fait tourner le volet digital.",
+        "title": "Service sur salaire mensuel",
+        "subtitle": "Engagez ExploreTechify comme un salarié, pour un salaire mensuel fixe — nous travaillons chaque mois pour votre entreprise et faisons tourner le volet digital et opérationnel.",
         "sections": [
-          { "title": "Ce que signifie un partenariat mensuel", "text": "Plutôt que de lancer un nouveau projet chaque fois qu'il y a quelque chose à faire, vous travaillez avec ExploreTechify dans la durée. Nous convenons ensemble d'un périmètre mensuel et réalisons chaque mois le travail convenu, en tant qu'équipe unique et responsable." },
+          { "title": "Comment fonctionne le modèle du salaire mensuel", "text": "Cela fonctionne exactement comme l'embauche d'un salarié. Vous versez un salaire mensuel fixe et, chaque mois, nous traitons les tâches de votre entreprise comme un membre dédié de votre équipe — sans nouveau devis ni nouveau projet chaque fois qu'il y a quelque chose à faire. Nous convenons ensemble des types de tâches couverts par le poste." },
           { "title": "Exemples d'accompagnement continu", "items": ["Mises à jour, modifications de contenu et maintenance du site web", "Suivi du référencement (SEO) et de la présence digitale", "Messagerie professionnelle, comptes et gestion des utilisateurs", "Support CRM et systèmes de gestion", "Support administratif au recrutement et aux RH", "Amélioration des automatisations et support technique", "Comptes rendus réguliers du travail réalisé"] },
           { "title": "Périmètre, responsabilités, priorités et communication", "text": "Avant de commencer, nous convenons par écrit de ce que couvre le périmètre mensuel, des responsabilités de chacun, de la manière de fixer les priorités, ainsi que des modalités et de la fréquence de nos échanges. Toute demande hors périmètre est discutée avec vous avant tout travail supplémentaire." },
-          { "title": "Forfait mensuel et facturation", "text": "Le forfait mensuel dépend du périmètre convenu et figure dans une proposition écrite avant le début du travail. Il n'existe pas de grille tarifaire standard : le montant, le rythme de facturation et les conditions de paiement sont convenus individuellement avec vous." },
+          { "title": "Salaire mensuel et facturation", "text": "Le salaire mensuel dépend de la charge de travail convenue et figure dans une proposition écrite avant le début du travail. Comme le salaire d'un employé, c'est un montant fixe chaque mois. Il n'existe pas de grille tarifaire standard : le salaire, le rythme de facturation et les conditions de paiement sont convenus individuellement avec vous." },
           { "title": "S'adapter à l'évolution de votre entreprise", "text": "Vos besoins évolueront avec le temps. Le périmètre peut être revu ensemble à intervalles convenus et ajusté à la hausse comme à la baisse ; toute modification du périmètre ou du forfait est convenue par écrit." }
         ],
         "ctaTitle": "Parlons de vos besoins continus",
-        "ctaText": "Dites-nous sur quoi vous avez besoin d'aide aujourd'hui. Nous vous proposerons un périmètre mensuel concret, sans engagement.",
-        "cta": "Discuter d'un partenariat mensuel"
+        "ctaText": "Dites-nous sur quoi vous avez besoin d'aide aujourd'hui. Nous vous proposerons un salaire mensuel adapté à la charge de travail, sans engagement.",
+        "cta": "Nous engager sur salaire mensuel"
       },
       "growth": {
         "title": "Partenariat de croissance",
@@ -137,7 +137,7 @@
     "eyebrow": "Contact", "title": "Travaillons ensemble", "subtitle": "Parlez-nous de votre entreprise et de vos besoins. Nous vous répondrons avec une proposition concrète pour démarrer.", "asideTitle": "Et ensuite ?",
     "asideSteps": ["Nous étudions votre message et votre présence en ligne actuelle.", "Nous vous répondons sous un jour ouvré avec des questions ou une proposition.", "Si cela correspond, nous convenons d'un court échange pour comprendre votre activité."],
     "form": { "engagement": "Mode de collaboration souhaité", "engagements": {
-      "monthly": "Partenariat mensuel",
+      "monthly": "Service sur salaire mensuel",
       "growth": "Partenariat de croissance",
       "project": "Mission ponctuelle",
       "notSure": "Je ne sais pas encore"

@@ -245,9 +245,9 @@
       "cta": "Explore This Model",
       "models": {
         "monthly": {
-          "title": "Monthly Partnership",
-          "text": "Dedicated, ongoing digital and technical support for a predictable monthly fee — working like an extension of your own team.",
-          "points": ["Ongoing support", "Agreed monthly scope", "Long-term collaboration"]
+          "title": "Monthly Salary-Based Service",
+          "text": "Hire us like your own employee: you pay a fixed monthly salary, and we work for your business every month on the digital and technical tasks you need.",
+          "points": ["Fixed monthly salary", "Works like your own employee", "Ongoing tasks every month"]
         },
         "growth": {
           "title": "Growth Partnership",
@@ -471,18 +471,18 @@
     "otherModels": "Other engagement models",
     "models": {
       "monthly": {
-        "title": "Monthly Partnership",
-        "subtitle": "Ongoing digital and operational support for a predictable monthly fee — one team that knows your business and keeps the digital side running.",
+        "title": "Monthly Salary-Based Service",
+        "subtitle": "Hire ExploreTechify like an employee on a fixed monthly salary — we work for your business every month and keep the digital and operational side running.",
         "sections": [
-          { "title": "What a monthly partnership means", "text": "Instead of starting a new project every time something needs doing, you work with ExploreTechify on an ongoing basis. We agree a monthly scope together and handle the agreed work each month as one accountable team." },
+          { "title": "How the monthly salary model works", "text": "It works just like hiring a staff member. You pay a fixed monthly salary, and every month we work on your business's tasks as your own dedicated team member — no new quote or project each time something needs doing. We agree together which kinds of tasks the role covers." },
           { "title": "Typical ongoing support", "items": ["Website updates, content changes and maintenance", "SEO and digital presence follow-up", "Business email, accounts and user administration", "CRM and business-system support", "Recruitment and HR administration support", "Automation improvements and technical support", "Regular reporting on the work done"] },
           { "title": "Scope, responsibilities, priorities and communication", "text": "Before we start, we agree in writing what the monthly scope covers, who is responsible for what on each side, how priorities are set, and how and how often we communicate. Requests outside the agreed scope are discussed with you before any extra work begins." },
-          { "title": "Monthly fee and billing", "text": "The monthly fee is based on the agreed scope and set out in a written proposal before work begins. There is no standard price list — the fee, billing schedule and payment terms are agreed with you individually." },
+          { "title": "Monthly salary and billing", "text": "The monthly salary is based on the agreed workload and set out in a written proposal before work begins. Like an employee's salary, it is a fixed amount each month. There is no standard price list — the salary, billing schedule and payment terms are agreed with you individually." },
           { "title": "Adjusting as your business changes", "text": "Your needs will change over time. The scope can be reviewed together at agreed intervals and adjusted up or down, with any change to the scope or fee agreed in writing." }
         ],
         "ctaTitle": "Discuss your ongoing needs",
-        "ctaText": "Tell us what you need help with today. We'll suggest a practical monthly scope — no obligation.",
-        "cta": "Discuss a Monthly Partnership"
+        "ctaText": "Tell us what you need help with today. We'll suggest a monthly salary that fits the workload — no obligation.",
+        "cta": "Hire Us on a Monthly Salary"
       },
       "growth": {
         "title": "Growth Partnership",
@@ -589,7 +589,7 @@
       "privacy": "We only use your details to respond to your enquiry.",
       "engagement": "Preferred engagement model",
       "engagements": {
-        "monthly": "Monthly Partnership",
+        "monthly": "Monthly Salary-Based Service",
         "growth": "Growth Partnership",
         "project": "Task-Based Engagement",
         "notSure": "Not sure yet"

@@ -16,7 +16,7 @@ import { LinkTabs, PageHeader, Pagination, Table, TBody, TD, TH, THead, TR, with
 import { EmptyState } from "@/components/ui/feedback";
 import { InquiryStatus } from "@/components/app/client-admin";
 
-const ENGAGEMENT_LABELS: Record<string, string> = { monthly: "Monthly partnership", growth: "Growth partnership", project: "Task-based", notSure: "Not sure yet" };
+const ENGAGEMENT_LABELS: Record<string, string> = { monthly: "Monthly salary-based", growth: "Growth partnership", project: "Task-based", notSure: "Not sure yet" };
 
 export async function ClientsPage({ base, searchParams }: { base: WorkspaceBase; searchParams: Promise<{ tab?: string; status?: string; q?: string; page?: string }> }) {
   const actor = await requireWorkspacePage(base, "clients.manage");

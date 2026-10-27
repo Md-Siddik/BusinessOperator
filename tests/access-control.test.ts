@@ -3,7 +3,7 @@ import path from "node:path";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
-import { AuditLog, Company, CrmActivity, LeadAssignment, Notification, Opportunity, Project, User, type LeadAssignmentDoc, type UserDoc } from "@/models";
+import { AuditLog, Company, CrmActivity, LeadAssignment, Notification, Opportunity, Project, User, type LeadAssignmentDoc, type ProjectDoc, type UserDoc } from "@/models";
 import type { SessionUser } from "@/lib/auth/actor";
 import { toActor } from "@/lib/auth/actor";
 import { can, COMPANY_INTELLIGENCE_PERMISSIONS, isGrantable, PERMISSION_CATALOG, PERMISSION_DEFS, PERMISSIONS, type Actor, type Permission } from "@/lib/permissions";
@@ -449,7 +449,7 @@ describe("Owner deletes accounts and turns clients into team members", () => {
     await Notification.create({ userId: new Types.ObjectId(admin), type: "ACCOUNT", title: "Hi" });
     await users.deleteUserAccount(owner, admin);
     expect(await User.exists({ _id: admin })).toBeNull();
-    expect((await Project.findById(project._id).lean())!.assignedStaff).toHaveLength(0);
+    expect((await Project.findById(project._id).lean<ProjectDoc>())!.assignedStaff).toHaveLength(0);
     expect(await Notification.countDocuments({ userId: admin })).toBe(0);
     expect(await holds(s, "tickets.manage")).toBe(true); // not a scoped delegation, so no cascade
     expect(await AuditLog.exists({ action: "user.deleted", entityId: admin })).toBeTruthy();
