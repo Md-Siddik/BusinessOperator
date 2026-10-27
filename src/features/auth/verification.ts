@@ -1,12 +1,13 @@
 import "server-only";
 import { createHmac, randomInt } from "node:crypto";
 import { z } from "zod";
-import { ContactRequest, User, Organization, type UserDoc } from "@/models";
+import { ContactRequest, EmailMessage, User, Organization, type UserDoc } from "@/models";
 import { hashToken } from "@/lib/auth/password";
 import { emailSchema } from "@/lib/validation";
 import { Errors } from "@/lib/errors";
 import { sendTransactionalEmail } from "@/lib/email/transactional";
 import { getEmailProvider } from "@/lib/email/provider";
+import { VERIFICATION_CODE_MINUTES, verificationEmail } from "@/lib/email/deliverability";
 
 export function hashAuthCode(code: string) {
   const key = process.env.AUTH_SECRET;
@@ -14,16 +15,22 @@ export function hashAuthCode(code: string) {
   return createHmac("sha256", key).update(code).digest("hex");
 }
 
+/** At most this many codes per address per hour (on top of the 60-second resend lock and the per-IP route limit). */
+const CODES_PER_HOUR = Number(process.env.AUTH_CODES_PER_HOUR || 5);
+
 export async function issueAuthCode(user: Pick<UserDoc, "_id" | "email" | "name">, purpose: "VERIFY" | "MFA") {
   if (!getEmailProvider().isLive) throw Errors.badRequest("Email verification is unavailable. Configure a live email provider.");
+  const recent = await EmailMessage.countDocuments({ kind: "TRANSACTIONAL", category: "VERIFICATION", to: user.email, createdAt: { $gte: new Date(Date.now() - 3_600_000) } });
+  if (recent >= CODES_PER_HOUR) throw Errors.tooManyRequests("Several codes were already sent to this address in the last hour. Check your spam or junk folder for the newest one, or try again later.");
   const code = String(randomInt(100000, 1000000));
   const hash = hashAuthCode(code);
   const locked = await User.updateOne({
     _id: user._id,
     $or: [{ authCodeSentAt: { $exists: false } }, { authCodeSentAt: { $lt: new Date(Date.now() - 60_000) } }],
-  }, { $set: { authCodeHash: hash, authCodeExpiresAt: new Date(Date.now() + 600_000), authCodeSentAt: new Date(), authCodeAttempts: 0, authCodePurpose: purpose } });
+  }, { $set: { authCodeHash: hash, authCodeExpiresAt: new Date(Date.now() + VERIFICATION_CODE_MINUTES * 60_000), authCodeSentAt: new Date(), authCodeAttempts: 0, authCodePurpose: purpose } });
   if (!locked.modifiedCount) throw Errors.tooManyRequests("Please wait 60 seconds before requesting another code.");
-  const result = await sendTransactionalEmail({ to: user.email, toName: user.name, sensitive: true, subject: purpose === "MFA" ? "Your sign-in security code" : "Verify your email", text: "Your security code is " + code + ". It expires in 10 minutes. Do not share this code. If you did not request it, ignore this email." });
+  const mail = verificationEmail({ code, purpose, name: user.name });
+  const result = await sendTransactionalEmail({ to: user.email, toName: user.name, sensitive: true, category: "VERIFICATION", ...mail });
   if (!result.accepted) {
     await User.updateOne({ _id: user._id, authCodeHash: hash }, { $unset: { authCodeHash: 1, authCodeExpiresAt: 1, authCodeSentAt: 1, authCodePurpose: 1 } });
     throw Errors.badRequest("The email provider did not confirm acceptance. Please retry later.");
