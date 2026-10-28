@@ -151,7 +151,7 @@
     "reset": { "title": "Vælg ny adgangskode", "submit": "Opdater adgangskode", "success": "Din adgangskode er opdateret. Du kan nu logge ind.", "invalid": "Linket er ugyldigt eller udløbet." }
   },
   "industries": { "ecommerce": "E-handel", "retail": "Detailhandel", "technology": "Teknologi", "professionalServices": "Liberale erhverv", "consulting": "Rådgivning", "construction": "Byggeri", "manufacturing": "Produktion", "printing": "Trykkeri", "design": "Design", "logistics": "Logistik", "hospitality": "Hotel og restauration", "health": "Sundhed og velvære", "realEstate": "Ejendomme", "localServices": "Lokale serviceydelser", "other": "Andet" },
-  "cookieConsent": { "title": "Analysecookies", "text": "Må vi bruge en anonym analysecookie til at se, hvordan hjemmesiden bruges? Det hjælper os med at forbedre den. Vi bruger den aldrig til at finde ud af, hvem du er, og du kan ændre dit valg når som helst.", "accept": "Accepter", "decline": "Afvis", "settings": "Cookie-indstillinger" },
+  "cookieConsent": { "title": "Analysecookies", "text": "Må vi bruge en anonym analysecookie til at se, hvordan hjemmesiden bruges? Det hjælper os med at forbedre den. Vi bruger den aldrig til at finde ud af, hvem du er, og du kan ændre dit valg når som helst.", "essential": "Nødvendige cookies til login, sikkerhed og til at huske dette valg er altid slået til. Intet andet gemmes, før du har valgt.", "accept": "Accepter", "decline": "Afvis", "settings": "Cookie-indstillinger" },
   "theme": { "label": "Udseende", "dark": "Mørk", "light": "Lys", "mixed": "Blandet" },
   "footer": {
     "socialEyebrow": "Lidt tættere på, uanset hvor du er",

@@ -151,7 +151,7 @@
     "reset": { "title": "Välj nytt lösenord", "submit": "Uppdatera lösenord", "success": "Ditt lösenord är uppdaterat. Du kan nu logga in.", "invalid": "Länken är ogiltig eller har gått ut." }
   },
   "industries": { "ecommerce": "E-handel", "retail": "Detaljhandel", "technology": "Teknik", "professionalServices": "Professionella tjänster", "consulting": "Konsultverksamhet", "construction": "Bygg", "manufacturing": "Tillverkning", "printing": "Tryckeri", "design": "Design", "logistics": "Logistik", "hospitality": "Hotell och restaurang", "health": "Hälsa och välbefinnande", "realEstate": "Fastigheter", "localServices": "Lokala tjänster", "other": "Övrigt" },
-  "cookieConsent": { "title": "Analyscookies", "text": "Får vi använda en anonym analyscookie för att se hur webbplatsen används? Det hjälper oss att förbättra den. Vi använder den aldrig för att ta reda på vem du är, och du kan ändra ditt val när som helst.", "accept": "Godkänn", "decline": "Avböj", "settings": "Cookie-inställningar" },
+  "cookieConsent": { "title": "Analyscookies", "text": "Får vi använda en anonym analyscookie för att se hur webbplatsen används? Det hjälper oss att förbättra den. Vi använder den aldrig för att ta reda på vem du är, och du kan ändra ditt val när som helst.", "essential": "Nödvändiga cookies för inloggning, säkerhet och för att komma ihåg det här valet är alltid på. Inget annat sparas innan du har valt.", "accept": "Godkänn", "decline": "Avböj", "settings": "Cookie-inställningar" },
   "theme": { "label": "Utseende", "dark": "Mörkt", "light": "Ljust", "mixed": "Blandat" },
   "footer": {
     "socialEyebrow": "Lite närmare, var du än är",

@@ -82,6 +82,21 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
       log(`established: run failed — ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+  try {
+    // Old company Intelligence never shows a company Startup Company Intelligence holds (reads Company, deletes only Old records).
+    const { sweepStartupOverlap } = await import("@/features/established/service");
+    const s = await sweepStartupOverlap();
+    if (s.removed) log(`established: ${s.removed} of ${s.checked} old-company records now in Startup Company Intelligence — removed from Old company Intelligence`);
+  } catch (err) {
+    log(`established: overlap sweep failed — ${err instanceof Error ? err.message : String(err)}`);
+  }
+  try {
+    // Website analytics: keep today's and yesterday's daily statistics current and freeze closed days.
+    const { rollupPending } = await import("@/features/website-analytics/rollup");
+    await rollupPending();
+  } catch (err) {
+    log(`analytics: daily roll-up failed — ${err instanceof Error ? err.message : String(err)}`);
+  }
   const { dispatchDueFollowUpReminders } = await import("@/features/crm/service");
   await dispatchDueFollowUpReminders();
   if (process.env.OPPORTUNITY_SCHEDULER !== "off") {

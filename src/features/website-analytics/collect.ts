@@ -1,18 +1,21 @@
 import { randomBytes } from "node:crypto";
 import { Types } from "mongoose";
 import { z } from "zod";
-import { WebPageView, WebSession, WebVisitor, type WebSessionDoc, type WebVisitorDoc } from "@/models";
+import { ContactRequest, WebConversion, WebEventKey, WebPageView, WebSession, WebVisitor, type ConversionType, type WebSessionDoc, type WebVisitorDoc } from "@/models";
 import { isInternal, type Actor } from "@/lib/permissions";
 import { getSetting } from "@/features/settings/service";
-import { channelFor, hashVisitorId, isBot, parsePath, parseReferrer, parseUtm, SESSION_TIMEOUT_MS, VISITOR_ID_RE, visitorLabel } from "./classify";
+import { todayIn } from "@/lib/dates/country-time";
+import { ANALYTICS_TIME_ZONE, browserFamily, channelFor, deviceCategory, hashVisitorId, isBot, parsePath, parseReferrer, parseUtm, SESSION_TIMEOUT_MS, VISITOR_ID_RE, visitorLabel } from "./classify";
 import { validTimeZone, type Geo } from "./geo";
 
 /**
  * Collection side of website analytics (public tracker → /api/track). Never throws to the
  * caller's page: the route swallows failures, and the tracker ignores the response.
  *
- * Without consent a page view is stored with NO visitor or session. With consent the
- * browser's random cookie id (HMAC-hashed here) groups page views into visitors and sessions.
+ * Only browsers with a valid "granted" consent decision are recorded (lib/consent): the tracker
+ * sends nothing before a decision or after "Deny", and this function refuses such events anyway.
+ * With consent the browser's random cookie id (HMAC-hashed here) groups page views into visitors
+ * and sessions. A client event id makes every beacon idempotent (retries are counted once).
  */
 
 const landingSchema = z.object({ url: z.string().max(2000), referrer: z.string().max(2000).nullish() });
@@ -27,6 +30,8 @@ const trackSchema = z.object({
   landing: landingSchema.optional(),
   /** The browser's IANA time zone, to show the visit in the visitor's local time. */
   tz: z.string().max(64).optional(),
+  /** Random id of this beacon, generated once per page view: a retried request is counted once. */
+  eventId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
 });
 
 export type TrackContext = {
@@ -58,6 +63,8 @@ export async function recordEvent(input: unknown, ctx: TrackContext): Promise<Tr
   if (isBot(ctx.userAgent, data.webdriver)) return { recorded: false, reason: "bot" };
   // The team's own browsing is not marketing traffic.
   if (isInternal(ctx.actor)) return { recorded: false, reason: "internal" };
+  // Optional analytics needs a valid "granted" decision — nothing at all is stored without it.
+  if (!ctx.consent) return { recorded: false, reason: "no-consent" };
   const now = ctx.now ?? new Date();
   const vid = ctx.consent ? validVid(ctx.vid) : undefined;
 
@@ -73,13 +80,16 @@ export async function recordEvent(input: unknown, ctx: TrackContext): Promise<Tr
   const expireAt = await expiry(now);
   const geo = (await ctx.resolveGeo?.().catch(() => null)) ?? undefined;
   const timeZone = validTimeZone(data.tz);
-  const base = { at: now, path: loc.path, page: loc.page, locale: loc.locale, serviceSlug: loc.serviceSlug, geo, timeZone, expireAt };
+  const device = deviceCategory(ctx.userAgent);
+  const base = { at: now, path: loc.path, page: loc.page, locale: loc.locale, serviceSlug: loc.serviceSlug, geo, timeZone, device, expireAt };
 
-  if (!ctx.consent) {
-    // Arrival from outside the site (or typed/bookmarked): counts as a visit for sources and landing pages.
-    const entry = !ref.internal;
-    const doc = await WebPageView.create({ ...base, consented: false, entry, ...(entry && { channel: channelFor(utm, ref.referrerDomain), referrerDomain: ref.referrerDomain, utm }) });
-    return { recorded: true, id: String(doc._id) };
+  if (data.eventId) {
+    try {
+      await WebEventKey.create({ key: `pv:${data.eventId}`, at: now });
+    } catch (e) {
+      if ((e as { code?: number }).code === 11000) return { recorded: false, reason: "duplicate" };
+      throw e;
+    }
   }
 
   // Attribution comes from how this tab arrived (after "Accept"), otherwise from this page.
@@ -136,6 +146,8 @@ export async function recordEvent(input: unknown, ctx: TrackContext): Promise<Tr
         geo,
         timeZone,
         userId,
+        device,
+        browser: browserFamily(ctx.userAgent),
         expireAt,
       })
     ).toObject() as WebSessionDoc;
@@ -169,6 +181,64 @@ export async function linkVisitorToEnquiry(vid: string | null | undefined, conta
   await WebVisitor.updateOne({ _id: visitor._id }, { $addToSet: { contactRequestIds: contactRequestId }, ...(!visitor.convertedAt && { $set: { convertedAt: now } }) });
   await WebSession.findOneAndUpdate({ visitorId: visitor._id }, { $inc: { enquiries: 1 } }, { sort: { lastSeen: -1 } });
   return true;
+}
+
+type Touch = { at?: Date | null; channel?: string | null; referrerDomain?: string | null; utm?: { source?: string | null; medium?: string | null; campaign?: string | null } | null; landingPage?: string | null };
+
+export type ConversionInput = {
+  type: ConversionType;
+  /** Idempotency key: the same lead is never counted twice (e.g. "contact:<id>"). */
+  key: string;
+  /** Raw et_vid cookie — pass it only when the browser has a valid "granted" decision. */
+  vid?: string | null;
+  contactRequestId?: string;
+  userId?: string;
+  serviceSlug?: string | null;
+  now?: Date;
+};
+
+/**
+ * Record a lead submission. Every lead is counted (it is our own record, not tracking); first-
+ * and last-touch attribution is added only for a browser that accepted analytics, and is copied
+ * onto the enquiry. Unknown visitors stay anonymous — nothing is inferred from technical signals.
+ */
+export async function recordConversion(input: ConversionInput) {
+  const now = input.now ?? new Date();
+  const visitor = input.vid ? await WebVisitor.findOne({ vidHash: hashVisitorId(validVid(input.vid) ?? "") }).lean<WebVisitorDoc>() : null;
+  const session = visitor ? await WebSession.findOne({ visitorId: visitor._id }).sort({ lastSeen: -1 }).lean<WebSessionDoc>() : null;
+  const firstTouch: Touch | undefined = visitor ? { at: visitor.firstSeen, channel: visitor.firstChannel, referrerDomain: visitor.firstReferrerDomain, utm: visitor.firstUtm, landingPage: visitor.firstLandingPage } : undefined;
+  const lastTouch: Touch | undefined = session ? { at: session.startedAt, channel: session.channel, referrerDomain: session.referrerDomain, utm: session.utm, landingPage: session.landingPage } : undefined;
+  const res = await WebConversion.updateOne(
+    { key: input.key },
+    {
+      $setOnInsert: {
+        key: input.key,
+        type: input.type,
+        at: now,
+        day: todayIn(ANALYTICS_TIME_ZONE, now),
+        consented: !!visitor,
+        visitorId: visitor?._id,
+        sessionId: session?._id,
+        contactRequestId: input.contactRequestId && Types.ObjectId.isValid(input.contactRequestId) ? new Types.ObjectId(input.contactRequestId) : undefined,
+        userId: input.userId && Types.ObjectId.isValid(input.userId) ? new Types.ObjectId(input.userId) : undefined,
+        serviceSlug: input.serviceSlug ?? undefined,
+        firstTouch,
+        lastTouch,
+      },
+    },
+    { upsert: true },
+  );
+  const created = res.upsertedCount > 0;
+  if (created && visitor && input.contactRequestId && Types.ObjectId.isValid(input.contactRequestId)) {
+    const flat = (t?: Touch) => t && { at: t.at, channel: t.channel, referrerDomain: t.referrerDomain, source: t.utm?.source, medium: t.utm?.medium, campaign: t.utm?.campaign, landingPage: t.landingPage };
+    await ContactRequest.updateOne({ _id: input.contactRequestId, attribution: { $exists: false } }, { $set: { attribution: { conversionType: input.type, visitorLabel: visitor.label, firstTouch: flat(firstTouch), lastTouch: flat(lastTouch) } } });
+  }
+  return { created, attributed: !!visitor };
+}
+
+/** A contact-form enquiry asking for a phone or video call is a consultation request. */
+export function enquiryConversionType(preferredContact: string | null | undefined): ConversionType {
+  return preferredContact === "phone" || preferredContact === "video" ? "consultation_request" : "contact_form";
 }
 
 /** A CLIENT logged in on this browser: associate the anonymous visitor with the account. */

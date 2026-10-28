@@ -8,7 +8,7 @@ import { LANGUAGE_CODES } from "@/config/languages";
 /** A visit ends after this much inactivity; the next page view starts a new session. */
 export const SESSION_TIMEOUT_MS = 30 * 60_000;
 /** Browser cookies. `et_consent` remembers the visitor's choice; `et_vid` exists only after "Accept". */
-export const CONSENT_COOKIE = "et_consent";
+export { CONSENT_COOKIE } from "@/lib/consent";
 export const VISITOR_COOKIE = "et_vid";
 /** 13 months — the usual upper bound for an analytics cookie in Europe. */
 export const VISITOR_COOKIE_MAX_AGE = 395 * 86_400;
@@ -44,6 +44,32 @@ export function isBot(userAgent: string | null | undefined, webdriver = false): 
   const ua = (userAgent ?? "").trim();
   if (ua.length < 10) return true;
   return BOT_UA.test(ua);
+}
+
+/** Reporting time zone: every analytics day, chart and export is a Norwegian calendar day. */
+export const ANALYTICS_TIME_ZONE = "Europe/Oslo";
+
+export const DEVICES = ["desktop", "mobile", "tablet"] as const;
+export type Device = (typeof DEVICES)[number];
+
+/** Coarse device class from the user agent (no model, no screen size — not a fingerprint). */
+export function deviceCategory(userAgent: string | null | undefined): Device {
+  const ua = userAgent ?? "";
+  if (/ipad|tablet|kindle|silk|playbook|(android(?!.*mobile))/i.test(ua)) return "tablet";
+  if (/mobi|iphone|ipod|android|windows phone|blackberry|opera mini/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
+/** Browser family only (no version). */
+export function browserFamily(userAgent: string | null | undefined): string {
+  const ua = userAgent ?? "";
+  if (/edg(e|a|ios)?\//i.test(ua)) return "Edge";
+  if (/opr\/|opera/i.test(ua)) return "Opera";
+  if (/samsungbrowser/i.test(ua)) return "Samsung Internet";
+  if (/firefox|fxios/i.test(ua)) return "Firefox";
+  if (/chrome|crios|chromium/i.test(ua)) return "Chrome";
+  if (/safari/i.test(ua)) return "Safari";
+  return "Other";
 }
 
 const clip = (v: string | null | undefined, max: number) => {

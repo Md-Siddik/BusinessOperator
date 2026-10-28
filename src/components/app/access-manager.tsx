@@ -365,8 +365,8 @@ function PersonAccess({ user, viewerRole, abilities, roleTemplate, onBack, onCha
           {user.waitingLeads ? (
             <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-900">
               <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              {user.waitingLeads} lead{user.waitingLeads === 1 ? " has" : "s have"} been sent to {user.name.split(" ")[0]}
-              {effective.includes("marketerLeads.view") ? "." : " and stay hidden until “View Assigned Client Leads” is granted."}
+              {user.waitingLeads} lead{user.waitingLeads === 1 ? " is" : "s are"} in the marketer table
+              {effective.includes("marketerLeads.view") ? `, visible to ${user.name.split(" ")[0]}.` : ` — hidden from ${user.name.split(" ")[0]} until “View Marketer Table” is granted.`}
             </p>
           ) : null}
         </div>

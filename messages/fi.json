@@ -151,7 +151,7 @@
     "reset": { "title": "Valitse uusi salasana", "submit": "Päivitä salasana", "success": "Salasanasi on päivitetty. Voit nyt kirjautua.", "invalid": "Linkki on virheellinen tai vanhentunut." }
   },
   "industries": { "ecommerce": "Verkkokauppa", "retail": "Vähittäiskauppa", "technology": "Teknologia", "professionalServices": "Asiantuntijapalvelut", "consulting": "Konsultointi", "construction": "Rakentaminen", "manufacturing": "Valmistus", "printing": "Painotoiminta", "design": "Suunnittelu", "logistics": "Logistiikka", "hospitality": "Majoitus ja ravitsemus", "health": "Terveys ja hyvinvointi", "realEstate": "Kiinteistöt", "localServices": "Paikalliset palvelut", "other": "Muu" },
-  "cookieConsent": { "title": "Analytiikkaevästeet", "text": "Saammeko käyttää anonyymiä analytiikkaevästettä nähdäksemme, miten verkkosivuja käytetään? Se auttaa meitä parantamaan sivustoa. Emme koskaan käytä sitä selvittääksemme, kuka olet, ja voit muuttaa valintaasi milloin tahansa.", "accept": "Hyväksy", "decline": "Hylkää", "settings": "Evästeasetukset" },
+  "cookieConsent": { "title": "Analytiikkaevästeet", "text": "Saammeko käyttää anonyymiä analytiikkaevästettä nähdäksemme, miten verkkosivuja käytetään? Se auttaa meitä parantamaan sivustoa. Emme koskaan käytä sitä selvittääksemme, kuka olet, ja voit muuttaa valintaasi milloin tahansa.", "essential": "Kirjautumiseen, tietoturvaan ja tämän valinnan muistamiseen tarvittavat välttämättömät evästeet ovat aina käytössä. Muuta ei tallenneta ennen kuin teet valintasi.", "accept": "Hyväksy", "decline": "Hylkää", "settings": "Evästeasetukset" },
   "theme": { "label": "Ulkoasu", "dark": "Tumma", "light": "Vaalea", "mixed": "Yhdistelmä" },
   "footer": {
     "socialEyebrow": "Hieman lähempänä, missä oletkin",

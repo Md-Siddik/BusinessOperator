@@ -21,7 +21,11 @@ export const TEAM_NAV: TeamNavGroup[] = [
   {
     id: "marketing",
     title: "Marketing",
-    items: [{ href: "/staff/client-leads", label: "Client leads", icon: "leads", requires: ["marketerLeads.view"] }],
+    items: [
+      { href: "/staff/client-leads", label: "Client leads", icon: "leads", requires: ["marketerLeads.view"] },
+      // The management table ("Super Admin"): Admins the Owner granted "Manage Marketer Table".
+      { href: "/staff/marketer-table", label: "Manage marketer table", icon: "templates", requires: ["marketerTable.manage"] },
+    ],
   },
   {
     id: "company-intelligence",

@@ -151,7 +151,7 @@
     "reset": { "title": "Velg nytt passord", "submit": "Oppdater passord", "success": "Passordet er oppdatert. Du kan nå logge inn.", "invalid": "Lenken er ugyldig eller utløpt." }
   },
   "industries": { "ecommerce": "Netthandel", "retail": "Varehandel", "technology": "Teknologi", "professionalServices": "Profesjonelle tjenester", "consulting": "Rådgivning", "construction": "Bygg og anlegg", "manufacturing": "Industri", "printing": "Trykkeri", "design": "Design", "logistics": "Logistikk", "hospitality": "Overnatting og servering", "health": "Helse og velvære", "realEstate": "Eiendom", "localServices": "Lokale tjenester", "other": "Annet" },
-  "cookieConsent": { "title": "Analysekapsler", "text": "Kan vi bruke en anonym analysekapsel for å se hvordan nettsiden brukes? Det hjelper oss å gjøre den bedre. Vi bruker den aldri til å finne ut hvem du er, og du kan endre valget ditt når som helst.", "accept": "Godta", "decline": "Avslå", "settings": "Innstillinger for informasjonskapsler" },
+  "cookieConsent": { "title": "Analysekapsler", "text": "Kan vi bruke en anonym analysekapsel for å se hvordan nettsiden brukes? Det hjelper oss å gjøre den bedre. Vi bruker den aldri til å finne ut hvem du er, og du kan endre valget ditt når som helst.", "essential": "Nødvendige informasjonskapsler for innlogging, sikkerhet og for å huske dette valget er alltid på. Ingenting annet lagres før du har valgt.", "accept": "Godta", "decline": "Avslå", "settings": "Innstillinger for informasjonskapsler" },
   "theme": { "label": "Utseende", "dark": "Mørk", "light": "Lys", "mixed": "Blandet" },
   "footer": {
     "socialEyebrow": "Litt nærmere, uansett hvor du er",

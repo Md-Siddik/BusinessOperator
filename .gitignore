@@ -17,3 +17,6 @@ next-env.d.ts
 
 npm-debug.log*
 .DS_Store
+
+# Local analytics backups (npm run analytics:backup) — never commit
+storage/backups/

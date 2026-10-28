@@ -197,7 +197,7 @@ function StatePanel({ view, canSync }: { view: CountryView; canSync: boolean }) 
  * country (or all), with readable contact details, filters, quick
  * qualification, drawer review and export.
  */
-export async function DailyWorkspace({ actor, country, searchParams, basePath, mode = "daily", fixedPath = false, title, variant }: { actor: Actor; country: string; searchParams: SP; basePath: string; mode?: WorkspaceMode; fixedPath?: boolean; title?: string; /** "old" = Old company Intelligence: the same workspace, limited to operating companies registered ≥ 6 months ago. */ variant?: "old" }) {
+export async function DailyWorkspace({ actor, country, searchParams, basePath, mode = "daily", fixedPath = false, title }: { actor: Actor; country: string; searchParams: SP; basePath: string; mode?: WorkspaceMode; fixedPath?: boolean; title?: string }) {
   const code = country.toUpperCase();
   const defaultRange = mode === "daily" ? "today" : "all";
   const range = str(searchParams.range) ?? defaultRange;
@@ -210,9 +210,6 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
     const s = str(v);
     if (s && k !== "country") params[k] = s;
   }
-  // Old company Intelligence: verified operating companies, or (age=unverified) the records still missing a status / date.
-  if (variant === "old") params.age = params.age === "unverified" ? "unverified" : "old";
-  else delete params.age;
   const listInput = { ...params, country: code, range, ...(mode === "saved" && { saved: "yes" }) };
 
   const [cards, overview, list] = await Promise.all([listCountryCards(actor), getRegistrationOverview(actor, code, range, from, to), listCompanies(actor, listInput)]);
@@ -272,19 +269,18 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 space-y-3 xl:flex-1">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">{variant === "old" ? "Old company Intelligence" : `Company Intelligence${mode === "daily" ? " · New registrations" : ""}`}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-700">Company Intelligence{mode === "daily" ? " · New registrations" : ""}</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-900 sm:text-[1.7rem]">
               {code !== ALL && view?.flag && <span className="mr-2" aria-hidden>{view.flag}</span>}
               {heading.charAt(0).toUpperCase() + heading.slice(1)}
             </h1>
-            <p className="mt-1 text-sm text-ink-600">{variant === "old" ? "Companies registered at least 6 months ago that the registry still lists as active, with their available company and contact information." : "Discover newly registered businesses and their available company and contact information."}</p>
+            <p className="mt-1 text-sm text-ink-600">Discover newly registered businesses and their available company and contact information.</p>
           </div>
           <CountryDateBar
             key={`${code}-${range}-${from}-${to}`}
             countries={cards.map((c) => ({ code: c.code, slug: c.slug, name: c.name, flag: c.flag, today: c.today }))}
             current={code}
             fixedPath={fixedPath}
-            pathPrefix={variant === "old" ? "/dashboard/old-companies" : undefined}
             range={dr.preset}
             from={from}
             to={to}
@@ -411,23 +407,6 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
             </h2>
             {mode !== "daily" && <span className="text-xs text-ink-500">Registration date: {DATE_PRESET_LABELS[dr.preset].toLowerCase()}</span>}
           </div>
-          {variant === "old" && (
-            <nav aria-label="Verification" className="flex flex-wrap gap-1 rounded-xl border border-ink-200 bg-white p-1">
-              {(
-                [
-                  ["old", "Verified operating", "Registry status is active and the registration date is at least 6 months old"],
-                  ["unverified", "Needs verification", "Status or registration date not published yet — kept for verification, not shown as verified"],
-                ] as const
-              ).map(([key, label, hint]) => {
-                const active = params.age === key;
-                return (
-                  <Link key={key} href={qs({ age: key === "old" ? null : key })} title={hint} aria-current={active || undefined} className={cn("rounded-lg px-3 py-1.5 text-sm font-medium", active ? "bg-ink-900 text-white" : "text-ink-600 hover:bg-ink-50")}>
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
           <CompanyFilters industries={INDUSTRIES.map((i) => ({ value: i, label: INDUSTRY_LABELS[i] }))} sorts={COMPANY_SORTS.map((s) => ({ value: s, label: COMPANY_SORT_LABELS[s] }))} />
           {rows.length ? (
             <>

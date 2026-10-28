@@ -108,6 +108,25 @@ export async function ensureGrantsRecorded(userId: Types.ObjectId | string) {
   );
 }
 
+/**
+ * An invited team account was just activated: it starts with its role's template (the Owner's
+ * saved template, else the built-in one), recorded as system grants (`via: "invitation"`). Only
+ * permissions the catalog lets the role hold; never Owner-only entries. No-op when grants exist.
+ */
+export async function recordInvitationAccess(userId: Types.ObjectId | string) {
+  const u = await User.findById(userId).select("role permissionGrants").lean<TargetUser>();
+  if (!u || Array.isArray(u.permissionGrants) || !TEAM_ROLES.includes(u.role as Role) || u.role === "OWNER") return [];
+  const role = u.role as Role;
+  const perms = (await getRoleTemplates())[role].filter((p) => eligiblePermissions(role).includes(p));
+  const now = new Date();
+  const res = await User.updateOne(
+    { _id: u._id, permissionGrants: { $exists: false } },
+    { $set: { permissionGrants: perms.map((permission) => ({ permission, grantedBy: null, origin: "MIGRATION", via: "invitation", grantedAt: now })), permissions: perms } },
+  );
+  if (res.modifiedCount) await audit(null, "permission.template_applied", { entityType: "User", entityId: String(u._id), metadata: { preset: "role-template", targetRole: role, via: "invitation", permissions: perms } });
+  return perms;
+}
+
 async function pushGrant(userId: Types.ObjectId, grant: GrantDoc) {
   // The filter makes the write idempotent: the same grantor never stores the same grant twice.
   // Native driver: pipeline updates and $not/$elemMatch are passed through without schema casting.
@@ -257,10 +276,10 @@ export async function grantInitialAccess(actor: Actor, userId: Types.ObjectId, r
 }
 
 async function notifyLeadsVisible(userId: Types.ObjectId) {
-  const waiting = await LeadAssignment.countDocuments({ recipientId: userId, status: "ACTIVE" });
+  const waiting = await LeadAssignment.countDocuments({ recipientId: null, status: "ACTIVE" });
   if (!waiting) return;
   const { notifyUsers } = await import("@/features/notifications/service");
-  await notifyUsers([String(userId)], { type: "ACCOUNT", title: "Client leads are now visible", body: `${waiting} lead${waiting === 1 ? "" : "s"} sent to you can now be opened.`, link: "/staff/client-leads" }).catch(() => undefined);
+  await notifyUsers([String(userId)], { type: "ACCOUNT", title: "The marketer table is now visible", body: `${waiting} lead${waiting === 1 ? " is" : "s are"} waiting in the Digital Marketer table.`, link: "/staff/client-leads" }).catch(() => undefined);
 }
 
 /* ───────────────────────── Read model for the Permission Management page ───────────────────────── */
@@ -290,7 +309,7 @@ export type AccessUserView = {
   /** Effective permissions (what this account can use right now). */
   effective: Permission[];
   rows: AccessRow[];
-  /** Leads sent to a Digital Marketer that stay hidden until "View Assigned Client Leads" is granted. */
+  /** Leads in the shared marketer table (hidden from this marketer until "View Marketer Table" is granted). */
   waitingLeads?: number;
   migrated: boolean;
 };
@@ -343,8 +362,8 @@ async function buildViews(actor: Actor, users: TargetUser[]): Promise<AccessUser
   const names = new Map(grantors.map((g) => [String(g._id), g]));
   const marketerIds = users.filter((u) => u.role === "DIGITAL_MARKETER").map((u) => u._id);
   const showWaiting = isOwner(actor) || can(actor, "marketerLeads.grant");
-  const waiting = showWaiting && marketerIds.length ? await LeadAssignment.aggregate<{ _id: Types.ObjectId; n: number }>([{ $match: { recipientId: { $in: marketerIds }, status: "ACTIVE" } }, { $group: { _id: "$recipientId", n: { $sum: 1 } } }]) : [];
-  const waitingBy = new Map(waiting.map((w) => [String(w._id), w.n]));
+  // Leads in the shared marketer table (every marketer with "View Marketer Table" sees them all).
+  const tableLeads = showWaiting && marketerIds.length ? await LeadAssignment.countDocuments({ recipientId: null, status: "ACTIVE" }) : 0;
   const catalog = visibleCatalog(actor);
 
   return users.map((u) => {
@@ -390,7 +409,7 @@ async function buildViews(actor: Actor, users: TargetUser[]): Promise<AccessUser
       isSelf: String(u._id) === actor.id,
       effective: role === "OWNER" ? [...PERMISSIONS] : effective,
       rows,
-      waitingLeads: role === "DIGITAL_MARKETER" && showWaiting ? (waitingBy.get(String(u._id)) ?? 0) : undefined,
+      waitingLeads: role === "DIGITAL_MARKETER" && showWaiting ? tableLeads : undefined,
       migrated,
     };
   });

@@ -1,9 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
-import { ContactRequest, Service, WebPageView, WebSession, WebVisitor, type WebSessionDoc, type WebVisitorDoc } from "@/models";
+import { ContactRequest, Service, WebAnalyticsDaily, WebConversion, WebEventKey, WebPageView, WebSession, WebVisitor, type WebSessionDoc, type WebVisitorDoc } from "@/models";
 import type { SessionUser } from "@/lib/auth/actor";
 import type { Actor } from "@/lib/permissions";
+import { createConsent, serializeConsent } from "@/lib/consent";
 import { expectRejects, makeTenants } from "./helpers";
 
 /**
@@ -56,6 +57,19 @@ async function consentingBrowser() {
   };
 }
 const at = (iso: string) => new Date(iso);
+/** Valid, current consent decisions (lib/consent). */
+const GRANTED = `et_consent=${serializeConsent(createConsent("granted"))}`;
+const DENIED = `et_consent=${serializeConsent(createConsent("denied"))}`;
+/**
+ * A page view recorded WITHOUT consent by the tracker before 2026-10 (it no longer records those).
+ * Such historical records still exist in the database and must keep being reported.
+ */
+async function legacyCookieless(url: string, when: Date, opts: { referrer?: string; geo?: { country?: string; region?: string; city?: string }; tz?: string } = {}) {
+  const loc = classify.parsePath(url)!;
+  const ref = classify.parseReferrer(opts.referrer, HOST);
+  const entry = !ref.internal;
+  await WebPageView.create({ at: when, path: loc.path, page: loc.page, locale: loc.locale, serviceSlug: loc.serviceSlug, consented: false, entry, geo: opts.geo, timeZone: opts.tz, expireAt: new Date(when.getTime() + 395 * 86_400_000), ...(entry && { channel: classify.channelFor(classify.parseUtm(loc.search), ref.referrerDomain), referrerDomain: ref.referrerDomain }) });
+}
 const range = (from: string, to = from) => svc.analyticsRange({ range: "custom", from, to });
 
 beforeAll(async () => {
@@ -64,7 +78,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   resetRateLimits();
   as(null);
-  await Promise.all([WebVisitor.deleteMany({}), WebSession.deleteMany({}), WebPageView.deleteMany({}), ContactRequest.deleteMany({})]);
+  await Promise.all([WebVisitor.deleteMany({}), WebSession.deleteMany({}), WebPageView.deleteMany({}), ContactRequest.deleteMany({}), WebEventKey.deleteMany({}), WebConversion.deleteMany({}), WebAnalyticsDaily.deleteMany({})]);
 });
 
 /* ───────────── Classification ───────────── */
@@ -122,27 +136,29 @@ describe("Classification", () => {
 /* ───────────── Collection ───────────── */
 
 describe("Collection", () => {
-  it("without consent: records the page view with no visitor, session or cookie", async () => {
-    const res = await trackRoute(post("/api/track", { url: "/services/seo?utm_source=google&utm_medium=cpc&utm_campaign=autumn", referrer: "https://www.google.com/" }), ctx);
-    expect(res.status).toBe(200);
-    expect(res.headers.get("set-cookie") ?? "").not.toContain(classify.VISITOR_COOKIE);
-    const body = (await res.json()) as { id?: string };
-    expect(body.id).toBeTruthy();
-    const pv = await WebPageView.findById(body.id).lean<{ visitorId?: unknown }>();
-    expect(pv).toMatchObject({ consented: false, entry: true, channel: "google", page: "/services/seo", serviceSlug: "seo" });
-    expect(pv?.visitorId).toBeUndefined();
+  it("before a decision, after Deny, or with an outdated consent record: records nothing at all", async () => {
+    const body = { url: "/services/seo?utm_source=google&utm_medium=cpc&utm_campaign=autumn", referrer: "https://www.google.com/" };
+    // No decision, Deny, the pre-2026-10 bare "granted" value (older policy version), and an expired decision.
+    const expired = `et_consent=${serializeConsent({ ...createConsent("granted"), at: Math.floor(Date.now() / 1000) - 400 * 86_400 })}`;
+    for (const cookie of ["", DENIED, "et_consent=granted", expired]) {
+      const res = await trackRoute(post("/api/track", body, cookie), ctx);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("set-cookie") ?? "").not.toContain(`${classify.VISITOR_COOKIE}=`);
+    }
+    expect(await WebPageView.countDocuments()).toBe(0);
     expect(await WebVisitor.countDocuments()).toBe(0);
     expect(await WebSession.countDocuments()).toBe(0);
+    expect((await recordEvent(body, { userAgent: CHROME, host: HOST, consent: false })).reason).toBe("no-consent");
   });
 
   it("with consent: issues an httpOnly anonymous cookie and recognises the same browser next time", async () => {
-    const first = await trackRoute(post("/api/track", { url: "/", referrer: "" }, "et_consent=granted"), ctx);
+    const first = await trackRoute(post("/api/track", { url: "/", referrer: "" }, GRANTED), ctx);
     const cookie = first.headers.get("set-cookie") ?? "";
     expect(cookie).toMatch(/et_vid=[A-Za-z0-9_-]{22,};/);
     expect(cookie.toLowerCase()).toContain("httponly");
     expect(cookie).toMatch(/Max-Age=34128000/);
     const vid = /et_vid=([^;]+)/.exec(cookie)![1]!;
-    await trackRoute(post("/api/track", { url: "/services", referrer: `https://${HOST}/` }, `et_consent=granted; et_vid=${vid}`), ctx);
+    await trackRoute(post("/api/track", { url: "/services", referrer: `https://${HOST}/` }, `${GRANTED}; et_vid=${vid}`), ctx);
     expect(await WebVisitor.countDocuments()).toBe(1);
     const v = await WebVisitor.findOne().lean<WebVisitorDoc>();
     expect(v?.vidHash).toBe(classify.hashVisitorId(vid));
@@ -193,10 +209,10 @@ describe("Collection", () => {
   });
 
   it("ignores bots, automated browsers, the internal team and non-site paths", async () => {
-    for (const ua of ["Mozilla/5.0 (compatible; Googlebot/2.1)", "curl/8.0"]) await trackRoute(post("/api/track", { url: "/" }, "et_consent=granted", ua), ctx);
-    await trackRoute(post("/api/track", { url: "/", webdriver: true }, "et_consent=granted"), ctx);
+    for (const ua of ["Mozilla/5.0 (compatible; Googlebot/2.1)", "curl/8.0"]) await trackRoute(post("/api/track", { url: "/" }, GRANTED, ua), ctx);
+    await trackRoute(post("/api/track", { url: "/", webdriver: true }, GRANTED), ctx);
     for (const user of [t.owner, t.admin, t.staff]) expect((await recordEvent({ url: "/" }, { userAgent: CHROME, host: HOST, consent: true, actor: user.actor })).reason).toBe("internal");
-    expect((await recordEvent({ url: "/dashboard" }, { userAgent: CHROME, host: HOST, consent: false })).reason).toBe("path");
+    expect((await recordEvent({ url: "/dashboard" }, { userAgent: CHROME, host: HOST, consent: true })).reason).toBe("path");
     expect(await WebPageView.countDocuments()).toBe(0);
   });
 
@@ -217,13 +233,27 @@ describe("Collection", () => {
     expect(await linkVisitorToUser("not a valid id", { id: t.clientB.actor.id, role: "CLIENT" })).toBe(false);
   });
 
-  it("after 'Accept': replaces the page's cookieless record and keeps how the visit arrived", async () => {
+  it("on 'Accept': records the current page once and keeps how the visit arrived", async () => {
     const landing = "/services/seo?utm_source=email&utm_medium=outreach&utm_campaign=outreach-general";
-    const first = (await (await trackRoute(post("/api/track", { url: landing, referrer: "" }), ctx)).json()) as { id: string };
-    await trackRoute(post("/api/track", { url: landing, referrer: "", replaces: first.id, landing: { url: landing, referrer: "" } }, "et_consent=granted"), ctx);
-    expect(await WebPageView.countDocuments()).toBe(1);
+    // Before the decision the tracker sends nothing; the server would refuse it anyway.
+    await trackRoute(post("/api/track", { url: landing, referrer: "" }), ctx);
+    expect(await WebPageView.countDocuments()).toBe(0);
+    await trackRoute(post("/api/track", { url: landing, referrer: "", landing: { url: landing, referrer: "" }, eventId: "accept-0001" }, GRANTED), ctx);
     expect(await WebPageView.countDocuments({ consented: true })).toBe(1);
-    expect(await WebSession.findOne().lean<WebSessionDoc>()).toMatchObject({ channel: "email", utm: { campaign: "outreach-general" }, landingPage: "/services/seo" });
+    expect(await WebSession.findOne().lean<WebSessionDoc>()).toMatchObject({ channel: "email", utm: { campaign: "outreach-general" }, landingPage: "/services/seo", device: "desktop", browser: "Chrome" });
+  });
+
+  it("is idempotent: a retried beacon with the same event id is counted once", async () => {
+    const first = await trackRoute(post("/api/track", { url: "/", referrer: "", eventId: "evt-retry-0001" }, GRANTED), ctx);
+    const vid = /et_vid=([^;]+)/.exec(first.headers.get("set-cookie") ?? "")![1];
+    for (let i = 0; i < 3; i++) await trackRoute(post("/api/track", { url: "/", referrer: "", eventId: "evt-retry-0001" }, `${GRANTED}; et_vid=${vid}`), ctx);
+    expect(await WebPageView.countDocuments()).toBe(1);
+    expect(await WebSession.countDocuments()).toBe(1);
+    expect((await WebVisitor.findOne().lean<WebVisitorDoc>())!.pageViews).toBe(1);
+    // A different event (the next page load) is counted.
+    await trackRoute(post("/api/track", { url: "/", referrer: "", eventId: "evt-retry-0002" }, `${GRANTED}; et_vid=${vid}`), ctx);
+    expect(await WebPageView.countDocuments()).toBe(2);
+    expect(await WebVisitor.countDocuments()).toBe(1);
   });
 
   it("pings keep the session's end time accurate without adding page views", async () => {
@@ -238,7 +268,7 @@ describe("Collection", () => {
   it("declining or withdrawing consent deletes the browser's data and cookie", async () => {
     const b = await consentingBrowser();
     await b.view("/", at("2026-10-23T08:00:00Z"));
-    const res = await consentRoute(post("/api/track/consent", { granted: false }, `et_consent=denied; et_vid=${b.vid}`), ctx);
+    const res = await consentRoute(post("/api/track/consent", { granted: false }, `${DENIED}; et_vid=${b.vid}`), ctx);
     expect(res.status).toBe(200);
     expect(res.headers.get("set-cookie")).toMatch(/et_vid=;/);
     expect(await WebVisitor.countDocuments()).toBe(0);
@@ -260,7 +290,7 @@ describe("Enquiry linking", () => {
     const b = await consentingBrowser();
     await b.view("/", at("2026-10-23T08:00:00Z"));
     await b.view("/contact", new Date(), { referrer: `https://${HOST}/` });
-    const res = await contactRoute(post("/api/contact", enquiry, `et_consent=granted; et_vid=${b.vid}`), ctx);
+    const res = await contactRoute(post("/api/contact", enquiry, `${GRANTED}; et_vid=${b.vid}`), ctx);
     expect(res.status).toBe(200);
     const v = await WebVisitor.findOne().lean<WebVisitorDoc>();
     expect(v?.contactRequestIds).toHaveLength(1);
@@ -294,9 +324,9 @@ describe("Aggregation", () => {
     const b = await consentingBrowser();
     await b.view("/", at("2026-10-23T09:00:00Z"), { referrer: "https://www.linkedin.com/" });
     await b.view("/services/web-development", at("2026-10-23T09:01:00Z"), { referrer: `https://${HOST}/` });
-    // One cookieless Google visit on 23 Oct, and one on 1 Oct (outside the ranges below).
-    await recordEvent({ url: "/services/seo", referrer: "https://www.google.com/" }, { userAgent: CHROME, host: HOST, consent: false, now: at("2026-10-23T11:00:00Z") });
-    await recordEvent({ url: "/", referrer: "" }, { userAgent: CHROME, host: HOST, consent: false, now: at("2026-10-01T11:00:00Z") });
+    // Historical (pre-2026-10) cookieless visits: Google on 23 Oct, and one on 1 Oct (outside the ranges below).
+    await legacyCookieless("/services/seo", at("2026-10-23T11:00:00Z"), { referrer: "https://www.google.com/" });
+    await legacyCookieless("/", at("2026-10-01T11:00:00Z"), { referrer: "" });
     await ContactRequest.create({ name: "X", email: "x@example.test", message: "Hello there, a website please.", serviceSlug: "seo", createdAt: at("2026-10-23T10:05:00Z") });
     return { a, b };
   }
@@ -325,7 +355,7 @@ describe("Aggregation", () => {
 
   it("reports sources and campaigns with visitors, sessions, page views and enquiries", async () => {
     const { a } = await seed();
-    await contactRoute(post("/api/contact", { name: "Ola Hansen", email: "ola@example.test", message: "Interested in SEO help." }, `et_consent=granted; et_vid=${a.vid}`), ctx);
+    await contactRoute(post("/api/contact", { name: "Ola Hansen", email: "ola@example.test", message: "Interested in SEO help." }, `${GRANTED}; et_vid=${a.vid}`), ctx);
     const r = range("2026-10-17", "2026-10-23");
     const sources = await svc.getSources(t.owner.actor, r);
     const by = Object.fromEntries(sources.map((s) => [s.key, s]));
@@ -415,14 +445,14 @@ describe("Access: OWNER only", () => {
   it("the public beacon never returns analytics data", async () => {
     const b = await consentingBrowser();
     await b.view("/", new Date());
-    const res = await trackRoute(post("/api/track", { url: "/services" }, "et_consent=granted"), ctx);
+    const res = await trackRoute(post("/api/track", { url: "/services" }, GRANTED), ctx);
     expect(Object.keys((await res.json()) as object)).toEqual(["ok"]);
   });
 
   it("CSV exports carry no IP addresses, names or emails, and are formula-safe", async () => {
     const b = await consentingBrowser();
     await b.view("/?utm_source=x&utm_campaign=%3Dcmd%7Ccalc", new Date());
-    await contactRoute(post("/api/contact", { name: "Kari Nordmann", email: "kari@fjord.example", message: "We would like a new website." }, `et_consent=granted; et_vid=${b.vid}`), ctx);
+    await contactRoute(post("/api/contact", { name: "Kari Nordmann", email: "kari@fjord.example", message: "We would like a new website." }, `${GRANTED}; et_vid=${b.vid}`), ctx);
     as(t.owner);
     for (const kind of svc.EXPORT_KINDS) {
       const res = await exportRoute(req(`/api/website-analytics/export?kind=${kind}`), ctx);
@@ -468,16 +498,15 @@ describe("Location and local time", () => {
 
   it("stores country, region, city and time zone on the visit — never the IP address", async () => {
     const ip = "84.208.20.110";
-    const res = await trackRoute(geoPost({ url: "/services", tz: "Europe/Oslo" }, "et_consent=granted", { ...NO, "x-forwarded-for": ip }), ctx);
+    const res = await trackRoute(geoPost({ url: "/services", tz: "Europe/Oslo" }, GRANTED, { ...NO, "x-forwarded-for": ip }), ctx);
     expect(res.status).toBe(200);
     const s = await WebSession.findOne().lean<WebSessionDoc>();
     expect(s).toMatchObject({ geo: { country: "NO", region: "Oslo", city: "Oslo" }, timeZone: "Europe/Oslo" });
     expect((await WebVisitor.findOne().lean<WebVisitorDoc>())?.geo).toMatchObject({ country: "NO", city: "Oslo" });
-    // Without consent the page view still carries the coarse location (and nothing identifying).
+    // Without consent nothing is stored — not even a coarse location.
     await trackRoute(geoPost({ url: "/", referrer: "https://www.google.com/", tz: "America/New_York" }, "", { "x-vercel-ip-country": "US", "x-vercel-ip-city": "New%20York", "x-forwarded-for": "8.8.8.8" }), ctx);
-    const anon = await WebPageView.findOne({ consented: false }).lean<{ geo?: unknown; timeZone?: string; visitorId?: unknown }>();
-    expect(anon).toMatchObject({ geo: { country: "US", city: "New York" }, timeZone: "America/New_York" });
-    expect(anon?.visitorId).toBeUndefined();
+    expect(await WebPageView.countDocuments({ consented: false })).toBe(0);
+    expect(await WebPageView.countDocuments({ "geo.country": "US" })).toBe(0);
     for (const model of [WebVisitor, WebSession, WebPageView] as const) {
       const all = JSON.stringify(await (model as typeof WebPageView).find().lean());
       expect(all).not.toContain(ip);
@@ -491,11 +520,13 @@ describe("Location and local time", () => {
     await recordEvent({ url: "/" }, { userAgent: "curl/8.0", host: HOST, consent: true, resolveGeo });
     await recordEvent({ url: "/" }, { userAgent: CHROME, host: HOST, consent: true, actor: t.owner.actor, resolveGeo });
     await recordEvent({ type: "ping", url: "/" }, { userAgent: CHROME, host: HOST, consent: true, vid: "abcdefghijklmnopqrstuvwx", resolveGeo });
-    expect(lookups).toHaveLength(0);
+    // Without consent nothing is recorded, so no location is looked up either.
     await recordEvent({ url: "/" }, { userAgent: CHROME, host: HOST, consent: false, resolveGeo });
+    expect(lookups).toHaveLength(0);
+    await recordEvent({ url: "/" }, { userAgent: CHROME, host: HOST, consent: true, resolveGeo });
     expect(lookups).toHaveLength(1);
     // A failing lookup never blocks the visit.
-    const r = await recordEvent({ url: "/about" }, { userAgent: CHROME, host: HOST, consent: false, resolveGeo: async () => Promise.reject(new Error("db")) });
+    const r = await recordEvent({ url: "/about" }, { userAgent: CHROME, host: HOST, consent: true, resolveGeo: async () => Promise.reject(new Error("db")) });
     expect(r.recorded).toBe(true);
   });
 
@@ -507,7 +538,7 @@ describe("Location and local time", () => {
     await recordEvent({ url: "/about" }, { userAgent: CHROME, host: HOST, consent: true, now: at("2026-10-23T07:00:00Z") });
     const bergen = await recordEvent({ url: "/", tz: "Europe/Oslo" }, { userAgent: CHROME, host: HOST, consent: true, now: day(9), resolveGeo: async () => ({ country: "NO", region: "Vestland", city: "Bergen" }) });
     expect(bergen.newVid).toBeTruthy();
-    await recordEvent({ url: "/", referrer: "https://www.google.com/", tz: "America/New_York" }, { userAgent: CHROME, host: HOST, consent: false, now: day(10), resolveGeo: async () => ({ country: "US", region: "New York", city: "New York" }) });
+    await legacyCookieless("/", day(10), { referrer: "https://www.google.com/", tz: "America/New_York", geo: { country: "US", region: "New York", city: "New York" } });
 
     const { countries, areas } = await svc.getLocations(t.owner.actor, range("2026-10-23"));
     expect(countries.map((c) => c.country)).toEqual(["NO", "US", undefined]);
@@ -558,7 +589,7 @@ describe("Analytics failures never break the website", () => {
   it("the beacon answers 200 even when recording fails", async () => {
     const spy = vi.spyOn(WebPageView, "create").mockRejectedValueOnce(new Error("database down"));
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    const res = await trackRoute(post("/api/track", { url: "/" }), ctx);
+    const res = await trackRoute(post("/api/track", { url: "/" }, GRANTED), ctx);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: false });
     spy.mockRestore();
@@ -575,7 +606,7 @@ describe("Analytics failures never break the website", () => {
     await b.view("/", new Date());
     const spy = vi.spyOn(WebVisitor, "updateOne").mockRejectedValueOnce(new Error("database down"));
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    const res = await contactRoute(post("/api/contact", { name: "Kari Nordmann", email: "kari@fjord.example", message: "We would like a new website." }, `et_consent=granted; et_vid=${b.vid}`), ctx);
+    const res = await contactRoute(post("/api/contact", { name: "Kari Nordmann", email: "kari@fjord.example", message: "We would like a new website." }, `${GRANTED}; et_vid=${b.vid}`), ctx);
     expect(res.status).toBe(200);
     expect(await ContactRequest.countDocuments()).toBe(1);
     spy.mockRestore();

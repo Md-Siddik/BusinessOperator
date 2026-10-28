@@ -20,15 +20,23 @@ The navigation item is shown only to the Owner.
 
 ## Consent
 
-The public site shows a small banner with equally weighted **Accept** and **Decline** buttons, in every site language. The choice is stored in the `et_consent` cookie (`granted` / `denied`, 13 months). Visitors can change it at any time through **Cookie settings** in the footer.
+The public site opens a **centred consent dialog** (native modal `<dialog>`, with an overlay) with equally clear **Accept** and **Deny** buttons, in every site language. While no decision is saved, the page behind it is inert: it can't be scrolled, clicked or reached with the keyboard. Focus stays inside the dialog, and **Escape does not bypass the choice**. When the dialog is reopened from **Cookie settings** in the footer, Escape closes it and keeps the saved decision.
+
+The decision is stored in the first-party `et_consent` cookie (13 months) with its **policy version, timestamp and categories** (`src/lib/consent.ts`):
+
+```
+et_consent = granted.2.1793174400.essential+analytics   |   denied.2.1793174400.essential
+```
+
+A decision counts only when it is for the current `CONSENT_VERSION`, is less than 13 months old, and its categories match the decision. Anything else (no cookie, the earlier bare `granted` / `denied` value, an expired or tampered value) means **no decision**: the dialog asks again and nothing optional runs. Bump `CONSENT_VERSION` when the cookie policy changes; everyone is asked again once. A valid decision is never prompted again.
 
 | State | What is recorded |
 |---|---|
-| No choice yet, or **Decline** | Page views with **no identifier at all**: page, time, language, and (for arrivals from outside the site) source, referring domain and UTM tags. They count towards page views, sources, campaigns and landing pages, but not as visitors or sessions. |
-| **Accept** | The server sets `et_vid`: an httpOnly, random, anonymous id (13 months). Page views are grouped into visitors and sessions. |
-| **Decline after Accept** | Everything recorded for that browser is deleted (`/api/track/consent`) and `et_vid` is removed. |
+| No valid decision yet | **Nothing.** The tracker sends no beacon, and `/api/track` refuses events anyway. Only essential cookies exist (sign-in, security, language, this decision). |
+| **Deny** | **Nothing.** Anything recorded earlier for this browser is deleted (`/api/track/consent`) and `et_vid` is removed. |
+| **Accept** | The server sets `et_vid`: an httpOnly, random, anonymous id (13 months). Page views are grouped into visitors and sessions. The page the visitor is on is recorded at that moment, with how the tab arrived (source, campaign). |
 
-When someone lands (for example from an outreach email), sees the banner and clicks **Accept**, the landing page's cookieless record is replaced by a consented one. That record keeps the original source and campaign, so the visit is not lost or counted twice.
+Until October 2026 the site counted page views without consent (no identifier). Those historical records are kept and still shown as "visits without consent"; new ones are no longer recorded.
 
 ## What is collected
 
@@ -131,9 +139,31 @@ Requests are not recorded when:
 
 The tracker also only runs from JavaScript in the page, which most crawlers never execute. Detection is deliberately not aggressive: an unusual but real browser is still counted.
 
-## Retention
+## Retention and history
 
-Each record carries an `expireAt` date. A MongoDB TTL index removes it after the retention period, set on the analytics page: 3, 6, 13 (default) or 25 months. A change applies to activity recorded from then on.
+- **Raw records** (visitors, sessions, page views, lead attribution records) carry an `expireAt` date. A MongoDB TTL index removes them after the retention period set on the analytics page: 3, 6, 13 (default) or 25 months. A change applies to activity recorded from then on.
+- **Daily statistics** (`WebAnalyticsDaily`, one row per Norwegian calendar day) are **kept permanently**. They are anonymous aggregates: unique visitors, sessions, page views, leads by type, converted sessions, and sources, devices, countries and top pages with counts.
+  - The scheduler rolls up today and yesterday on every tick (every 5 minutes). Opening the History or Leads tab refreshes them too.
+  - From the day before yesterday on, a day is **final**. It is computed once more and then frozen. Raw expiry can never lower or rewrite a historical number.
+  - Nothing is estimated. A day is computed only from records that exist. A day whose raw records may already have been expiring before its first roll-up is marked **partial** (shown with \*).
+- **Leads** (`WebConversion`) and the attribution copied onto an enquiry are part of the lead record.
+- **Beacon keys** (`WebEventKey`) de-duplicate retried requests and expire after 7 days.
+
+### Why traffic seemed to disappear
+
+The code keeps raw records for 13 months by default (never less than 30 days), and nothing deletes them in bulk except a visitor's own Deny. Before October 2026, though, every number was computed live from raw records. Nothing durable kept the history, so anything that removed or hid raw data made past traffic vanish.
+
+`npm run analytics:diagnose` is a **read-only** check of the live database. It lists the TTL indexes MongoDB actually has, the retention setting, how far back raw records reach, records per day, and whether `MONGODB_URI` is set. Things to look for:
+
+- A TTL index with `expireAfterSeconds` > 0 on a time field. An older build or a manual change may have created one, and MongoDB keeps an index even after the code changes.
+- `expireAt` only a day or two after the visit.
+- A server running without `MONGODB_URI`, so data sits on a disk that a redeploy wipes.
+
+The daily statistics make history independent of all three.
+
+### Backups
+
+`npm run analytics:backup` writes the daily statistics and lead records (add `--raw` for raw visits) as NDJSON. Output goes to `storage/backups/analytics/<timestamp>/`, or to `--out <dir>`. It is read-only on the database and contains no IP addresses. Schedule it daily (cron / Task Scheduler) and copy the folder off the server. It complements, and doesn't replace, the database's own backups (e.g. Atlas snapshots).
 
 ## Performance and failure handling
 
@@ -142,9 +172,29 @@ Each record carries an `expireAt` date. A MongoDB TTL index removes it after the
 - Linking an enquiry or a login is wrapped so that a failure can never fail the contact form or the sign-in.
 - Queries are aggregations over indexed fields (`startedAt`, `at`, `visitorId`, `sessionId`).
 
+## History, leads and attribution
+
+- **History tab**: daily, weekly (Monday–Sunday) or monthly periods for any preset or custom range, compared with the previous period of the same length. It shows source attribution, devices and top pages, with pagination. All days are Europe/Oslo.
+  - **Unique visitors** for a single day is exact. For a week, month or range it is exact while raw sessions still cover the whole period.
+  - Older periods show the **sum of daily unique visitors**, labelled "sum of days".
+  - A repeated page load is never a new visitor.
+- **Leads tab**: every lead submission, with type, contact and attribution.
+  - **Types**: contact-form enquiry, **consultation request** (an enquiry asking for a phone or video call — the site has no calendar booking) and client sign-up.
+  - **Contact details** are shown only as the person entered them in the form or at sign-up. Nothing is looked up or inferred.
+  - **Attribution**: for a browser that accepted analytics, the lead keeps its **first touch** (first recorded visit: channel, referrer, UTM, landing page) and **last touch** (the visit that converted), also stored on the enquiry. Other leads are counted but shown as **Anonymous**.
+- **Definitions**:
+  - Leads: all lead submissions, consented or not.
+  - Conversion rate: tracked sessions that produced a lead ÷ tracked sessions.
+  - Ingestion is idempotent. Each beacon carries a random event id, so a retry is counted once, and each lead has one record per enquiry or sign-up.
+
 ## CSV export
 
-There are five exports for the selected period: **visitors**, **sessions**, **page views**, **sources** and **campaigns**. They contain no IP addresses, names or email addresses; visitors appear only by display code. Cells are protected against spreadsheet formula injection.
+Exports for the selected period:
+
+- **Visitors**, **sessions**, **page views**, **sources**, **campaigns** and **locations**.
+- **Daily statistics** and **leads** (attribution only).
+
+They contain no IP addresses, names, email addresses or phone numbers. Visitors appear only by display code. Cells are protected against spreadsheet formula injection.
 
 ## Code
 
@@ -156,7 +206,11 @@ There are five exports for the selected period: **visitors**, **sessions**, **pa
 | `src/features/website-analytics/collect.ts` | Recording, enquiry/login linking, forgetting a visitor |
 | `src/features/website-analytics/service.ts` | Owner-only queries and CSV export |
 | `src/models/WebAnalytics.ts` | `WebVisitor`, `WebSession`, `WebPageView` |
-| `src/components/site/site-analytics.tsx` | Consent banner and beacon |
+| `src/lib/consent.ts` | Consent record: version, timestamp, categories, validity |
+| `src/components/site/site-analytics.tsx` | Consent dialog and beacon |
+| `src/features/website-analytics/rollup.ts` | Durable daily statistics (roll-up, freeze, backfill) |
+| `src/features/website-analytics/history.ts` | History, leads and their CSV exports (Owner only) |
+| `scripts/analytics-diagnose.ts`, `scripts/analytics-backup.ts` | Read-only health check; NDJSON backup |
 | `src/app/api/track/*` | Public beacon and consent withdrawal |
 | `src/app/api/website-analytics/*` | Owner-only statistics, visitor detail, CSV |
-| `tests/website-analytics.test.ts` | Tests |
+| `tests/website-analytics.test.ts`, `tests/analytics-history.test.ts`, `tests/consent.test.tsx` | Tests |

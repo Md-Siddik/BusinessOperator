@@ -54,6 +54,7 @@ export const PERMISSIONS = [
   // Marketing
   "marketerLeads.view",
   "marketerLeads.grant",
+  "marketerTable.manage",
   // Clients & communication
   "clients.manage",
   "chat.manage",
@@ -165,29 +166,38 @@ export const PERMISSION_CATALOG: PermissionDef[] = [
   },
   { key: "registry.sync", label: "Run Registry Syncs", description: "Start registry synchronisations and manage country sources.", action: "RUN", unlocks: ["/dashboard/sources"], ...CI },
   { key: "leads.manage", label: "Manage CRM Leads", description: "Manage every lead in the CRM pipeline and follow-ups.", action: "MANAGE", unlocks: ["/dashboard/crm"], ...CI },
-  { key: "leads.sendToMarketer", label: "Send Leads to Marketers", description: "Send a company from Today's New Companies to a Digital Marketer.", action: "ASSIGN", unlocks: ["/dashboard/today", "POST /api/lead-assignments"], ...CI },
+  { key: "leads.sendToMarketer", label: "Send Leads to Marketers", description: "Send a company from Today's New Companies to the Digital Marketer table, and manage the whole table (edit, delete, any status).", action: "ASSIGN", unlocks: ["/dashboard/today", "POST /api/lead-assignments", "/dashboard/marketer-leads", "GET /api/marketer/assignments", "PATCH /api/marketer/assignments/[id]", "DELETE /api/marketer/assignments/[id]"], ...CI },
   { key: "outreach.manage", label: "Create Outreach", description: "Campaigns, templates and email drafts to registered companies.", action: "MANAGE", unlocks: ["/dashboard/outreach"], ...CI },
   { key: "outreach.approve", label: "Approve & Send Outreach", description: "Approve and send outreach emails.", action: "MANAGE", unlocks: ["/dashboard/outreach/queue"], ...CI },
 
   /* ── Digital Marketer ── */
   {
     key: "marketerLeads.view",
-    label: "View Assigned Client Leads",
-    description: "Open the client leads table and see the company name, contact person, phone, website and Company Type of leads the Owner sent to this person.",
+    label: "View Marketer Table",
+    description: "Open the shared Digital Marketer table: every lead the Owner sent to it, with company name, contact person, phone, website and Company Type. Digital Marketers also set each lead's outreach status; Admins see the same table read-only.",
     group: "marketing",
     action: "VIEW",
-    eligibleRoles: ["DIGITAL_MARKETER"],
+    eligibleRoles: ["DIGITAL_MARKETER", "ADMIN"],
     delegatedBy: "marketerLeads.grant",
     unlocks: ["/staff/client-leads", "GET /api/marketer/leads"],
   },
   {
     key: "marketerLeads.grant",
     label: "Manage Marketer Lead Access",
-    description: "Turn “View Assigned Client Leads” on or off for Digital Marketers. Gives no other permission-management rights.",
+    description: "Turn “View Marketer Table” on or off for Digital Marketers. Gives no other permission-management rights.",
     group: "marketing",
     action: "GRANT",
     eligibleRoles: ["ADMIN"],
     unlocks: ["/staff/users"],
+  },
+  {
+    key: "marketerTable.manage",
+    label: "Manage Marketer Table",
+    description: "The full Digital Marketer management table: every record (active and withdrawn), edit the shown company and contact details, set any outreach status, withdraw, re-activate and delete records, and read their change history. Granted by the Owner only.",
+    group: "marketing",
+    action: "MANAGE",
+    eligibleRoles: ["ADMIN"],
+    unlocks: ["/staff/marketer-table", "GET /api/marketer/assignments", "PATCH /api/marketer/assignments/[id]", "DELETE /api/marketer/assignments/[id]"],
   },
 
   /* ── Opportunity Intelligence ── */
@@ -274,16 +284,26 @@ export const COMPANY_INTELLIGENCE_PERMISSIONS = PERMISSION_CATALOG.filter((d) =>
 export const SCOPED_GRANT_AUTHORITIES: Permission[] = ["opportunities.grant", "marketerLeads.grant", "companies.grant"];
 
 /**
+ * What every Digital Marketer starts with: the shared marketer table (see every lead the Owner sent
+ * and set its outreach status). In the role template; existing marketers received it through
+ * migration "2026-10-marketer-table-v1". Never a system-wide or administrative permission.
+ */
+export const DIGITAL_MARKETER_HANDOFF_PERMISSIONS: Permission[] = ["marketerLeads.view"];
+
+/**
  * Built-in starting access per role, shown (and editable) when an account is created. The Owner
  * can replace them in Permission Management → Role templates (stored as a setting, see
  * features/access). Never applied silently to existing accounts.
  */
 export const ROLE_TEMPLATES: Record<Role, Permission[]> = {
   OWNER: [...PERMISSIONS],
-  ADMIN: ["clients.manage", "chat.manage", "conversations.assigned", "tickets.manage", "tickets.assigned", "projects.manage", "projects.assigned", "content.manage", "services.manage", "users.manage", "analytics.view"],
+  // Admins see the shared marketer table read-only; managing it is a separate Owner grant.
+  ADMIN: ["clients.manage", "chat.manage", "conversations.assigned", "tickets.manage", "tickets.assigned", "projects.manage", "projects.assigned", "content.manage", "services.manage", "users.manage", "analytics.view", "marketerLeads.view"],
   MANAGER: ["clients.manage", "chat.manage", "conversations.assigned", "tickets.manage", "tickets.assigned", "projects.manage", "projects.assigned", "analytics.view"],
   STAFF: ["chat.manage", "conversations.assigned", "tickets.manage", "tickets.assigned", "projects.manage", "projects.assigned", "content.manage"],
-  DIGITAL_MARKETER: [],
+  // The shared marketer table. Broader research access — Company / Opportunity Intelligence —
+  // stays an explicit Owner grant.
+  DIGITAL_MARKETER: [...DIGITAL_MARKETER_HANDOFF_PERMISSIONS],
   CLIENT: [],
 };
 

@@ -46,6 +46,21 @@ const contactRequestSchema = new Schema(
     assignedTo: { type: ObjectId, ref: "User" },
     notes: String,
     isDemo: { type: Boolean, default: false },
+    /**
+     * How this lead found the site — only when the visitor's browser accepted analytics. First touch
+     * is their first recorded visit, last touch the visit that sent the enquiry. No identity data.
+     */
+    attribution: {
+      type: new Schema(
+        {
+          conversionType: String,
+          visitorLabel: String,
+          firstTouch: { type: new Schema({ at: Date, channel: String, referrerDomain: String, campaign: String, source: String, medium: String, landingPage: String }, { _id: false }) },
+          lastTouch: { type: new Schema({ at: Date, channel: String, referrerDomain: String, campaign: String, source: String, medium: String, landingPage: String }, { _id: false }) },
+        },
+        { _id: false },
+      ),
+    },
   },
   { timestamps: true },
 );
