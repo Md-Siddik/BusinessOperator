@@ -120,8 +120,8 @@ describe("Item 6/8 · one shared Company Type classification", () => {
     expect(await AuditLog.exists({ action: "company.type_changed", entityId: String(reviewId) })).toBeTruthy();
 
     // Marketer table reads the same stored value (no separate logic).
-    await LeadAssignment.create({ companyId: reviewId, recipientId: new Types.ObjectId(marketerA), senderId: new Types.ObjectId(ownerId), countryCode: "US", status: "ACTIVE", sentAt: new Date(), history: [] });
-    await LeadAssignment.create({ companyId: establishedId, recipientId: new Types.ObjectId(marketerA), senderId: new Types.ObjectId(ownerId), countryCode: "AU", status: "ACTIVE", sentAt: new Date(), history: [] });
+    await LeadAssignment.create({ companyId: reviewId, recipientId: null, senderId: new Types.ObjectId(ownerId), countryCode: "US", status: "ACTIVE", sentAt: new Date(), history: [] });
+    await LeadAssignment.create({ companyId: establishedId, recipientId: null, senderId: new Types.ObjectId(ownerId), countryCode: "AU", status: "ACTIVE", sentAt: new Date(), history: [] });
     await grant(ownerId, marketerA, "marketerLeads.view");
     const page = await marketer.listMarketerLeads(await fresh(marketerA), {});
     expect(Object.fromEntries(page.items.map((r) => [r.companyName, r.companyType.value]))).toEqual({ "Midway LLC": "STARTUP", "Old Oak Pty Ltd": "ESTABLISHED" });
@@ -374,55 +374,21 @@ describe("Team directory and Client Leads outreach status", () => {
     expect((await LeadAssignment.findById(first!.id).lean<{ outreachStatus?: string; history: { action: string }[] }>())!).toMatchObject({ outreachStatus: "GOT_RESPONSE" });
     expect(await AuditLog.exists({ action: "lead.outreach_status_changed", "metadata.assignmentId": first!.id })).toBeTruthy();
 
-    // Another marketer can't change this marketer's lead; the Owner workspace isn't involved.
+    // The table is shared: another marketer may update the status too (recorded as theirs); staff never can.
     const other = await account(owner, "DIGITAL_MARKETER", ["marketerLeads.view"]);
-    await expectRejects(marketer.updateLeadOutreachStatus(await fresh(other), first!.id, { outreachStatus: "NOT_REACHED" }), 404);
     await expectRejects(marketer.updateLeadOutreachStatus(await fresh(staff), first!.id, { outreachStatus: "NOT_REACHED" }), 403);
-    expect((await LeadAssignment.findById(first!.id).lean<{ outreachStatus?: string }>())!.outreachStatus).toBe("GOT_RESPONSE");
-  });
-});
-
-describe("Old company Intelligence (operating, registered ≥ 6 months ago)", () => {
-  it("lists only companies with an active registry status registered at least 6 months ago; unknowns go to verification", async () => {
-    const { listCompanies, oldCompanyFilter } = await import("@/features/companies/service");
-    const now = new Date();
-    const monthsAgo = (m: number) => {
-      const d = new Date(now);
-      d.setMonth(d.getMonth() - m);
-      return d;
-    };
-    const day = (d: Date) => d.toISOString().slice(0, 10);
-    const base = { source: "fixture-old", countryCode: "NO", eventType: "NEW_ENTITY" };
-    await Company.create([
-      { ...base, sourceId: "old-1", companyName: "Old Active AS", registrationDate: monthsAgo(30), registrationDay: day(monthsAgo(30)), status: "Active" },
-      { ...base, sourceId: "old-2", companyName: "Just Six Months AS", registrationDate: monthsAgo(7), registrationDay: day(monthsAgo(7)), status: "Registered" },
-      { ...base, sourceId: "old-3", companyName: "Young Active AS", registrationDate: monthsAgo(2), registrationDay: day(monthsAgo(2)), status: "Active" },
-      { ...base, sourceId: "old-4", companyName: "Old Dissolved AS", registrationDate: monthsAgo(40), registrationDay: day(monthsAgo(40)), status: "Dissolved" },
-      { ...base, sourceId: "old-5", companyName: "Old Unknown Status AS", registrationDate: monthsAgo(40), registrationDay: day(monthsAgo(40)) },
-      { ...base, sourceId: "old-6", companyName: "No Date AS", status: "Active" },
-      { ...base, sourceId: "old-7", companyName: "Incorporated Long Ago AS", incorporationDate: monthsAgo(120), registrationDate: monthsAgo(1), registrationDay: day(monthsAgo(1)), status: "Active" },
-    ]);
-    const names = async (age: "old" | "unverified") => (await Company.find({ source: "fixture-old", ...oldCompanyFilter(age, now) }).lean<{ companyName: string }[]>()).map((c) => c.companyName).sort();
-    expect(await names("old")).toEqual(["Incorporated Long Ago AS", "Just Six Months AS", "Old Active AS"]);
-    expect(await names("unverified")).toEqual(["No Date AS", "Old Unknown Status AS"]);
-
-    // The threshold moves with the current date.
-    const later = new Date(now);
-    later.setMonth(later.getMonth() + 5);
-    expect((await Company.find({ source: "fixture-old", ...oldCompanyFilter("old", later) }).lean<{ companyName: string }[]>()).map((c) => c.companyName)).toContain("Young Active AS");
-
-    // Same shared query as the original workspace (country, all registration dates, search still apply).
-    const list = await listCompanies(owner, { country: "NO", range: "all", age: "old", q: "Old Active" });
-    expect(list.items.map((c) => c.companyName)).toEqual(["Old Active AS"]);
-    expect(await Company.countDocuments({ source: "fixture-old" })).toBe(7); // nothing removed
+    await marketer.updateLeadOutreachStatus(await fresh(other), first!.id, { outreachStatus: "NOT_REACHED" });
+    const shared = (await LeadAssignment.findById(first!.id).lean<{ outreachStatus?: string; outreachStatusBy?: unknown }>())!;
+    expect(shared.outreachStatus).toBe("NOT_REACHED");
+    expect(String(shared.outreachStatusBy)).toBe(other);
   });
 });
 
 describe("Item 7 · established-company collection", () => {
-  it("keeps only active companies the shared rules don't classify as startups", async () => {
+  it("keeps only active, numbered companies past the Old company Intelligence threshold (see intel-separation.test.ts)", async () => {
     const { selectEstablished } = await import("@/features/registry/established");
-    const rec = (day: string, status?: string) => ({ identity: { sourceId: day + status, name: "X" }, registration: { registrationDay: day, status }, classification: {}, contact: {}, address: {}, source: {} }) as never;
-    const kept = selectEstablished([rec("2015-03-02", "Active"), rec("2015-03-02", "Dissolved"), rec("2026-01-10", "Active")], NOW);
+    const rec = (day: string, status?: string) => ({ identity: { sourceId: day + status, name: "X", registrationNumber: day + status }, registration: { registrationDay: day, status }, classification: {}, contact: {}, address: {}, source: {} }) as never;
+    const kept = selectEstablished([rec("2015-03-02", "Active"), rec("2015-03-02", "Dissolved"), rec("2026-01-10", "Active")], 5, NOW);
     expect(kept).toHaveLength(1);
   });
 });

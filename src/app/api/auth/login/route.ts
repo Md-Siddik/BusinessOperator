@@ -4,6 +4,7 @@ import { homeFor, setSessionCookie } from "@/lib/auth/session";
 import { beginLogin } from "@/features/auth/verification";
 import { authenticate } from "@/features/auth/service";
 import { CONSENT_COOKIE, VISITOR_COOKIE } from "@/features/website-analytics/classify";
+import { hasAnalyticsConsent } from "@/lib/consent";
 import { linkVisitorToUser } from "@/features/website-analytics/collect";
 
 /** After login, go to `next` only when it lies inside the user's own area. */
@@ -20,7 +21,7 @@ export const POST = route({ auth: "none", rateLimit: RATE_LIMITS.login }, async 
   if (registration) return registration;
   await setSessionCookie({ sub: String(user._id), role: user.role, sv: user.sessionVersion ?? 0 });
   // Client accounts on a browser that accepted analytics: link the earlier anonymous visits.
-  if (req.cookies.get(CONSENT_COOKIE)?.value === "granted") {
+  if (hasAnalyticsConsent(req.cookies.get(CONSENT_COOKIE)?.value)) {
     await linkVisitorToUser(req.cookies.get(VISITOR_COOKIE)?.value, { id: String(user._id), role: user.role }).catch((err) => console.error("[login] analytics link failed", err));
   }
   return { redirect: safeNext(body.next, user.role) };

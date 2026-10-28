@@ -26,7 +26,7 @@ export type MarketerLead = {
   outreachStatus: OutreachStatus;
   outreachStatusAt?: string;
 };
-type OutreachStatus = "NOT_REACHED" | "MESSAGED" | "GOT_RESPONSE";
+export type OutreachStatus = "NOT_REACHED" | "MESSAGED" | "GOT_RESPONSE";
 type Sort = "sent" | "company" | "contact" | "type";
 type Dir = "asc" | "desc";
 type Stats = { total: number; recent: number; withPhone: number; withWebsite: number; startup: number; established: number; review: number };
@@ -48,7 +48,7 @@ const TYPE_FILTERS: { key: CompanyTypeParam | null; label: string; stat: keyof S
   { key: "review", label: "Needs Review", stat: "review", Icon: CircleHelp, on: "border-transparent bg-amber-500 text-white" },
 ];
 
-const OUTREACH: { value: OutreachStatus; label: string; className: string; dot: string }[] = [
+export const OUTREACH: { value: OutreachStatus; label: string; className: string; dot: string }[] = [
   { value: "NOT_REACHED", label: "Not reached", className: "border-ink-200 bg-ink-100 text-ink-700", dot: "bg-ink-400" },
   { value: "MESSAGED", label: "Messaged", className: "border-amber-200 bg-amber-50 text-amber-800", dot: "bg-amber-500" },
   { value: "GOT_RESPONSE", label: "Got response", className: "border-emerald-200 bg-emerald-50 text-emerald-800", dot: "bg-emerald-500" },
@@ -63,7 +63,8 @@ const sentLabel = (iso: string) => formatDay(iso.slice(0, 10), { day: "numeric",
  * goes through /api/marketer/leads, which checks the permission and scopes the query to this
  * marketer server-side. Desktop/tablet: table; phones: stacked cards.
  */
-export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
+/** `readOnly`: Admins see the same table without changing anything (the API refuses their changes too). */
+export function MarketerLeadsTable({ initial, readOnly = false }: { initial: MarketerLeadPage; readOnly?: boolean }) {
   const [data, setData] = useState<MarketerLeadPage>(initial);
   const [query, setQuery] = useState(initial.q);
   const [params, setParams] = useState({ q: initial.q, sort: initial.sort, dir: initial.dir, page: initial.page, type: initial.type });
@@ -88,7 +89,7 @@ export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
       }
     } catch (e) {
       if (id !== seq.current) return;
-      setError(e instanceof ApiError ? (e.status === 403 ? "Your access to client leads has changed. Reload the page or ask the Owner." : e.message) : "Could not load your leads.");
+      setError(e instanceof ApiError ? (e.status === 403 ? "Your access to client leads has changed. Reload the page or ask the Owner." : e.message) : "Could not load the marketer table.");
     } finally {
       if (id === seq.current) setLoading(false);
     }
@@ -129,7 +130,7 @@ export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
             <Sparkles className="h-3.5 w-3.5" aria-hidden /> Marketing
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">Client leads</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-600">Companies the Owner sent to you. Copy a phone number with one tap, open the website, and use the Company Type to tailor your approach.</p>
+          <p className="mt-1 max-w-2xl text-sm text-ink-600">Every company the Owner sent to the marketer table — shared by all Digital Marketers. Copy a phone number with one tap, open the website, and use the Company Type to tailor your approach. The outreach status is shared, so the team sees who has been contacted.</p>
           <dl className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
             <StatCard icon={Users} label="Active leads" value={s.total} tone="from-ink-800 to-ink-600" />
             <StatCard icon={Sparkles} label="Sent in the last 7 days" value={s.recent} tone="from-fuchsia-600 to-violet-600" />
@@ -236,7 +237,7 @@ export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
           {/* Tablet / desktop */}
           <div className="scroll-thin hidden overflow-x-auto rounded-xl border border-ink-200 bg-white shadow-sm md:block">
             <table className="w-full min-w-[960px] table-fixed border-separate border-spacing-0 text-left text-sm">
-              <caption className="sr-only">Client leads assigned to you</caption>
+              <caption className="sr-only">Digital Marketer table</caption>
               <thead className="bg-gradient-to-r from-ink-50 via-violet-50/40 to-teal-50/40 text-[11px] font-semibold uppercase tracking-wide text-ink-500">
                 <tr>
                   <SortableTh label="Company Name" active={params.sort === "company"} dir={params.dir} onClick={() => setSort("company")} className="w-[23%]" />
@@ -281,7 +282,7 @@ export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
                           <CompanyTypeTag short value={r.companyType.value} reason={r.companyType.reason} manual={r.companyType.manual} />
                         </td>
                         <td className="border-b border-ink-100 px-4 py-3">
-                          <OutreachSelect lead={r} onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at })} />
+                          {readOnly ? <OutreachBadge lead={r} /> : <OutreachSelect lead={r} onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at })} />}
                         </td>
                       </tr>
                     ))}
@@ -290,7 +291,7 @@ export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
           </div>
 
           {/* Phones: stacked cards */}
-          <ul className="space-y-3 md:hidden" aria-label="Client leads assigned to you">
+          <ul className="space-y-3 md:hidden" aria-label="Digital Marketer table">
             {(loading && !items.length ? [] : items).map((r) => (
               <li key={r.id} className={cn("relative overflow-hidden rounded-xl border border-ink-200 bg-white p-4 shadow-sm", loading && "opacity-60")}>
                 <span className={cn("absolute inset-y-0 left-0 w-1", r.companyType.value === "STARTUP" ? "bg-gradient-to-b from-fuchsia-500 to-violet-500" : r.companyType.value === "ESTABLISHED" ? "bg-gradient-to-b from-teal-500 to-cyan-500" : "bg-amber-400")} aria-hidden />
@@ -307,7 +308,7 @@ export function MarketerLeadsTable({ initial }: { initial: MarketerLeadPage }) {
                   <div>
                     <dt className="text-[11px] font-semibold uppercase tracking-wide text-ink-400">Outreach Status</dt>
                     <dd className="mt-1">
-                      <OutreachSelect lead={r} touch onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at })} />
+                      {readOnly ? <OutreachBadge lead={r} /> : <OutreachSelect lead={r} touch onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at })} />}
                     </dd>
                   </div>
                   <div>
@@ -391,6 +392,17 @@ function TypeMix({ stats }: { stats: Stats }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+/** Read-only Outreach Status (Admin view of the table). */
+function OutreachBadge({ lead }: { lead: MarketerLead }) {
+  const current = OUTREACH.find((o) => o.value === lead.outreachStatus) ?? OUTREACH[0]!;
+  return (
+    <span className={cn("inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold", current.className)}>
+      <span className={cn("h-2 w-2 rounded-full", current.dot)} aria-hidden />
+      {current.label}
+    </span>
   );
 }
 

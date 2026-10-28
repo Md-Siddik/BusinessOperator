@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Bell, LogOut, UserCircle } from "lucide-react";
+import { Bell, Eye, LogOut, UserCircle } from "lucide-react";
 import { Dropdown, MenuItem } from "@/components/ui/overlay";
 import { Avatar } from "@/components/ui/data";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,6 +11,7 @@ import { formatRelative } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import { useLiveCounts } from "./live-counts";
 import { markNotificationRead } from "./notification-read";
+import { ViewAsRoleDialog } from "./role-preview";
 
 type NotificationItem = { _id: string; title: string; body?: string; link?: string; readAt?: string | null; updatedAt: string };
 
@@ -101,7 +102,9 @@ export function NotificationBell({ allHref }: { allHref: string }) {
   );
 }
 
-export function UserMenu({ name, email, role, profileHref }: { name: string; email: string; role: string; profileHref: string }) {
+/** `viewAsRole`: the Owner's "View as role" entry (the API checks the real role again). */
+export function UserMenu({ name, email, role, profileHref, viewAsRole }: { name: string; email: string; role: string; profileHref: string; viewAsRole?: boolean }) {
+  const [picker, setPicker] = useState(false);
   async function logout() {
     await apiFetch("/api/auth/logout", { body: {} }).catch(() => undefined);
     // Full reload on sign-out drops all client state and the realtime connection.
@@ -109,6 +112,7 @@ export function UserMenu({ name, email, role, profileHref }: { name: string; ema
     window.location.assign("/login");
   }
   return (
+    <>
     <Dropdown
       label="Account"
       trigger={({ open, toggle, id }) => (
@@ -130,11 +134,23 @@ export function UserMenu({ name, email, role, profileHref }: { name: string; ema
           <MenuItem href={profileHref} onClick={close}>
             <UserCircle className="h-4 w-4" /> Profile & security
           </MenuItem>
+          {viewAsRole && (
+            <MenuItem
+              onClick={() => {
+                close();
+                setPicker(true);
+              }}
+            >
+              <Eye className="h-4 w-4" /> View as role
+            </MenuItem>
+          )}
           <MenuItem onClick={logout}>
             <LogOut className="h-4 w-4" /> Sign out
           </MenuItem>
         </>
       )}
     </Dropdown>
+    {viewAsRole && picker && <ViewAsRoleDialog onClose={() => setPicker(false)} />}
+    </>
   );
 }

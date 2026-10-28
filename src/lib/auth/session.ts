@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { can, canAny, isInternal, isOwner, isTeamMember, type Actor, type Permission } from "@/lib/permissions";
 import { isActiveSessionUser, loadSessionUser } from "./actor";
-import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, signSession, verifySession, type SessionPayload } from "./token";
+import { applyRolePreview } from "./preview";
+import { PREVIEW_COOKIE, PREVIEW_MAX_AGE_SECONDS, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, signPreview, signSession, verifyPreview, verifySession, type PreviewPayload, type SessionPayload } from "./token";
 
 export async function setSessionCookie(payload: SessionPayload) {
   const token = await signSession(payload);
@@ -21,13 +22,36 @@ export async function setSessionCookie(payload: SessionPayload) {
 export async function clearSessionCookie() {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
+  jar.delete(PREVIEW_COOKIE);
 }
 
-/** Current session user (any account status), memoised per request. */
+/** "View as Role" cookie (Owner only — checked by the caller and again on every request). */
+export async function setPreviewCookie(payload: PreviewPayload) {
+  const jar = await cookies();
+  jar.set(PREVIEW_COOKIE, await signPreview(payload), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: PREVIEW_MAX_AGE_SECONDS });
+}
+
+export async function clearPreviewCookie() {
+  const jar = await cookies();
+  jar.delete(PREVIEW_COOKIE);
+}
+
+/** The verified session token of this request (the real account — never affected by a preview). */
+export const getSessionPayload = cache(async () => {
+  const jar = await cookies();
+  return verifySession(jar.get(SESSION_COOKIE)?.value);
+});
+
+/**
+ * Current session user (any account status), memoised per request. While the Owner uses
+ * "View as Role", the user's effective role and actor are the previewed role's (see lib/auth/preview).
+ */
 export const getSessionUser = cache(async () => {
   const jar = await cookies();
-  const payload = await verifySession(jar.get(SESSION_COOKIE)?.value);
-  return loadSessionUser(payload);
+  const payload = await getSessionPayload();
+  const user = await loadSessionUser(payload);
+  const preview = jar.has(PREVIEW_COOKIE) ? await verifyPreview(jar.get(PREVIEW_COOKIE)?.value) : null;
+  return applyRolePreview(user, payload, preview);
 });
 
 /** The current actor, only if the account is fully active. */

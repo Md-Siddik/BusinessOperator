@@ -54,7 +54,15 @@ One shared rule set in [`src/lib/company-classification.ts`](../src/lib/company-
 
 ## 7. Established companies
 
-[`src/features/registry/established.ts`](../src/features/registry/established.ts) asks the same official registries for companies registered on past days (walking back from five years ago, two days per country per day), keeps only active companies the shared rules don't classify as startups, and stores them with `discoveredVia: ESTABLISHED_COLLECTION`; free contact research is queued as for new companies. `npm run registry:established -- --probe` checks the sources live without writing anything; `ESTABLISHED_COLLECTION=off` disables the job.
+**Updated 2026-10-28 — Old company Intelligence is now a separate dataset.** The collection job ([`src/features/registry/established.ts`](../src/features/registry/established.ts)) asks the official registries for companies registered on past days (historical registration windows, walking back from the configured threshold, two days per country per day) and stores what qualifies in its own collection `established_companies` ([`src/models/EstablishedCompany.ts`](../src/models/EstablishedCompany.ts)) — never in `Company`, which belongs to Startup Company Intelligence. A record qualifies only with an official registration number, a published active status, a founding / registration date older than the threshold, not a branch and not a startup by the shared rules ([`qualifyEstablished`](../src/features/established/service.ts)).
+
+- **Threshold:** Owner-editable on the Old company Intelligence page (SystemSetting `established.config`, default 5 years); `ESTABLISHED_MIN_AGE_YEARS` pins it per deployment.
+- **Zero overlap:** refused at write time when the country + registration number, registry id or (case / accent-insensitive) name exists in `Company`; unique `identityKeys` index inside the Old dataset; a scheduler sweep removes Old records whose normalized name or number later appears in `Company`; every Old list / export excludes rows whose registration number is in `Company`. Startup records are only ever read.
+- **No fallback:** `/dashboard/old-companies/*` and `/api/old-companies` read only `established_companies`; an empty dataset shows an empty state.
+- **Not done here:** contact research (the research engine works on `Company`); Old records show only the contact fields the registry publishes.
+- `npm run intel:isolation` prints the record count of each module and the cross-module duplicate count (read-only). Records added to `Company` by the earlier version of this job (`discoveredVia: ESTABLISHED_COLLECTION`) were left untouched in Startup Company Intelligence and are excluded from Old company Intelligence.
+
+`npm run registry:established -- --probe` checks the sources live without writing anything; `ESTABLISHED_COLLECTION=off` disables the job.
 
 Live probe of a weekday five years ago (28 Oct 2026):
 

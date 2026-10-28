@@ -89,7 +89,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         { href: "/dashboard/coverage", label: "Coverage", icon: "verify" },
       ],
     });
-    // Same workspace and countries, limited to operating companies registered 6+ months ago.
+    // Separate dataset (historical registry records); never shows a Startup Company Intelligence record.
     groups.push({
       title: "Old company Intelligence",
       collapsible: true,
@@ -124,6 +124,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         { href: `/dashboard/crm${q}`, match: "/dashboard/crm", label: "Leads", icon: "leads" },
         { href: `/dashboard/crm/pipeline${q}`, label: "Pipeline", icon: "pipeline", match: "/dashboard/crm/pipeline" },
         { href: `/dashboard/crm/follow-ups${q}`, label: "Follow-ups", icon: "followups", match: "/dashboard/crm/follow-ups" },
+        // Owner-only Digital Marketer table (page, API routes and service enforce OWNER server-side too).
+        ...(isOwner(actor) ? [{ href: "/dashboard/marketer-leads", label: "Marketer leads", icon: "leads" }] : []),
         { href: "/dashboard/quotations", label: "Quotations", icon: "templates" },
         ...(can(actor, "analytics.view") ? [{ href: `/dashboard/analytics${q}`, match: "/dashboard/analytics", label: "Analytics", icon: "analytics" }] : []),
       ],
@@ -180,7 +182,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <NotificationBell allHref="/dashboard/notifications" />
-        <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/dashboard/settings/security" />
+        <UserMenu name={actor.name} email={actor.email} role={actor.role} profileHref="/dashboard/settings/security" viewAsRole={isOwner(actor)} />
       </div>
     </div>
   );

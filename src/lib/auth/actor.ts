@@ -15,7 +15,14 @@ export type SessionUser = {
   organizationId?: string;
   organizationStatus?: string;
   actor: Actor;
+  /**
+   * Set while the Owner uses "View as Role": `role` and `actor` are the previewed role's, the
+   * account (id, name, email, session) is still the Owner's. See lib/auth/preview.
+   */
+  preview?: RolePreview;
 };
+
+export type RolePreview = { role: Role; label: string; realRole: Role };
 
 export function toActor(user: Pick<UserDoc, "_id" | "role" | "permissions" | "organizationId" | "name" | "email"> & { permissionGrants?: { permission?: string | null }[] | null }): Actor {
   return {

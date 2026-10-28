@@ -26,7 +26,7 @@ const access = await import("@/features/access/service");
 const users = await import("@/features/users/service");
 const marketer = await import("@/features/marketer/service");
 const opportunities = await import("@/features/opportunities/service");
-const { GET: recipientsRoute, POST: sendRoute } = await import("@/app/api/lead-assignments/route");
+const { GET: stateRoute, POST: sendRoute } = await import("@/app/api/lead-assignments/route");
 const { DELETE: withdrawRoute } = await import("@/app/api/lead-assignments/[id]/route");
 const { GET: marketerLeadsRoute } = await import("@/app/api/marketer/leads/route");
 const { GET: accessListRoute } = await import("@/app/api/admin/access/route");
@@ -111,66 +111,65 @@ describe("New accounts start with no access (default deny)", () => {
   });
 });
 
-describe("1. Owner sends a lead to a marketer", () => {
-  it("persists the assignment, is idempotent and audited", async () => {
+describe("1. Owner sends a lead to the marketer table", () => {
+  it("adds one shared row (no recipient), is idempotent and audited — and grants nothing", async () => {
     await as(owner.id);
-    const list = await recipientsRoute(req(`/api/lead-assignments?companyId=${companyA}`), ctx());
-    expect(list.status).toBe(200);
-    const { recipients } = (await list.json()) as { recipients: { id: string; canView: boolean }[] };
-    expect(recipients.map((r) => r.id)).toEqual(expect.arrayContaining([marketerA, marketerB]));
+    const state = await stateRoute(req(`/api/lead-assignments?companyId=${companyA}`), ctx());
+    expect(state.status).toBe(200);
+    expect(await state.json()).toEqual({ viewers: 0 }); // not in the table; no marketer holds "View Marketer Table" yet
 
-    const res = await sendRoute(post("/api/lead-assignments", { companyId: String(companyA), recipientId: marketerA }), ctx());
+    const res = await sendRoute(post("/api/lead-assignments", { companyId: String(companyA) }), ctx());
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ status: "sent", visible: false });
+    expect(await res.json()).toMatchObject({ status: "sent", viewers: 0 });
+    // Sending never changes anyone's access.
+    expect((await fresh(marketerA)).permissions).toEqual([]);
 
-    // "Reload": the assignment is in the database with sender, recipient, timestamps and history.
-    const stored = await LeadAssignment.findOne({ companyId: companyA, recipientId: marketerA }).lean<LeadAssignmentDoc>();
-    expect(stored).toMatchObject({ status: "ACTIVE", senderId: new Types.ObjectId(owner.id) });
+    // "Reload": the table row is in the database with sender, timestamps and history — and no recipient.
+    const stored = await LeadAssignment.findOne({ companyId: companyA }).lean<LeadAssignmentDoc>();
+    expect(stored).toMatchObject({ status: "ACTIVE", recipientId: null, senderId: new Types.ObjectId(owner.id) });
     expect(stored!.sentAt).toBeInstanceOf(Date);
     expect(stored!.history).toHaveLength(1);
 
-    // Retries / double clicks never duplicate.
+    // Retries / double clicks never duplicate (a recipient in the payload is ignored).
     const again = await sendRoute(post("/api/lead-assignments", { companyId: String(companyA), recipientId: marketerA }), ctx());
     expect(await again.json()).toMatchObject({ status: "already" });
-    await Promise.all(Array.from({ length: 5 }, () => marketer.sendLeadToMarketer(owner, String(companyB), { recipientId: marketerB })));
-    expect(await LeadAssignment.countDocuments({ companyId: companyB, recipientId: marketerB })).toBe(1);
-    expect(await LeadAssignment.countDocuments({ companyId: companyA, recipientId: marketerA })).toBe(1);
+    await Promise.all(Array.from({ length: 5 }, () => marketer.sendLeadToMarketer(owner, String(companyB))));
+    expect(await LeadAssignment.countDocuments({ companyId: companyB })).toBe(1);
+    expect(await LeadAssignment.countDocuments({ companyId: companyA })).toBe(1);
 
     expect(await CrmActivity.exists({ companyId: companyA, type: "ASSIGNMENT" })).toBeTruthy();
     expect(await AuditLog.exists({ action: "lead.sent_to_marketer", entityId: String(companyA) })).toBeTruthy();
 
-    // The picker shows the existing assignment.
-    const after = (await (await recipientsRoute(req(`/api/lead-assignments?companyId=${companyA}`), ctx())).json()) as { recipients: { id: string; assignment?: { status: string } }[] };
-    expect(after.recipients.find((r) => r.id === marketerA)?.assignment?.status).toBe("ACTIVE");
+    const after = (await (await stateRoute(req(`/api/lead-assignments?companyId=${companyA}`), ctx())).json()) as { assignment?: { status: string } };
+    expect(after.assignment?.status).toBe("ACTIVE");
   });
 
   it("withdraw and re-send keep one record with history", async () => {
     await as(owner.id);
-    const a = await LeadAssignment.findOne({ companyId: companyB, recipientId: marketerB }).lean<LeadAssignmentDoc>();
+    const a = await LeadAssignment.findOne({ companyId: companyB }).lean<LeadAssignmentDoc>();
     expect((await withdrawRoute(req(`/api/lead-assignments/${a!._id}`, { method: "DELETE" }), ctx({ id: String(a!._id) }))).status).toBe(200);
-    expect(await marketer.sendLeadToMarketer(owner, String(companyB), { recipientId: marketerB })).toMatchObject({ status: "resent" });
+    expect(await marketer.sendLeadToMarketer(owner, String(companyB))).toMatchObject({ status: "resent" });
     const back = await LeadAssignment.findById(a!._id).lean<LeadAssignmentDoc>();
     expect(back!.status).toBe("ACTIVE");
     expect(back!.history.map((h) => h.action)).toEqual(["SENT", "WITHDRAWN", "RESENT"]);
   });
 
-  it("rejects invalid recipients, demo companies and non-owners", async () => {
-    await expectRejects(marketer.sendLeadToMarketer(owner, String(companyA), { recipientId: staffA }), 400);
-    await expectRejects(marketer.sendLeadToMarketer(owner, String(companyA), { recipientId: String(new Types.ObjectId()) }), 400);
+  it("rejects unknown and demo companies and non-owners", async () => {
+    await expectRejects(marketer.sendLeadToMarketer(owner, String(new Types.ObjectId())), 404);
     const demo = await Company.create({ companyName: "Demo Co", countryCode: "NO", source: "fixture", sourceId: "acl-demo", isDemo: true });
-    await expectRejects(marketer.sendLeadToMarketer(owner, String(demo._id), { recipientId: marketerA }), 400);
+    await expectRejects(marketer.sendLeadToMarketer(owner, String(demo._id)), 400);
     for (const id of [superAdmin, staffA, marketerA]) {
       await as(id);
-      expect((await sendRoute(post("/api/lead-assignments", { companyId: String(companyA), recipientId: marketerA }), ctx())).status).toBe(403);
-      expect((await recipientsRoute(req(`/api/lead-assignments?companyId=${companyA}`), ctx())).status).toBe(403);
+      expect((await sendRoute(post("/api/lead-assignments", { companyId: String(companyA) }), ctx())).status).toBe(403);
+      expect((await stateRoute(req(`/api/lead-assignments?companyId=${companyA}`), ctx())).status).toBe(403);
     }
   });
 });
 
-describe("2. A marketer without “View Assigned Client Leads” sees nothing", () => {
-  it("no menu entry, 403 from the API and the service — even with an assignment", async () => {
+describe("2. A marketer without “View Marketer Table” sees nothing", () => {
+  it("no menu entry, 403 from the API and the service — even with leads in the table", async () => {
     const m = await as(marketerA);
-    expect(await LeadAssignment.countDocuments({ recipientId: marketerA, status: "ACTIVE" })).toBeGreaterThan(0);
+    expect(await LeadAssignment.countDocuments({ recipientId: null, status: "ACTIVE" })).toBeGreaterThan(0);
     expect(teamNavigation(m!).flatMap((g) => g.items).some((i) => i.href === "/staff/client-leads")).toBe(false);
     const res = await marketerLeadsRoute(req("/api/marketer/leads"), ctx());
     expect(res.status).toBe(403);
@@ -179,8 +178,8 @@ describe("2. A marketer without “View Assigned Client Leads” sees nothing", 
   });
 });
 
-describe("3. After the Owner grants it, the marketer sees only their own leads", () => {
-  it("returns only assigned leads with the four fields, sanitized websites and phone numbers", async () => {
+describe("3. Every marketer with “View Marketer Table” sees the whole table", () => {
+  it("returns every active lead with the four fields, sanitized websites and phone numbers — to every marketer", async () => {
     await grant(owner.id, marketerA, "marketerLeads.view");
     await grant(owner.id, marketerB, "marketerLeads.view");
     const m = await as(marketerA);
@@ -188,14 +187,18 @@ describe("3. After the Owner grants it, the marketer sees only their own leads",
     const res = await marketerLeadsRoute(req("/api/marketer/leads"), ctx());
     expect(res.status).toBe(200);
     const body = (await res.json()) as { items: { companyName: string; contactPerson?: string; phone?: string; website?: { href: string; display: string } }[]; total: number };
-    expect(body.total).toBe(1);
-    expect(body.items[0]).toMatchObject({ companyName: "Fjord Analytics AS", contactPerson: "Kari Nordmann", phone: "+47 22 33 44 55", website: { href: "https://fjord-analytics.no/", display: "fjord-analytics.no" } });
-    expect(JSON.stringify(body)).not.toContain("Baltic"); // assigned to marketer B only
+    expect(body.total).toBe(2);
+    expect(body.items.find((i) => i.companyName === "Fjord Analytics AS")).toMatchObject({ contactPerson: "Kari Nordmann", phone: "+47 22 33 44 55", website: { href: "https://fjord-analytics.no/", display: "fjord-analytics.no" } });
 
     const b = await fresh(marketerB);
     const theirs = await marketer.listMarketerLeads(b, {});
-    expect(theirs.items.map((i) => i.companyName)).toEqual(["Baltic Bakers SIA"]);
-    expect(theirs.items[0]!.website).toBeUndefined(); // javascript: is never linked
+    expect(theirs.items.map((i) => i.companyName).sort()).toEqual(["Baltic Bakers SIA", "Fjord Analytics AS"]);
+    expect(theirs.items.find((i) => i.companyName === "Baltic Bakers SIA")!.website).toBeUndefined(); // javascript: is never linked
+
+    // A withdrawn lead leaves the table for everyone.
+    await marketer.withdrawLeadAssignment(owner, String((await LeadAssignment.findOne({ companyId: companyB }).lean<LeadAssignmentDoc>())!._id));
+    expect((await marketer.listMarketerLeads(b, {})).items.map((i) => i.companyName)).toEqual(["Fjord Analytics AS"]);
+    await marketer.sendLeadToMarketer(owner, String(companyB));
 
     // Search by digits, sorting and pagination are server-side.
     expect((await marketer.listMarketerLeads(m!, { q: "2233" })).total).toBe(1);

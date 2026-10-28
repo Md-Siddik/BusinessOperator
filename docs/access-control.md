@@ -62,12 +62,23 @@ Every `/staff` navigation entry is declared in [`src/lib/permissions/navigation.
 | Company Intelligence directory (view) | ✅ | if granted | if granted | if granted | if granted | ❌ never |
 | Company Intelligence edit / export | ✅ | if granted | if granted | ❌ | if granted | ❌ |
 | Company Intelligence delete | ✅ | if granted | ❌ | ❌ | ❌ | ❌ |
-| Client leads table (own assigned leads) | — | ❌ | ❌ | ❌ | with `marketerLeads.view` | ❌ |
+| Digital Marketer table (every lead the Owner sent): view; set **only** the outreach status (Not reached / Messaged / Got response) | — | ❌ | ❌ | ❌ | with `marketerLeads.view` (role template) | ❌ |
+| Digital Marketer table — all records: view, edit company / contact fields, any status, withdraw, delete, change history (`/dashboard/marketer-leads`, `/api/marketer/assignments`) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Client-service areas | ✅ | if granted | if granted | if granted | ❌ | own organization only |
 | Grant Company / Opportunity Intelligence view to others | ✅ | with view **and** the scoped grant permission | ❌ | ❌ | ❌ | ❌ |
 | Create Staff / pass on staff permissions | ✅ | with `users.manage`; Staff only; permissions they hold | ❌ | ❌ | ❌ | ❌ |
 | Create Admins / Managers / Digital Marketers, change roles, role templates | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Change own access | — | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+## View as Role (Owner preview)
+
+The Owner can browse the site as any role from the account menu (**View as role**) without signing out. The role list comes from the role catalog (`ROLES`, every role except Owner), and each role's preview uses its **current role template** (`access.roleTemplates`, read on every request). A role added to the catalog or a template edit shows up with no other code changes.
+
+- **How it works.** Starting a preview sets a second signed, httpOnly cookie (`et_role_preview`, 8 h) tied to the Owner's account and session version. The session cookie is never touched. `getSessionUser()` ([`src/lib/auth/preview.ts`](../src/lib/auth/preview.ts)) swaps in the previewed role and that role's template permissions. The user id, name and email stay the Owner's. Every page guard, navigation builder and API check then runs unchanged, and the proxy routes `/dashboard`, `/staff` and `/portal` by the previewed role, so direct URLs and refreshes land where that role would.
+- **Read-only.** While a preview is active, the API layer refuses every POST / PUT / PATCH / DELETE with `PREVIEW_READ_ONLY`. The only exceptions are sign out, session refresh and starting or ending the preview (`allowInPreview`).
+- **No other user's data.** "Own" data (assigned work, own client leads, notifications) resolves to the Owner's own account. A Client preview uses an organization id that matches nothing, so every portal URL shows a placeholder page (`/portal/preview`) instead of a client's records.
+- **Owner only.** `/api/role-preview` checks the account's real role, so it also works while previewing. Preview cookies held by anyone else, issued to another account, from an earlier session, expired, or naming a role that no longer exists are ignored, and the proxy removes them.
+- **Audit.** `role_preview.started` / `role_preview.ended`, recorded against the Owner. Every write the preview blocks is recorded as `role_preview.write_blocked` (Owner, previewed role, method, path).
 
 ## Grants and provenance
 
@@ -88,19 +99,42 @@ Grants are stored on the account (`User.permissionGrants`): `{ permission, grant
 | `permission.template_applied` | A preset or role template applied to a person |
 | `permission.role_template_changed` | The Owner changed a role template |
 | `company.type_changed`, `company.contact_refresh_requested`, `company.deleted`, `companies.exported` | Company Intelligence actions from the team workspace |
+| `role_preview.started`, `role_preview.ended` | The Owner starts / switches or ends View as Role |
 | `user.created`, `user.role_changed`, `user.suspended`, `user.reactivated`, `user.sessions_revoked` | Account changes |
-| `lead.sent_to_marketer`, `lead.resent_to_marketer`, `lead.withdrawn_from_marketer` | Lead handoffs |
+| `lead.sent_to_marketer`, `lead.resent_to_marketer`, `lead.withdrawn_from_marketer` | A lead added to / re-added to / removed from the marketer table |
+| `lead.handoff_access_provisioned` | The table migration gave a marketer “View Marketer Table” |
+| `role_preview.write_blocked` | A state-changing request refused during View as Role |
 
 ## Adding employees directly
 
 The Owner and an Admin with “Manage Staff Accounts” add employees from **Users & access → Add employee**. The account is `ACTIVE` at once and gets its role template as recorded grants (editable in the form). An Admin can add Staff only; Admins, Managers and Digital Marketers are added by the Owner. The employee confirms their email address with a one-time code the first time they sign in.
 
-## Lead handoff (Owner → Digital Marketer)
+## Digital Marketer table (Owner → all Digital Marketers)
 
-Unchanged: the Owner sends a company from Today's New Companies; sending never grants access; the marketer needs `marketerLeads.view` and sees only their own active assignments — now with the shared **Company Type** tag (filterable and sortable).
+The Owner clicks **Send to Marketer** on a company in Today's New Companies (Startup Company Intelligence). The company goes straight into the **shared Digital Marketer table**. There is no recipient to choose.
+
+- **Who sees it:** every Digital Marketer holding **View Marketer Table** (`marketerLeads.view`) sees every active row of the table. They see company name, contact person, phone, website and Company Type, and can set each lead's **outreach status**.
+- **One shared status:** the status is shared by the team (one row per company), and the history records who changed it and when.
+- **Who holds the permission:** it is in the Digital Marketer role template, so every new marketer starts with it. Existing marketers received it through the migration below. The Owner can still switch it off per person. Only the Digital Marketer role can hold it, and it gives nothing else.
+- **Sending never changes anyone's access.** Repeated clicks keep one row.
+- **Removing a lead:** clicking a sent company offers **Remove from table**. A removed lead disappears for every marketer and can be sent again later.
+- **The Owner's table:** the Owner manages the whole table at `/dashboard/marketer-leads`: edit, any status, withdraw, delete, history.
+
+## Invitations
+
+Accepting an invitation (`/accept-invitation`) activates the account. A team account then gets its **role template** (the Owner's saved one, else the built-in one), recorded as system grants with `via: "invitation"` and audited.
+
+- Only permissions the role may hold count. Owner-only entries never count.
+- Expired, reused and unknown tokens are refused.
+- A client invitation receives no team permissions and stays within its own organization.
 
 ## Migrations
 
 - `2026-10-access-grants-v1` — existing Admin / Staff access recorded as `MIGRATION` grants (unchanged).
 - `2026-10-company-type-v1` — classifies every company (adds `companyType`, tags `discoveredVia`); nothing else changes.
 - `2026-10-manager-role-v1` — Manager accounts start with empty recorded grants.
+- `2026-10-marketer-table-v1`:
+  - Leads that were sent to individual marketers are merged into one table row per company. The most recently worked row is kept, with the latest outreach status and corrections; it is active if any row was.
+  - Every active Digital Marketer gets `marketerLeads.view` (an Owner grant, audited).
+  - Everything changed is recorded in SystemSetting `__migration.marketer-handoff-access`. **Revert** with `npm run migrate:revert-marketer-access`, which restores the merged rows and removes exactly those grants.
+- `2026-10-analytics-daily-v1` — indexes for the durable analytics collections, existing enquiries recorded as (unattributed) leads, and every day with raw records rolled up. Additive only. Revert by dropping `webanalyticsdailies`, `webconversions` and `webeventkeys`.

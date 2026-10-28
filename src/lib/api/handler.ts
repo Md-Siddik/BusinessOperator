@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
 import { can, canAny, isInternal, isOwner, isStaffMember, isTeamMember, type Actor, type Permission } from "@/lib/permissions";
 import { enforceDurableAuthLimit } from "@/lib/auth/rate-limit";
+import { audit } from "@/lib/audit";
 import { enforceRateLimit, type RateLimitRule } from "@/lib/rate-limit";
 
 type Options = {
@@ -35,6 +36,12 @@ type Options = {
   allowPendingClient?: boolean;
   permission?: Permission;
   rateLimit?: RateLimitRule;
+  /**
+   * Allow a state-changing request while the Owner previews another role ("View as Role").
+   * Only for session housekeeping (sign out, refresh, starting / ending the preview) — every
+   * other POST / PUT / PATCH / DELETE is refused during a preview.
+   */
+  allowInPreview?: boolean;
 };
 
 export type RouteContext<P> = { req: NextRequest; actor: Actor | null; params: P; ip: string };
@@ -44,9 +51,11 @@ export function clientIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
 }
 
+const READ_ONLY_METHODS = ["GET", "HEAD", "OPTIONS"];
+
 /** Reject cross-site state-changing requests (defence in depth on top of SameSite cookies). */
 function assertSameOrigin(req: NextRequest) {
-  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return;
+  if (READ_ONLY_METHODS.includes(req.method)) return;
   const origin = req.headers.get("origin");
   if (!origin) return;
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
@@ -104,6 +113,11 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       if (auth !== "none") {
         const user = await getSessionUser();
         actor = user && (isActiveSessionUser(user) || (options.allowPendingClient && isPendingClientUser(user))) ? user.actor : null;
+        // Role preview is read-only: nothing is created, changed or deleted while previewing.
+        if (user?.preview && !READ_ONLY_METHODS.includes(req.method) && !options.allowInPreview) {
+          await audit({ id: user.id, email: user.email, role: user.preview.realRole }, "role_preview.write_blocked", { metadata: { previewRole: user.preview.role, method: req.method, path: req.nextUrl.pathname } });
+          throw Errors.previewReadOnly();
+        }
       }
       if (auth === "required" && !actor) throw Errors.unauthorized();
       if (options.internal && !(isOwner(actor) || (options.staff && isStaffMember(actor)))) throw Errors.forbidden();

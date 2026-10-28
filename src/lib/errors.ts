@@ -18,5 +18,7 @@ export const Errors = {
   notFound: (message = "Not found") => new AppError(404, "NOT_FOUND", message),
   badRequest: (message: string, details?: Record<string, unknown>) => new AppError(400, "BAD_REQUEST", message, details),
   conflict: (message: string, details?: Record<string, unknown>) => new AppError(409, "CONFLICT", message, details),
+  /** Any state-changing request while the Owner previews another role ("View as Role"). */
+  previewReadOnly: () => new AppError(403, "PREVIEW_READ_ONLY", "You're viewing the site as another role. Preview mode is read-only — exit the preview to make changes."),
   tooManyRequests: (message = "Too many requests. Please try again shortly.") => new AppError(429, "RATE_LIMITED", message),
 };

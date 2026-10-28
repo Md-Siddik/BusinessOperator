@@ -7,6 +7,7 @@ import { Organization } from "@/models";
 import { unreadConversationCount } from "@/features/chat/service";
 import { unreadNotificationCount } from "@/features/notifications/service";
 import { ChatWidget } from "@/components/chat/chat-widget";
+import { isPreviewOrganization } from "@/lib/auth/preview";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   ];
   const topbar = (
     <div className="flex flex-1 items-center justify-between gap-3">
-      <p className="truncate text-sm font-medium text-ink-700">{org?.name}</p>
+      <p className="truncate text-sm font-medium text-ink-700">{isPreviewOrganization(actor.organizationId) ? "Client organization (preview)" : org?.name}</p>
       <div className="flex items-center gap-1">
         <NotificationBell allHref="/portal/notifications" />
         <UserMenu name={actor.name} email={actor.email} role="client" profileHref="/portal/profile" />

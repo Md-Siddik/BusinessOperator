@@ -151,7 +151,7 @@
     "reset": { "title": "Neues Passwort wählen", "submit": "Passwort aktualisieren", "success": "Ihr Passwort wurde aktualisiert. Sie können sich jetzt anmelden.", "invalid": "Dieser Link ist ungültig oder abgelaufen." }
   },
   "industries": { "ecommerce": "E-Commerce", "retail": "Einzelhandel", "technology": "Technologie", "professionalServices": "Professionelle Dienstleistungen", "consulting": "Beratung", "construction": "Bau", "manufacturing": "Produktion", "printing": "Druck", "design": "Design", "logistics": "Logistik", "hospitality": "Gastgewerbe", "health": "Gesundheit & Wellness", "realEstate": "Immobilien", "localServices": "Lokale Dienstleistungen", "other": "Sonstiges" },
-  "cookieConsent": { "title": "Analyse-Cookies", "text": "Dürfen wir ein anonymes Analyse-Cookie verwenden, um zu sehen, wie unsere Website genutzt wird? Das hilft uns, sie zu verbessern. Wir nutzen es nie, um herauszufinden, wer Sie sind, und Sie können Ihre Wahl jederzeit ändern.", "accept": "Akzeptieren", "decline": "Ablehnen", "settings": "Cookie-Einstellungen" },
+  "cookieConsent": { "title": "Analyse-Cookies", "text": "Dürfen wir ein anonymes Analyse-Cookie verwenden, um zu sehen, wie unsere Website genutzt wird? Das hilft uns, sie zu verbessern. Wir nutzen es nie, um herauszufinden, wer Sie sind, und Sie können Ihre Wahl jederzeit ändern.", "essential": "Notwendige Cookies für Anmeldung, Sicherheit und das Speichern dieser Wahl sind immer aktiv. Sonst wird nichts gespeichert, bevor Sie entscheiden.", "accept": "Akzeptieren", "decline": "Ablehnen", "settings": "Cookie-Einstellungen" },
   "theme": { "label": "Darstellung", "dark": "Dunkel", "light": "Hell", "mixed": "Gemischt" },
   "footer": {
     "socialEyebrow": "Überall in Verbindung",

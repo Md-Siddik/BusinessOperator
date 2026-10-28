@@ -45,6 +45,11 @@ export async function acceptInvitation(input: unknown) {
   }, { new: true }).lean<UserDoc>();
   if (!user) throw Errors.badRequest("This invitation is invalid, expired, or already used.");
   if (user.role === "CLIENT" && user.organizationId) await Organization.updateOne({ _id: user.organizationId, status: "PENDING_APPROVAL" }, { $set: { status: "ACTIVE" } });
+  // Team accounts start with their role template (e.g. a Digital Marketer: their assigned client leads).
+  if (user.role !== "CLIENT" && user.role !== "OWNER") {
+    const { recordInvitationAccess } = await import("@/features/access/service");
+    await recordInvitationAccess(user._id);
+  }
   await audit(null, "account.invitation_accepted", { entityType: "User", entityId: String(user._id) });
   return { ok: true };
 }

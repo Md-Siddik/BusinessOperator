@@ -124,6 +124,66 @@ const STEPS: { id: string; run: (log: (m: string) => void) => Promise<void> }[] 
     },
   },
   {
+    id: "2026-10-marketer-table-v1",
+    /**
+     * One shared Digital Marketer table: leads previously sent to individual marketers are merged
+     * into one row per company, and every active Digital Marketer gets "View Marketer Table" (an
+     * Owner grant, audited). Everything changed is recorded in SystemSetting
+     * "__migration.marketer-handoff-access"; `npm run migrate:revert-marketer-access` undoes
+     * exactly that. See features/marketer/handoff-migration.
+     */
+    async run(log) {
+      const { runMarketerTableMigration } = await import("@/features/marketer/handoff-migration");
+      const r = await runMarketerTableMigration();
+      log(`marketer table: ${r.merged.length} compan(ies) merged into the shared table; ${r.provisioned.length} of ${r.checked} marketer(s) given "View Marketer Table"`);
+    },
+  },
+  {
+    id: "2026-10-admin-marketer-table-v1",
+    /**
+     * Admins see the shared Digital Marketer table read-only: every active Admin gets "View
+     * Marketer Table" (an Owner grant, audited), recorded in SystemSetting
+     * "__migration.admin-marketer-table". Revert: `npm run migrate:revert-admin-marketer-access`.
+     */
+    async run(log) {
+      const { runAdminMarketerTableMigration } = await import("@/features/marketer/handoff-migration");
+      const r = await runAdminMarketerTableMigration();
+      log(`marketer table: ${r.provisioned.length} of ${r.checked} Admin(s) given read-only "View Marketer Table"`);
+    },
+  },
+  {
+    id: "2026-10-analytics-daily-v1",
+    /**
+     * Durable analytics history: creates the indexes of the new collections (daily statistics,
+     * conversions, beacon keys) and rolls up every day that still has raw records, so history
+     * that exists today is kept permanently. Additive only: no raw record is changed or deleted.
+     * Revert: drop `webanalyticsdailies`, `webconversions` and `webeventkeys` (raw data untouched).
+     */
+    async run(log) {
+      const { WebAnalyticsDaily, WebConversion, WebEventKey } = await import("@/models");
+      await Promise.all([WebAnalyticsDaily.createIndexes(), WebConversion.createIndexes(), WebEventKey.createIndexes()]);
+      // Existing enquiries become lead records (real submissions, unattributed — nothing is inferred).
+      const { enquiryConversionType } = await import("@/features/website-analytics/collect");
+      const { todayIn } = await import("@/lib/dates/country-time");
+      const enquiries = await ContactRequest.find({ isDemo: { $ne: true } }).select("_id createdAt preferredContact serviceSlug").lean<{ _id: Types.ObjectId; createdAt: Date; preferredContact?: string; serviceSlug?: string }[]>();
+      if (enquiries.length) {
+        await WebConversion.bulkWrite(
+          enquiries.map((e) => ({
+            updateOne: {
+              filter: { key: `contact:${e._id}` },
+              update: { $setOnInsert: { key: `contact:${e._id}`, type: enquiryConversionType(e.preferredContact), at: e.createdAt, day: todayIn("Europe/Oslo", e.createdAt), consented: false, contactRequestId: e._id, serviceSlug: e.serviceSlug } },
+              upsert: true,
+            },
+          })),
+          { ordered: false },
+        );
+      }
+      const { rollupPending } = await import("@/features/website-analytics/rollup");
+      const r = await rollupPending();
+      log(`analytics: ${enquiries.length} existing enquiries recorded as leads; daily statistics backfilled ${r.from} → ${r.to} (${r.computed} day(s))`);
+    },
+  },
+  {
     id: "2026-10-manager-role-v1",
     /** Manager accounts start with recorded (empty) grants: default deny, like every other team role. */
     async run(log) {

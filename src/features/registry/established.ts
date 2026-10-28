@@ -1,23 +1,25 @@
 import "server-only";
 import { COUNTRIES, getCountry } from "@/config/countries";
 import { SystemSetting } from "@/models";
-import { classifyCompany, isInactiveStatus } from "@/lib/company-classification";
 import { addDays, todayIn, type Day } from "@/lib/dates/country-time";
+import { getEstablishedConfig } from "@/features/established/config";
+import { qualifyEstablished, storeEstablished, sweepStartupOverlap } from "@/features/established/service";
 import { getRegistryProvider } from "./providers";
 import type { CompanyRegistryProvider, NormalizedCompany } from "./types";
 
 /**
- * Established-company collection. The daily feeds only bring in companies registered today; this
- * job adds existing, operating companies by asking the same official sources for companies
- * registered on past days, walking backwards from five years ago one day at a time.
+ * Established-company collection — the ingestion pipeline of Old company Intelligence. It asks the
+ * official registries for companies registered on past days (historical registration windows),
+ * walking backwards from the configured age threshold one day at a time, and stores what
+ * qualifies in its OWN dataset (EstablishedCompany). It never writes to the Company collection of
+ * Startup Company Intelligence, and the daily new-registration syncs never write to its dataset.
  *
  *  - Only adapters whose official API answers a historical registration-date window directly
  *    (no full-register download) take part; bulk-file sources (Latvia, Estonia, Canada) need a
  *    windowed streaming scan first and are reported as "not yet collected".
- *  - Only records the source lists as active are stored, and only those the shared rules
- *    classify as Established Company or Needs Review (never relabelled as startups).
- *  - Records are upserted by registry id like every sync (no duplicates) and tagged
- *    discoveredVia = ESTABLISHED_COLLECTION; contact research is queued as for new companies.
+ *  - Only verified records are stored: official registration number, published active status,
+ *    founding date older than the threshold, not a branch, not a startup (see qualifyEstablished).
+ *  - Anything already in Startup Company Intelligence is refused (see features/established).
  *  - Bounded: a few days per country per run, a record cap per day, once a day per country.
  */
 
@@ -34,7 +36,6 @@ const NOT_COLLECTED: Record<string, string> = {
 };
 
 const SETTING_KEY = "established.collection";
-const START_YEARS_BACK = 5;
 /** Walk back at most this far (older companies are still found through later runs' wrap-around). */
 const MAX_YEARS_BACK = 30;
 
@@ -50,13 +51,9 @@ async function writeCountryState(code: string, s: CountryState) {
   await SystemSetting.updateOne({ key: SETTING_KEY }, { $set: { [`value.${code}`]: s } }, { upsert: true });
 }
 
-/** Keep only active, non-startup records (established or needs review by the shared rules). */
-export function selectEstablished(records: NormalizedCompany[], now = new Date()) {
-  return records.filter((n) => {
-    if (isInactiveStatus(n.registration.status)) return false;
-    const c = classifyCompany({ incorporationDate: n.registration.incorporationDay, registrationDay: n.registration.registrationDay, eventType: n.eventType ?? "NEW_ENTITY", status: n.registration.status, employees: n.employees }, now);
-    return c.value !== "STARTUP";
-  });
+/** Records that qualify for Old company Intelligence under the given threshold (used by the probe). */
+export function selectEstablished(records: NormalizedCompany[], minAgeYears: number, now = new Date()) {
+  return records.filter((n) => qualifyEstablished(n, minAgeYears, now).ok);
 }
 
 export function establishedProviderFor(countryCode: string): { provider?: CompanyRegistryProvider; reason?: string } {
@@ -77,7 +74,7 @@ export async function establishedCoverage() {
   });
 }
 
-export type EstablishedRunResult = { country: string; days: Day[]; fetched: number; kept: number; imported: number; updated: number; skippedReason?: string; error?: string };
+export type EstablishedRunResult = { country: string; days: Day[]; fetched: number; kept: number; excludedAsStartup: number; imported: number; updated: number; skippedReason?: string; error?: string };
 
 /**
  * Collect established companies for one country: `days` historical registration days, at most
@@ -86,7 +83,7 @@ export type EstablishedRunResult = { country: string; days: Day[]; fetched: numb
 export async function collectEstablishedCountry(code: string, opts: { days?: number; perDay?: number; minHours?: number; log?: (m: string) => void; now?: Date } = {}): Promise<EstablishedRunResult> {
   const now = opts.now ?? new Date();
   const def = getCountry(code);
-  const result: EstablishedRunResult = { country: code, days: [], fetched: 0, kept: 0, imported: 0, updated: 0 };
+  const result: EstablishedRunResult = { country: code, days: [], fetched: 0, kept: 0, excludedAsStartup: 0, imported: 0, updated: 0 };
   if (!def) return { ...result, skippedReason: "Unknown country" };
   const { provider, reason } = establishedProviderFor(code);
   if (!provider || reason) return { ...result, skippedReason: reason };
@@ -94,27 +91,25 @@ export async function collectEstablishedCountry(code: string, opts: { days?: num
   const minHours = opts.minHours ?? 20;
   if (state.lastRunAt && now.getTime() - new Date(state.lastRunAt).getTime() < minHours * 3_600_000) return { ...result, skippedReason: "Ran recently" };
 
+  const { minAgeYears } = await getEstablishedConfig();
   const today = todayIn(def.timezone);
-  const newest = addDays(today, -Math.round(START_YEARS_BACK * 365.25));
+  const newest = addDays(today, -Math.ceil(minAgeYears * 365.25));
   const oldest = addDays(today, -Math.round(MAX_YEARS_BACK * 365.25));
   let cursor = state.cursor && state.cursor <= newest && state.cursor >= oldest ? state.cursor : newest;
-  const { ingestCompanies } = await import("./sync");
   let collected = state.collected ?? 0;
   try {
     for (let i = 0; i < (opts.days ?? 2); i++) {
       const day = cursor;
       const batch = await provider.getRegistrations!(day, day, { limit: opts.perDay ?? 150, signal: AbortSignal.timeout(120_000), log: opts.log });
-      const kept = selectEstablished(batch.companies, now);
+      const r = await storeEstablished(provider, code, batch.companies, { now, minAgeYears });
       result.days.push(day);
       result.fetched += batch.companies.length;
-      result.kept += kept.length;
-      if (kept.length) {
-        const r = await ingestCompanies(provider, code, kept, { discoveredVia: "ESTABLISHED_COLLECTION" });
-        result.imported += r.imported;
-        result.updated += r.updated;
-        collected += r.imported;
-      }
-      opts.log?.(`${code} ${day}: ${batch.companies.length} fetched, ${kept.length} active & established, ${result.imported} new so far`);
+      result.kept += r.qualified - r.excludedAsStartup;
+      result.excludedAsStartup += r.excludedAsStartup;
+      result.imported += r.imported;
+      result.updated += r.updated;
+      collected += r.imported;
+      opts.log?.(`${code} ${day}: ${batch.companies.length} fetched, ${r.qualified} verified established, ${r.excludedAsStartup} already in Startup Company Intelligence (skipped), ${result.imported} new so far`);
       cursor = addDays(day, -1);
       if (cursor < oldest) cursor = newest; // wrap around: start again from the most recent established days
     }
@@ -134,5 +129,6 @@ export async function collectEstablished(opts: { countries?: string[]; days?: nu
   const targets = (opts.countries?.length ? opts.countries : enabled).map((c) => c.toUpperCase());
   const out: EstablishedRunResult[] = [];
   for (const code of targets) out.push(await collectEstablishedCountry(code, opts));
+  if (out.some((r) => r.imported)) await sweepStartupOverlap();
   return out;
 }

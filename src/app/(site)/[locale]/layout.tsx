@@ -47,7 +47,7 @@ export default async function LocaleRootLayout({ children, params }: { children:
         {/* Bottom-right live chat — messaging requires a client account (signup or login). */}
         <ChatWidget labels={chatLabels} signupHref={localizedPath(locale, "/signup")} loginHref={localizedPath(locale, "/login")} />
         {/* Consent banner + page-view beacon (Owner-only Website Analytics). Never blocks rendering. */}
-        <SiteAnalytics labels={{ title: t("cookieConsent.title"), text: t("cookieConsent.text"), accept: t("cookieConsent.accept"), decline: t("cookieConsent.decline") }} />
+        <SiteAnalytics labels={{ title: t("cookieConsent.title"), text: t("cookieConsent.text"), essential: t("cookieConsent.essential"), accept: t("cookieConsent.accept"), decline: t("cookieConsent.decline") }} />
       </body>
     </html>
   );

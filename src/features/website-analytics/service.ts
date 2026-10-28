@@ -12,8 +12,9 @@ import type { Geo } from "./geo";
  * API routes check it too). Reads only aggregated behaviour; no IP addresses are stored at all.
  */
 
-export const ANALYTICS_TIME_ZONE = "Europe/Oslo";
-export const ANALYTICS_PRESETS = ["today", "yesterday", "7d", "30d", "month", "custom"] as const;
+import { ANALYTICS_TIME_ZONE } from "./classify";
+export { ANALYTICS_TIME_ZONE };
+export const ANALYTICS_PRESETS = ["today", "yesterday", "7d", "week", "30d", "month", "custom"] as const;
 
 function requireOwner(actor: Actor | null | undefined) {
   if (!isOwner(actor)) throw Errors.forbidden();

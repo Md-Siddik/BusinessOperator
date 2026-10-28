@@ -50,7 +50,9 @@ export const contactRequestSchema = z.object({
   website2: z.string().max(0).optional(),
 });
 
-export async function submitContactRequest(input: unknown, opts: { actor?: Actor | null; onCreated?: (id: string) => Promise<unknown> } = {}) {
+export type CreatedEnquiry = { preferredContact?: string; serviceSlug?: string; isDemo?: boolean };
+
+export async function submitContactRequest(input: unknown, opts: { actor?: Actor | null; onCreated?: (id: string, enquiry: CreatedEnquiry) => Promise<unknown> } = {}) {
   const { country, website2: _hp, service, submissionId, ...data } = contactRequestSchema.parse(input);
   void _hp;
   const submissionKey = createHash("sha256").update(submissionId ? data.email + ":" + submissionId : JSON.stringify(data) + Math.floor(Date.now() / 600000)).digest("hex");
@@ -69,7 +71,7 @@ export async function submitContactRequest(input: unknown, opts: { actor?: Actor
     text: "Confirm your email so our team can send private replies and quotations: " + absoluteUrl("/verify-inquiry?id=" + doc._id + "&token=" + token) });
 
   // Optional follow-up (website analytics); never allowed to fail the enquiry.
-  await opts.onCreated?.(String(doc._id)).catch((err) => console.error("[contact] post-submit hook failed", err));
+  await opts.onCreated?.(String(doc._id), { preferredContact: data.preferredContact, serviceSlug: service, isDemo: doc.isDemo }).catch((err) => console.error("[contact] post-submit hook failed", err));
   await notifyInternal("clients.manage", {
     type: "CLIENT_REQUEST",
     title: `New enquiry: ${data.company || data.name}`,

@@ -674,8 +674,9 @@
   "cookieConsent": {
     "title": "Analytics cookies",
     "text": "May we use an anonymous analytics cookie to see how our website is used? It helps us improve the site. We never use it to find out who you are, and you can change your choice at any time.",
+    "essential": "Essential cookies for sign-in, security and remembering this choice are always on. Nothing else is stored until you decide.",
     "accept": "Accept",
-    "decline": "Decline",
+    "decline": "Deny",
     "settings": "Cookie settings"
   },
   "theme": {

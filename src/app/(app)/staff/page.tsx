@@ -43,7 +43,7 @@ export default async function StaffHome({ searchParams }: { searchParams: Promis
               <Lock className="mt-0.5 h-5 w-5 shrink-0 text-ink-400" aria-hidden />
               <div>
                 <p className="font-medium text-ink-900">Client leads — no access yet</p>
-                <p className="mt-1 text-sm text-ink-600">The Owner hasn&apos;t given you “View Assigned Client Leads”. Leads sent to you appear once access is granted.</p>
+                <p className="mt-1 text-sm text-ink-600">The Owner hasn&apos;t given you “View Marketer Table”. The shared table of client leads appears once access is granted.</p>
               </div>
             </Card>
           )}

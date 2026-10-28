@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readJson, route } from "@/lib/api/handler";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 import { CONSENT_COOKIE, VISITOR_COOKIE, VISITOR_COOKIE_MAX_AGE } from "@/features/website-analytics/classify";
+import { hasAnalyticsConsent } from "@/lib/consent";
 import { recordEvent } from "@/features/website-analytics/collect";
 import { lookupGeo } from "@/features/website-analytics/geo";
 
@@ -9,11 +10,12 @@ import { lookupGeo } from "@/features/website-analytics/geo";
  * Public analytics beacon. Always answers 200: analytics must never affect the website, so
  * failures are logged and swallowed. The response holds nothing about other visitors.
  *
- * The anonymous visitor cookie is only ever set when the browser has accepted analytics
- * (et_consent=granted), and is cleared again when it has not.
+ * Nothing is recorded without a valid, current "granted" decision (see lib/consent): before a
+ * decision and after "Deny" the beacon is not even sent, and the server refuses it anyway. The
+ * anonymous visitor cookie is only ever set with consent, and is cleared again without it.
  */
 export const POST = route({ auth: "optional", rateLimit: RATE_LIMITS.track }, async ({ req, actor, ip }) => {
-  const consent = req.cookies.get(CONSENT_COOKIE)?.value === "granted";
+  const consent = hasAnalyticsConsent(req.cookies.get(CONSENT_COOKIE)?.value);
   const vid = req.cookies.get(VISITOR_COOKIE)?.value;
   let body: Record<string, unknown> = { ok: true };
   let newVid: string | undefined;

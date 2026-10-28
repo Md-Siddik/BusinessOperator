@@ -1,5 +1,5 @@
 import { route, searchParamsObject } from "@/lib/api/handler";
 import { listMarketerLeads } from "@/features/marketer/service";
 
-/** The signed-in Digital Marketer's assigned leads. Requires "View Assigned Client Leads". */
+/** The shared Digital Marketer table. Requires "View Marketer Table". */
 export const GET = route({ team: true, permission: "marketerLeads.view" }, async ({ req, actor }) => listMarketerLeads(actor, searchParamsObject(req)));

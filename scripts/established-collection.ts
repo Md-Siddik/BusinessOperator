@@ -13,6 +13,9 @@ process.env.REGISTRY_SCHEDULER = "off";
 async function probe(countries: string[]) {
   const { COUNTRIES } = await import("../src/config/countries");
   const { establishedProviderFor, selectEstablished } = await import("../src/features/registry/established");
+  const { DEFAULT_MIN_AGE_YEARS } = await import("../src/features/established/config");
+  // Probe runs without a database: env threshold or the default.
+  const minAgeYears = Number(process.env.ESTABLISHED_MIN_AGE_YEARS) || DEFAULT_MIN_AGE_YEARS;
   const { addDays, todayIn } = await import("../src/lib/dates/country-time");
   for (const c of COUNTRIES) {
     if (countries.length && !countries.includes(c.code)) continue;
@@ -21,13 +24,13 @@ async function probe(countries: string[]) {
       console.info(`${c.flag} ${c.name}: not collected — ${reason}`);
       continue;
     }
-    let day = addDays(todayIn(c.timezone), -Math.round(5 * 365.25) - 3);
+    let day = addDays(todayIn(c.timezone), -Math.ceil(minAgeYears * 365.25) - 3);
     // Registries register on working days: probe the nearest weekday.
     while ([0, 6].includes(new Date(`${day}T12:00:00Z`).getUTCDay())) day = addDays(day, -1);
     try {
       const started = Date.now();
       const batch = await provider.getRegistrations!(day, day, { limit: 200, signal: AbortSignal.timeout(120_000) });
-      const kept = selectEstablished(batch.companies);
+      const kept = selectEstablished(batch.companies, minAgeYears);
       const wrongDay = batch.companies.filter((x) => x.registration.registrationDay !== day).length;
       const n = (f: (x: (typeof kept)[number]) => unknown) => kept.filter(f).length;
       console.info(`${c.flag} ${c.name} (${provider.id}) · registered ${day}: ${batch.companies.length} fetched (source total ${batch.total ?? "?"}) in ${Date.now() - started} ms → ${kept.length} active & established${wrongDay ? ` · ⚠ ${wrongDay} with another registration day` : ""}`);

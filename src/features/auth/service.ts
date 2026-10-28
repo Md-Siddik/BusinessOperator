@@ -57,7 +57,7 @@ export const signupSchema = z.object({
  * Client self-signup. Creates the organization and user in PENDING_APPROVAL
  * with the CLIENT role only — never any privileged access.
  */
-export async function signupClient(input: unknown, ip?: string) {
+export async function signupClient(input: unknown, ip?: string, opts: { onCreated?: (userId: string) => Promise<unknown> } = {}) {
   const data = signupSchema.parse(input);
   if (!getEmailProvider().isLive && process.env.NODE_ENV !== "test") throw Errors.badRequest("Account verification is unavailable. Please retry later.");
   if (await User.exists({ email: data.email })) {
@@ -93,6 +93,8 @@ export async function signupClient(input: unknown, ip?: string) {
     return null;
   });
   if (!user) return { ok: true };
+  // Optional follow-up (website analytics); never allowed to fail the sign-up.
+  await opts.onCreated?.(String(user._id)).catch((err) => console.error("[signup] post-signup hook failed", err));
   await audit(null, "auth.signup", { entityType: "User", entityId: String(user._id), organizationId: String(org._id), ip });
   await notifyInternal("clients.manage", {
     type: "CLIENT_SIGNUP",

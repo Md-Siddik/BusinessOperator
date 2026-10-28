@@ -1,14 +1,12 @@
 import { z } from "zod";
 import { readJson, route } from "@/lib/api/handler";
-import { listMarketerRecipients, sendLeadToMarketer } from "@/features/marketer/service";
+import { marketerTableState, sendLeadToMarketer } from "@/features/marketer/service";
 
-/** Owner only: Digital Marketers for the recipient picker, with this company's assignment state. */
-export const GET = route({ internal: true, ownerOnly: true, permission: "leads.sendToMarketer" }, async ({ req, actor }) => ({
-  recipients: await listMarketerRecipients(actor, req.nextUrl.searchParams.get("companyId") ?? ""),
-}));
+/** Owner only: is this company in the Digital Marketer table, and how many marketers can see it? */
+export const GET = route({ internal: true, ownerOnly: true, permission: "leads.sendToMarketer" }, async ({ req, actor }) => marketerTableState(actor, req.nextUrl.searchParams.get("companyId") ?? ""));
 
-/** Owner only: send a lead (company) to a Digital Marketer. Idempotent per company + recipient. */
+/** Owner only: add a company (lead) to the shared Digital Marketer table. Idempotent per company. */
 export const POST = route({ internal: true, ownerOnly: true, permission: "leads.sendToMarketer" }, async ({ req, actor }) => {
-  const body = z.object({ companyId: z.string(), recipientId: z.string() }).parse(await readJson(req));
-  return sendLeadToMarketer(actor, body.companyId, { recipientId: body.recipientId });
+  const body = z.object({ companyId: z.string() }).parse(await readJson(req));
+  return sendLeadToMarketer(actor, body.companyId);
 });
