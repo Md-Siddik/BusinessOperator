@@ -1,8 +1,12 @@
+import { after } from "next/server";
 import { z } from "zod";
 import { readJson, route } from "@/lib/api/handler";
 import { isDay } from "@/lib/dates/country-time";
 import { countryCodeSchema } from "@/lib/validation";
 import { startSync } from "@/features/registry/sync";
+
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 /**
  * Start a country-specific registry sync in the background. Returns at once
@@ -11,9 +15,9 @@ import { startSync } from "@/features/registry/sync";
  *   kind DATE            — one registry day (`date`)
  *   kind BACKFILL        — incremental catch-up since the last successful sync
  */
-export const POST = route({ internal: true, permission: "registry.sync" }, async ({ req, actor }) => {
+export const POST = route({ diagnostics: true, internal: true, permission: "registry.sync" }, async ({ req, actor }) => {
   const body = z
     .object({ country: countryCodeSchema, kind: z.enum(["TODAY", "DATE", "BACKFILL"]).default("TODAY"), date: z.string().refine(isDay, "Use YYYY-MM-DD").optional() })
     .parse(await readJson(req));
-  return startSync({ countryCode: body.country, kind: body.kind, from: body.date, trigger: "MANUAL", actor });
+  return startSync({ countryCode: body.country, kind: body.kind, from: body.date, trigger: "MANUAL", actor }, after);
 });

@@ -10,6 +10,7 @@ import type { Actor } from "@/lib/permissions";
 import { rescoreCompanies } from "@/features/companies/service";
 import { getRegistryProvider } from "./providers";
 import { mapLimit } from "./http";
+import { safeFailure, syncStage } from "@/lib/diagnostics";
 import { buildCompanyUpdate, personOrUndefined, registryContacts, type ExistingCompany } from "./normalize";
 import type { CompanyRegistryProvider, NormalizedCompany, ProviderStatus } from "./types";
 
@@ -114,10 +115,10 @@ async function clearStaleRuns(countryCode: string) {
 }
 
 async function createRun(p: Prepared, req: SyncRequest) {
-  await clearStaleRuns(p.country.code);
-  const running = await RegistrySync.findOne({ countryCode: p.country.code, status: "RUNNING" }).lean<RegistrySyncDoc>();
+  await syncStage("clear_stale_runs", () => clearStaleRuns(p.country.code));
+  const running = await syncStage("find_running_sync", async () => RegistrySync.findOne({ countryCode: p.country.code, status: "RUNNING" }).lean<RegistrySyncDoc>());
   if (running) return { run: running, alreadyRunning: true };
-  const run = await RegistrySync.create({
+  const run = await syncStage("create_sync_run", () => RegistrySync.create({
     countryCode: p.country.code,
     providerId: p.provider.id,
     trigger: req.trigger,
@@ -128,16 +129,18 @@ async function createRun(p: Prepared, req: SyncRequest) {
     heartbeatAt: new Date(),
     triggeredBy: req.actor?.id,
     isLiveSource: !p.provider.isDemo,
-  });
+  }));
   return { run: run.toObject() as RegistrySyncDoc, alreadyRunning: false };
 }
 
 /** Start a sync in the background and return immediately (used by the dashboard buttons). */
-export async function startSync(req: SyncRequest) {
-  const p = await prepare(req);
+export async function startSync(req: SyncRequest, schedule: (task: () => Promise<void>) => void = (task) => { void task(); }) {
+  const p = await syncStage("prepare", () => prepare(req));
   const { run, alreadyRunning } = await createRun(p, req);
   if (!alreadyRunning) {
-    void execute(String(run._id), p, req).catch((err) => console.error("[registry] sync crashed", err));
+    schedule(async () => {
+      await syncStage("execute_or_finalize", () => execute(String(run._id), p, req)).catch(() => undefined);
+    });
   }
   return { syncId: String(run._id), alreadyRunning, from: p.from, to: p.to };
 }
@@ -167,6 +170,7 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
   let complete = true;
   let sourceTotal: number | undefined;
   let lastBeat = 0;
+  let stage = "fetch_registrations";
   const beat = (progress: string, force = false) => {
     if (!force && Date.now() - lastBeat < 2000) return;
     lastBeat = Date.now();
@@ -183,6 +187,7 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
     if (!batch.complete) errors.push(`The source reported ${batch.total ?? "more"} records; ${fetched} were imported (per-run cap ${MAX_PER_RUN}).`);
 
     beat(`Saving ${batch.companies.length} companies…`, true);
+    stage = "ingest_companies";
     const r = await ingestCompanies(p.provider, code, batch.companies, { onProgress: (m) => beat(m) });
     imported += r.imported;
     updated += r.updated;
@@ -191,14 +196,18 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
     errors.push(...r.errors);
     const records = r.records;
 
+    stage = "fetch_roles";
     peopleFetched = await fetchPeopleForRecent(p, records.map((x) => x.identity.sourceId), beat, errors);
+    stage = "rescore_companies";
     await rescoreCompanies({ countryCode: code, source: p.provider.id, sourceId: { $in: records.map((x) => x.identity.sourceId) } });
     // Sources that publish with a lag (SHAB) can return companies registered before the
     // window; their days' counts are rebuilt too. For every other source this is p.from.
     const earliest = records.reduce<Day>((min, x) => (x.registration.registrationDay && x.registration.registrationDay < min ? x.registration.registrationDay : min), p.from);
     const snapshotFrom = daysBetween(earliest, p.from) <= 31 ? earliest : p.from;
+    stage = "rebuild_snapshots";
     await rebuildSnapshots(code, snapshotFrom, p.to, { providerId: p.provider.id, isDemo: p.provider.isDemo, complete, sourceTotal: p.from === p.to && snapshotFrom === p.from ? sourceTotal : undefined });
   } catch (err) {
+    console.error("[registry.sync]", { stage, provider: p.provider.id, durationMs: Date.now() - started, ...safeFailure(err) });
     failed = Math.max(failed, 1);
     errors.unshift(err instanceof Error ? err.message : String(err));
   }
@@ -288,6 +297,7 @@ export async function ingestCompanies(provider: CompanyRegistryProvider, code: s
       out.imported += res.upsertedCount;
       out.newIds.push(...Object.values(res.upsertedIds ?? {}).map(String));
     } catch (err) {
+      console.error("[registry.sync]", { stage: "company_bulk_write", provider: provider.id, ...safeFailure(err) });
       // Duplicate registration numbers from another source etc. — count, keep going.
       const e = err as { writeErrors?: { errmsg?: string }[]; result?: { upsertedCount?: number; upsertedIds?: Record<string, unknown> } };
       out.imported += e.result?.upsertedCount ?? 0;
@@ -336,7 +346,7 @@ async function recordRegistryContacts(countryCode: string, provider: CompanyRegi
  * loads the rest on demand.
  */
 async function fetchPeopleForRecent(p: Prepared, sourceIds: string[], beat: (m: string) => void, errors: string[]) {
-  if (!p.provider.getPeople || !p.provider.capabilities.supportsRoles) return 0;
+  if (PEOPLE_PER_RUN <= 0 || !p.provider.getPeople || !p.provider.capabilities.supportsRoles) return 0;
   const def = getCountry(p.country.code)!;
   const recentFrom = addDays(todayIn(def.timezone), -2);
   const targets = await Company.find({ countryCode: p.country.code, source: p.provider.id, sourceId: { $in: sourceIds }, peopleFetchedAt: null, registrationDay: { $gte: recentFrom } })

@@ -1,4 +1,5 @@
 import "server-only";
+import { safeFailure } from "@/lib/diagnostics";
 import { siteConfig } from "@/config/site";
 
 /**
@@ -91,6 +92,7 @@ export function createHttpClient(opts: HttpClientOptions) {
     for (;;) {
       await slot();
       const signals = [AbortSignal.timeout(timeoutMs), ...(init.signal ? [init.signal] : [])];
+      const started = Date.now();
       try {
         const res = await fetch(url, {
           ...init,
@@ -98,6 +100,7 @@ export function createHttpClient(opts: HttpClientOptions) {
           signal: AbortSignal.any(signals),
           cache: "no-store",
         });
+        if (!res.ok) console.error("[registry.http]", { stage: "upstream_response", provider: opts.name, upstreamStatus: res.status, durationMs: Date.now() - started, attempt });
         if (res.ok || (res.status >= 400 && res.status < 500 && res.status !== 429)) {
           // 4xx (other than 429) are caller errors — not a provider outage.
           if (res.ok) recordSuccess();
@@ -111,6 +114,7 @@ export function createHttpClient(opts: HttpClientOptions) {
         }
         await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 60_000) : 500 * 2 ** attempt, init.signal);
       } catch (err) {
+        console.error("[registry.http]", { stage: "upstream_request", provider: opts.name, durationMs: Date.now() - started, attempt, ...safeFailure(err) });
         if (err instanceof ProviderHttpError) throw err;
         if (init.signal?.aborted) throw new ProviderHttpError("Aborted");
         if (attempt >= maxRetries) {
@@ -127,9 +131,9 @@ export function createHttpClient(opts: HttpClientOptions) {
   async function json<T>(url: string, init: RequestInit & { signal?: AbortSignal } = {}): Promise<T> {
     const res = await request(url, init);
     if (!res.ok) {
-      const body = await res.text().catch(() => "");
+      await res.body?.cancel().catch(() => undefined);
       if (res.status === 401 || res.status === 403) throw new ProviderHttpError(`${opts.name} rejected the credentials (${res.status}). Check the API key configuration.`, res.status);
-      throw new ProviderHttpError(`${opts.name} responded ${res.status}${body ? `: ${body.slice(0, 200)}` : ""}`, res.status);
+      throw new ProviderHttpError(`${opts.name} responded ${res.status}`, res.status);
     }
     return (await res.json()) as T;
   }
