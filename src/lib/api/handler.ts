@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import { connectToDatabase, DatabaseUnavailableError } from "@/lib/db/connect";
+import { isDatabaseCapacityError } from "@/lib/db/errors";
 import { AppError, Errors } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth/session";
 import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
@@ -78,7 +79,8 @@ export function errorResponse(err: unknown) {
   if (err instanceof AppError) {
     return NextResponse.json({ error: { code: err.code, message: err.message, ...err.details } }, { status: err.status });
   }
-  if (err instanceof DatabaseUnavailableError) {
+  if (err instanceof DatabaseUnavailableError || isDatabaseCapacityError(err)) {
+    if (isDatabaseCapacityError(err)) console.error("[db] Storage quota exceeded; database writes are unavailable.");
     return NextResponse.json({ error: { code: "UNAVAILABLE", message: "Service temporarily unavailable." } }, { status: 503 });
   }
   console.error("[api] unhandled error", err);

@@ -23,7 +23,7 @@ import {
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
 import { can, isClient, isInternal, type Actor } from "@/lib/permissions";
-import { createOpaqueToken, hashPassword } from "@/lib/auth/password";
+import { createOpaqueToken } from "@/lib/auth/password";
 import { escapeRegex } from "@/lib/utils";
 import { emailSchema, objectId, optionalPhone, optionalUrl, paginate, parseObjectId } from "@/lib/validation";
 import { absoluteUrl } from "@/config/site";
@@ -32,6 +32,7 @@ import { sendTransactionalEmail, transactionalTemplates } from "@/lib/email/tran
 import { notifyInternal, notifyUsers } from "@/features/notifications/service";
 import { getBaseMessages } from "@/lib/i18n/dictionaries";
 import { getPath } from "@/lib/i18n/translator";
+import { clientTransaction } from "./transaction";
 
 /** Organization access: clients only their own; internal users any (read). */
 export function assertOrgAccess(actor: Actor, organizationId: string | Types.ObjectId) {
@@ -138,35 +139,63 @@ export async function setOrganizationStatus(actor: Actor, organizationId: string
   });
 }
 
-export const createClientUserSchema = z.object({ name: z.string().trim().min(2).max(120), email: emailSchema, phone: optionalPhone });
+export const createClientUserSchema = z.object({ name: z.string().trim().min(2).max(120), email: emailSchema, phone: optionalPhone, mode: z.enum(["invite", "link"]).default("invite") }).strict();
 
 /** Internal staff add a user to a client org; the user sets a password via an emailed link. */
 export async function createClientUser(actor: Actor, organizationId: string, input: unknown) {
   requireClientsManage(actor);
   const id = parseObjectId(organizationId);
-  const org = await Organization.findById(id).lean<OrganizationDoc>();
-  if (!org) throw Errors.notFound();
   const data = createClientUserSchema.parse(input);
-  if (await User.exists({ email: data.email })) throw Errors.conflict("A user with this email already exists.");
   const { token, hash } = createOpaqueToken();
-  const user = await User.create({
-    ...data,
-    passwordHash: await hashPassword(createOpaqueToken().token),
-    role: "CLIENT",
-    status: org.status === "ACTIVE" ? "ACTIVE" : "PENDING_APPROVAL",
-    organizationId: id,
-    preferredLanguage: org.preferredLanguage,
-    passwordResetTokenHash: hash,
-    passwordResetExpiresAt: new Date(Date.now() + 7 * 86_400_000),
+  const { user, org, linked } = await clientTransaction(async (session) => {
+    // Touching the tenant serializes invitations/linking against deletion.
+    const org = await Organization.findOneAndUpdate({ _id: id, status: { $ne: "SUSPENDED" } }, { $inc: { lifecycleVersion: 1 } }, { new: true, session }).lean<OrganizationDoc>();
+    if (!org) throw Errors.badRequest("Client is unavailable or suspended.");
+    let user = await User.findOne({ email: data.email }).select("+passwordHash").session(session).lean<UserDoc>();
+    let linked = false;
+    if (data.mode === "link") {
+      if (actor.role !== "OWNER" || !can(actor, "users.manage")) throw Errors.forbidden("Only the Owner can associate an existing account.");
+      const { toActor } = await import("@/lib/auth/actor");
+      if (!user || user.status !== "ACTIVE" || user.organizationId || !["CLIENT", "STAFF"].includes(user.role) || toActor(user).permissions.length) throw Errors.conflict("Select an active unassociated Client or Staff account with no permissions.");
+      user = await User.findOneAndUpdate({ _id: user._id, status: "ACTIVE", organizationId: null }, { $set: { role: "CLIENT", organizationId: id, permissions: [], permissionGrants: [] }, $inc: { sessionVersion: 1 } }, { new: true, session }).lean<UserDoc>();
+      if (!user) throw Errors.conflict("The account changed; retry.");
+      linked = true;
+    } else {
+      if (user && (user.role !== "CLIENT" || String(user.organizationId) !== organizationId || user.passwordHash || user.status === "SUSPENDED")) throw Errors.conflict("This email already belongs to an account. Use explicit association for eligible accounts.");
+      if (user) {
+        await User.updateOne({ _id: user._id }, { $set: { invitationTokenHash: hash, invitationExpiresAt: new Date(Date.now() + 7 * 86_400_000) } }, { session });
+      } else {
+        const created = await User.create([{ name: data.name, email: data.email, phone: data.phone, role: "CLIENT", permissions: [], permissionGrants: [], status: org.status === "ACTIVE" ? "ACTIVE" : "PENDING_APPROVAL", organizationId: id, preferredLanguage: org.preferredLanguage, invitationTokenHash: hash, invitationExpiresAt: new Date(Date.now() + 7 * 86_400_000) }], { session });
+        user = created[0].toObject();
+      }
+    }
+    await AuditLog.create([{ actorId: actor.id, actorEmail: actor.email, actorRole: actor.role, action: linked ? "client.user_linked" : "client.user_invited", entityType: "User", entityId: String(user!._id), organizationId: id, metadata: { role: "CLIENT" } }], { session });
+    return { user: user!, org, linked };
+  }).catch((err: unknown) => {
+    if ((err as { code?: number }).code === 11000) throw Errors.conflict("This email already belongs to an account. Reload and retry.");
+    throw err;
   });
-  await sendTransactionalEmail({
+  if (linked) return { id: String(user._id), linked: true };
+  const mail = await sendTransactionalEmail({
     to: data.email,
     toName: data.name,
     subject: `You've been invited to ${org.name}'s workspace`,
-    text: `Hi ${data.name},\n\nYou now have access to ${org.name}'s ExploreTechify workspace. Set your password here (valid for 7 days):\n${absoluteUrl(`/reset-password?token=${token}`)}`,
+    sensitive: true, category: "ACCOUNT",
+    text: `Hi ${data.name},\n\nYou have been invited to ${org.name}'s ExploreTechify workspace. Set up your account here (valid for 7 days):\n${absoluteUrl(`/accept-invitation?token=${token}`)}`,
   });
-  await audit(actor, "user.created", { entityType: "User", entityId: String(user._id), organizationId, metadata: { role: "CLIENT" } });
-  return { id: String(user._id) };
+  if (!mail.accepted) throw Errors.badRequest("Account saved, but the invitation email was not accepted. Submit the invitation again to retry without creating a duplicate.");
+  return { id: String(user._id), linked: false };
+}
+
+export const createOrganizationSchema = z.object({ name: z.string().trim().min(2).max(200), email: emailSchema.optional().or(z.literal("")), phone: optionalPhone, website: optionalUrl }).strict();
+export async function createOrganization(actor: Actor, input: unknown) {
+  requireClientsManage(actor);
+  if (!isInternal(actor)) throw Errors.forbidden();
+  const data = createOrganizationSchema.parse(input);
+  const id = new Types.ObjectId();
+  const org = await Organization.create({ ...data, _id: id, slug: `client-${id}`, status: "ACTIVE" });
+  await audit(actor, "client.created", { entityType: "Organization", entityId: String(id), organizationId: String(id) });
+  return { id: String(org._id) };
 }
 
 /* ───────────── Client services ───────────── */

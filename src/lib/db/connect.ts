@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import path from "node:path";
 import fs from "node:fs";
+import { configureMongoDns, hasExplicitMongoDatabase } from "./configuration";
 
 /**
  * MongoDB connection.
@@ -57,7 +58,11 @@ async function canConnect(uri: string) {
 }
 
 async function resolveUri(): Promise<string> {
-  if (process.env.MONGODB_URI) return process.env.MONGODB_URI;
+  configureMongoDns();
+  if (process.env.MONGODB_URI) {
+    if (!hasExplicitMongoDatabase(process.env.MONGODB_URI)) throw new DatabaseUnavailableError("MONGODB_URI must include the intended database name; implicit test databases are refused.");
+    return process.env.MONGODB_URI;
+  }
   if (!isDatabaseConfigured()) throw new DatabaseUnavailableError("MONGODB_URI is required in production");
 
   const localUri = `mongodb://127.0.0.1:${LOCAL_DB_PORT}/${LOCAL_DB_NAME}`;

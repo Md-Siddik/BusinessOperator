@@ -19,6 +19,8 @@
     "migrate:revert-marketer-access": "tsx --conditions=react-server scripts/revert-marketer-access.ts",
     "migrate:revert-admin-marketer-access": "tsx --conditions=react-server scripts/revert-marketer-access.ts --admins",
     "db:migrate-to-atlas": "tsx scripts/migrate-to-atlas.ts",
+    "db:migrate-intelligence": "tsx scripts/migrate-intelligence.ts",
+    "db:backup-intelligence": "tsx scripts/backup-intelligence.ts",
     "coverage:report": "tsx scripts/coverage-report.ts",
     "coverage:contacts": "tsx --conditions=react-server scripts/contact-coverage.ts",
     "intel:isolation": "tsx --conditions=react-server scripts/intel-isolation-report.ts",

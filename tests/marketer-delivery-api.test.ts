@@ -1,0 +1,71 @@
+import { expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { Types } from "mongoose";
+import { Company, LeadAssignment, type LeadAssignmentDoc } from "@/models";
+import type { SessionUser } from "@/lib/auth/actor";
+import { makeUser } from "./helpers";
+import { changeAccess } from "@/features/access/service";
+
+const state = vi.hoisted(() => ({ user: null as SessionUser | null }));
+vi.mock("@/lib/auth/session", () => ({ getSessionUser: async () => state.user }));
+const { POST } = await import("@/app/api/lead-assignments/route");
+const send = (body: unknown) => POST(new NextRequest("http://localhost:3000/api/lead-assignments", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), { params: Promise.resolve({}) });
+
+it("delivers distinct bulk records privately, reports partial failures, retries safely and checks permissions", async () => {
+  const owner = await makeUser("OWNER");
+  const marketer = await makeUser("DIGITAL_MARKETER");
+  await changeAccess(owner.actor, String(marketer.user._id), { permission: "marketerLeads.view", action: "grant" });
+  state.user = { ...owner.actor, status: "ACTIVE", emailVerifiedAt: new Date(), actor: owner.actor };
+  const a = await Company.create({ companyName: "SG delivery fixture", countryCode: "SG", source: "fixture", sourceId: "sg-bulk" });
+  const b = await Company.create({ companyName: "MY delivery fixture", countryCode: "MY", source: "fixture", sourceId: "my-bulk" });
+  const missing = String(new Types.ObjectId());
+  const body = { companyIds: [String(a._id), String(b._id), String(a._id), missing], destinationType: "individual", recipientId: String(marketer.user._id) };
+  const first = await (await send(body)).json();
+  expect(first.results).toHaveLength(3);
+  expect(first.results.filter((r: { ok: boolean }) => r.ok)).toHaveLength(2);
+  expect(first.results.find((r: { companyId: string }) => r.companyId === missing).ok).toBe(false);
+  const retry = await (await send(body)).json();
+  expect(retry.results.filter((r: { status?: string }) => r.status === "already")).toHaveLength(2);
+  expect(await LeadAssignment.countDocuments({ recipientId: marketer.user._id })).toBe(2);
+  state.user = { ...marketer.actor, status: "ACTIVE", emailVerifiedAt: new Date(), actor: marketer.actor };
+  expect((await send(body)).status).toBe(403);
+});
+
+
+it("assigns admins privately, protects personal data and records only actual atomic status changes", async () => {
+  const owner = await makeUser("OWNER");
+  const admin = await makeUser("ADMIN");
+  const other = await makeUser("DIGITAL_MARKETER");
+  await changeAccess(owner.actor, String(admin.user._id), { permission: "marketerLeads.view", action: "grant" });
+  await changeAccess(owner.actor, String(other.user._id), { permission: "marketerLeads.view", action: "grant" });
+  const { loadSessionUser } = await import("@/lib/auth/actor");
+  const fresh = async (u: typeof admin) => (await loadSessionUser({ sub: String(u.user._id), role: u.actor.role, sv: 0, mf: true }))!.actor;
+  const service = await import("@/features/marketer/service");
+  const company = await Company.create({ companyName: "Private admin fixture", countryCode: "SG", source: "fixture", sourceId: "private-admin" });
+  const recipients = await service.eligibleMarketers(owner.actor);
+  expect(recipients).toEqual(expect.arrayContaining([expect.objectContaining({ id: String(admin.user._id), role: "ADMIN" })]));
+  const sent = await service.sendLeadToMarketer(owner.actor, String(company._id), { destinationType: "individual", recipientId: String(admin.user._id) });
+  const adminActor = await fresh(admin);
+  const otherActor = await fresh(other);
+  expect((await service.listMarketerLeads(adminActor, { scope: "mine" })).items.map((r) => r.id)).toContain(sent.assignmentId);
+  expect((await service.listMarketerLeads(otherActor, {})).items.map((r) => r.id)).not.toContain(sent.assignmentId);
+  await expect(service.updateLeadOutreachStatus(otherActor, sent.assignmentId, { outreachStatus: "MESSAGED" })).rejects.toThrow();
+  await service.updateLeadOutreachStatus(adminActor, sent.assignmentId, { outreachStatus: "MESSAGED" });
+  await service.updateLeadOutreachStatus(adminActor, sent.assignmentId, { outreachStatus: "MESSAGED" });
+  const stored = await LeadAssignment.findById(sent.assignmentId).lean<LeadAssignmentDoc>();
+  expect(stored!.history.filter((h) => h.action === "OUTREACH")).toHaveLength(1);
+  expect(stored!.history.at(-1)).toMatchObject({ previousOutreachStatus: "NOT_REACHED", outreachStatus: "MESSAGED" });
+  await expect(service.sendLeadToMarketer(owner.actor, String(company._id), { destinationType: "individual", recipientId: String(other.user._id) })).rejects.toThrow(/Already assigned/);
+  const shared = await service.sendLeadToMarketer(owner.actor, String(company._id));
+  await expect(service.updateLeadOutreachStatus(otherActor, shared.assignmentId, { outreachStatus: "MESSAGED" })).rejects.toThrow(/Handled by/);
+  expect(await Company.countDocuments({ _id: company._id })).toBe(1);
+  await Promise.allSettled(["GOT_RESPONSE", "NOT_REACHED"].map((outreachStatus) => service.updateLeadOutreachStatus(adminActor, sent.assignmentId, { outreachStatus })));
+  const afterRace = await LeadAssignment.findById(sent.assignmentId).lean<LeadAssignmentDoc>();
+  const changes = afterRace!.history.filter((h) => h.action === "OUTREACH");
+  expect(changes.at(-1)!.outreachStatus).toBe(afterRace!.outreachStatus);
+  for (let i = 1; i < changes.length; i++) expect(changes[i].previousOutreachStatus).toBe(changes[i - 1].outreachStatus);
+  const raceCompany = await Company.create({ companyName: "Concurrent assignment", countryCode: "SG", source: "fixture", sourceId: "private-race" });
+  const results = await Promise.allSettled([admin, other].map((u) => service.sendLeadToMarketer(owner.actor, String(raceCompany._id), { destinationType: "individual", recipientId: String(u.user._id) })));
+  expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+  expect(await LeadAssignment.countDocuments({ companyId: raceCompany._id, status: "ACTIVE" })).toBe(1);
+});

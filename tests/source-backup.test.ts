@@ -1,0 +1,30 @@
+import { afterAll, expect, it } from "vitest";
+import mongoose from "mongoose";
+import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { createSourceBackup, verifySourceBackup, readBackupDocuments } from "../scripts/lib/source-backup";
+import { fingerprint } from "../scripts/lib/selective-migration";
+const directories: string[] = [];
+afterAll(async () => { for (const directory of directories) await rm(directory, { recursive: true, force: true }); });
+
+it("creates readable BSON backups, restores exact fields/types and rejects changed sources", async () => {
+  const source = mongoose.connection.getClient().db(`backup-source-${new mongoose.Types.ObjectId()}`);
+  const restored = mongoose.connection.getClient().db(`backup-restored-${new mongoose.Types.ObjectId()}`);
+  await source.collection("companies").insertOne({ companyName: "ঢাকা", phone: "+8801700000000", at: new Date("2020-01-01"), amount: mongoose.mongo.Decimal128.fromString("123.45"), floating: new mongoose.mongo.Double(1) });
+  await source.collection("users").insertOne({ email: "kept@example.test", passwordHash: "synthetic-hash" });
+  await source.collection("users").createIndex({ email: 1 }, { unique: true });
+  const directory = await mkdtemp(path.join(os.tmpdir(), "source-backup-")); directories.push(directory);
+  const file = await createSourceBackup(source, directory);
+  const manifest = await verifySourceBackup(source, file);
+  for (const entry of manifest.collections) for await (const doc of readBackupDocuments(path.join(directory, entry.file))) await restored.collection(entry.name).insertOne(doc);
+  expect(await fingerprint(restored, "companies")).toEqual(await fingerprint(source, "companies"));
+  expect(await fingerprint(restored, "users")).toEqual(await fingerprint(source, "users"));
+  const userEntry = manifest.collections.find(entry => entry.name === "users")!;
+  expect(userEntry.indexes).toEqual(expect.arrayContaining([expect.objectContaining({ name: "email_1", unique: true })]));
+  await source.collection("companies").updateOne({}, { $set: { companyName: "changed" } });
+  await expect(verifySourceBackup(source, file)).rejects.toThrow("changed");
+  const archive = path.join(directory, userEntry.file);
+  const bytes = await readFile(archive); bytes[bytes.length - 1] ^= 1; await writeFile(archive, bytes);
+  await expect(verifySourceBackup(source, file)).rejects.toThrow();
+});

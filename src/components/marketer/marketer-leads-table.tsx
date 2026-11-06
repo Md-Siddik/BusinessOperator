@@ -13,6 +13,12 @@ import { Alert, EmptyState } from "@/components/ui/feedback";
 import { Skeleton } from "@/components/ui/spinner";
 
 export type MarketerLead = {
+  destinationType?: "shared" | "individual";
+  recipientName?: string;
+  handledBy?: string;
+  handlerOutreachStatus?: string;
+  outreachStatusBy?: string;
+  canUpdateOutreach?: boolean;
   id: string;
   companyName: string;
   contactPerson?: string;
@@ -30,7 +36,7 @@ export type OutreachStatus = "NOT_REACHED" | "MESSAGED" | "GOT_RESPONSE";
 type Sort = "sent" | "company" | "contact" | "type";
 type Dir = "asc" | "desc";
 type Stats = { total: number; recent: number; withPhone: number; withWebsite: number; startup: number; established: number; review: number };
-export type MarketerLeadPage = { items: MarketerLead[]; total: number; page: number; pageSize: number; pageCount: number; sort: Sort; dir: Dir; q: string; type: CompanyTypeParam | null; stats: Stats };
+export type MarketerLeadPage = { items: MarketerLead[]; total: number; page: number; pageSize: number; pageCount: number; sort: Sort; dir: Dir; q: string; type: CompanyTypeParam | null; stats: Stats; scope?: string; outreach?: string };
 
 const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "sent:desc", label: "Newest first" },
@@ -67,7 +73,7 @@ const sentLabel = (iso: string) => formatDay(iso.slice(0, 10), { day: "numeric",
 export function MarketerLeadsTable({ initial, readOnly = false }: { initial: MarketerLeadPage; readOnly?: boolean }) {
   const [data, setData] = useState<MarketerLeadPage>(initial);
   const [query, setQuery] = useState(initial.q);
-  const [params, setParams] = useState({ q: initial.q, sort: initial.sort, dir: initial.dir, page: initial.page, type: initial.type });
+  const [params, setParams] = useState({ q: initial.q, sort: initial.sort, dir: initial.dir, page: initial.page, type: initial.type, scope: initial.scope ?? "all", outreach: initial.outreach ?? "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const first = useRef(true);
@@ -77,7 +83,7 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
     const id = ++seq.current;
     setLoading(true);
     setError(null);
-    const qs = new URLSearchParams({ sort: p.sort, dir: p.dir, page: String(p.page), ...(p.q && { q: p.q }), ...(p.type && { type: p.type }) });
+    const qs = new URLSearchParams({ scope: p.scope, ...(p.outreach && { outreach: p.outreach }), sort: p.sort, dir: p.dir, page: String(p.page), ...(p.q && { q: p.q }), ...(p.type && { type: p.type }) });
     try {
       const res = await apiFetch<MarketerLeadPage>(`/api/marketer/leads?${qs}`);
       if (id !== seq.current) return; // a newer request superseded this one
@@ -130,7 +136,7 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
             <Sparkles className="h-3.5 w-3.5" aria-hidden /> Marketing
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">Client leads</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-600">Every company the Owner sent to the marketer table — shared by all Digital Marketers. Copy a phone number with one tap, open the website, and use the Company Type to tailor your approach. The outreach status is shared, so the team sees who has been contacted.</p>
+          <p className="mt-1 max-w-2xl text-sm text-ink-600">Browse shared leads or choose Assigned to Me for your personal clients. Review the assigned handler and latest outreach status before contacting a client.</p>
           <dl className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
             <StatCard icon={Users} label="Active leads" value={s.total} tone="from-ink-800 to-ink-600" />
             <StatCard icon={Sparkles} label="Sent in the last 7 days" value={s.recent} tone="from-fuchsia-600 to-violet-600" />
@@ -143,6 +149,10 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
 
       {/* Toolbar */}
       <div className="space-y-3 rounded-xl border border-ink-200 bg-white p-3 shadow-sm">
+        <select aria-label="Filter outreach status" value={params.outreach} onChange={(e) => setParams((p) => ({ ...p, outreach: e.target.value, page: 1 }))} className="h-10 rounded-lg border border-ink-200 px-3 text-sm"><option value="">All outreach statuses</option>{OUTREACH.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select>
+        <select aria-label="Lead destination" value={params.scope} onChange={(e) => setParams((p) => ({ ...p, scope: e.target.value, page: 1 }))} className="h-10 rounded-lg border border-ink-200 px-3 text-sm">
+          <option value="all">All My Accessible Leads</option><option value="shared">Shared Leads</option><option value="mine">Assigned to Me</option>
+        </select>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">
             <label htmlFor="lead-search" className="sr-only">
@@ -263,7 +273,7 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
                       <tr key={r.id} className={cn("group align-top transition-colors duration-150 hover:bg-violet-50/60", i % 2 === 1 ? "bg-slate-50/70" : "bg-white", loading && "opacity-60")}>
                         <td className="relative border-b border-ink-100 px-4 py-3">
                           <span className={cn("absolute inset-y-2 left-0 w-0.5 rounded-full opacity-0 transition-opacity group-hover:opacity-100", r.companyType.value === "STARTUP" ? "bg-violet-500" : r.companyType.value === "ESTABLISHED" ? "bg-teal-500" : "bg-amber-400")} aria-hidden />
-                          <p className="break-words font-semibold text-ink-900">{r.companyName}</p>
+                          <p className="break-words font-semibold text-ink-900">{r.companyName}</p><AssignmentInfo lead={r} />
                           <p className="mt-0.5 text-xs text-ink-500">
                             {r.countryCode && <span className="mr-1 rounded bg-ink-100 px-1 font-medium text-ink-600">{r.countryCode}</span>}
                             Sent {sentLabel(r.sentAt)}
@@ -282,7 +292,7 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
                           <CompanyTypeTag short value={r.companyType.value} reason={r.companyType.reason} manual={r.companyType.manual} />
                         </td>
                         <td className="border-b border-ink-100 px-4 py-3">
-                          {readOnly ? <OutreachBadge lead={r} /> : <OutreachSelect lead={r} onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at })} />}
+                          {(readOnly && !r.canUpdateOutreach) || r.canUpdateOutreach === false ? <OutreachBadge lead={r} /> : <OutreachSelect lead={r} onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at, outreachStatusBy: "you" })} />}
                         </td>
                       </tr>
                     ))}
@@ -297,7 +307,7 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
                 <span className={cn("absolute inset-y-0 left-0 w-1", r.companyType.value === "STARTUP" ? "bg-gradient-to-b from-fuchsia-500 to-violet-500" : r.companyType.value === "ESTABLISHED" ? "bg-gradient-to-b from-teal-500 to-cyan-500" : "bg-amber-400")} aria-hidden />
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="break-words text-base font-semibold text-ink-900">{r.companyName}</p>
+                    <p className="break-words text-base font-semibold text-ink-900">{r.companyName}</p><AssignmentInfo lead={r} />
                     <p className="text-xs text-ink-500">
                       {r.countryCode && `${r.countryCode} · `}Sent {sentLabel(r.sentAt)}
                     </p>
@@ -308,7 +318,7 @@ export function MarketerLeadsTable({ initial, readOnly = false }: { initial: Mar
                   <div>
                     <dt className="text-[11px] font-semibold uppercase tracking-wide text-ink-400">Outreach Status</dt>
                     <dd className="mt-1">
-                      {readOnly ? <OutreachBadge lead={r} /> : <OutreachSelect lead={r} touch onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at })} />}
+                      {(readOnly && !r.canUpdateOutreach) || r.canUpdateOutreach === false ? <OutreachBadge lead={r} /> : <OutreachSelect lead={r} touch onSaved={(st, at) => patchRow(r.id, { outreachStatus: st, outreachStatusAt: at, outreachStatusBy: "you" })} />}
                     </dd>
                   </div>
                   <div>
@@ -509,4 +519,8 @@ function WebsiteCell({ r }: { r: MarketerLead }) {
       <span className="sr-only">(opens in a new tab)</span>
     </a>
   );
+}
+
+function AssignmentInfo({ lead }: { lead: MarketerLead }) {
+  return <div className="text-xs text-ink-500"><p>{lead.destinationType === "individual" ? `Assigned to ${lead.recipientName ?? "you"}` : "Shared Marketer Table"}</p>{lead.handledBy && <p>Handled by {lead.handledBy}: {lead.handlerOutreachStatus ?? "NOT_REACHED"}</p>}{lead.outreachStatusAt && <p>Last updated by {lead.outreachStatusBy ?? "you"} / {new Date(lead.outreachStatusAt).toLocaleString()}</p>}</div>;
 }

@@ -26,6 +26,8 @@ import { createRikProvider } from "./rik";
 import { createRikOpenDataProvider } from "./rik-open-data";
 import { createShabProvider } from "./shab";
 import { createUrLvProvider } from "./ur-lv";
+import { createAcraSgProvider } from "./acra-sg";
+import { createSsmMyProvider } from "./ssm-my";
 
 /**
  * Provider registry. To connect a new source:
@@ -36,6 +38,8 @@ import { createUrLvProvider } from "./ur-lv";
  * See docs/providers/README.md.
  */
 const REAL_FACTORIES: Record<string, () => CompanyRegistryProvider> = {
+  "acra-sg": createAcraSgProvider,
+  "ssm-my": createSsmMyProvider,
   brreg: createBrregProvider,
   prh: createPrhProvider,
   cro: createCroProvider,

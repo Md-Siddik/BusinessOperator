@@ -25,7 +25,7 @@ const workedAt = (a: LeadAssignmentDoc) => Math.max(new Date(a.outreachStatusAt 
 
 export async function mergeIntoMarketerTable() {
   // Per-marketer rows not merged yet (a merged row keeps its recipient and points to its table row).
-  const legacy = await LeadAssignment.find({ recipientId: { $ne: null }, mergedInto: { $exists: false } }).lean<LeadAssignmentDoc[]>();
+  const legacy = await LeadAssignment.find({ recipientId: { $ne: null }, destinationType: { $exists: false }, mergedInto: { $exists: false } }).lean<LeadAssignmentDoc[]>();
   const byCompany = new Map<string, LeadAssignmentDoc[]>();
   for (const a of legacy) byCompany.set(String(a.companyId), [...(byCompany.get(String(a.companyId)) ?? []), a]);
   const merged: Merged[] = [];

@@ -95,8 +95,9 @@ async function prepare(req: SyncRequest): Promise<Prepared> {
   } else {
     // Incremental: re-check the last successful day (late updates) through today.
     const lastDay = country.lastSuccessAt ? todayIn(def.timezone, country.lastSuccessAt) : null;
-    from = lastDay ? addDays(lastDay, -Math.max(1, provider.lookbackDays ?? 1)) : addDays(today, -(country.backfillDays ?? 7));
-    if (daysBetween(from, today) > MAX_INCREMENTAL_DAYS) from = addDays(today, -MAX_INCREMENTAL_DAYS);
+    from = lastDay ? addDays(lastDay, -Math.max(1, provider.lookbackDays ?? 1)) : addDays(today, -Math.max(country.backfillDays ?? 7, provider.lookbackDays ?? 1));
+    const maxLookback = Math.max(MAX_INCREMENTAL_DAYS, Math.min(92, provider.lookbackDays ?? 1));
+    if (daysBetween(from, today) > maxLookback) from = addDays(today, -maxLookback);
   }
   if (to > today) to = today;
   if (from > to) throw Errors.badRequest("Registrations cannot be synced for future dates.");
@@ -174,7 +175,8 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
 
   try {
     beat(`Fetching ${p.from === p.to ? p.from : `${p.from} → ${p.to}`} from ${p.provider.sourceName}…`, true);
-    const batch = await p.provider.getRegistrations!(p.from, p.to, { limit: MAX_PER_RUN, log: (m) => beat(m) });
+    const limit = process.env.REGISTRY_MAX_PER_RUN ? MAX_PER_RUN : p.provider.recommendedBatchLimit ?? MAX_PER_RUN;
+    const batch = await p.provider.getRegistrations!(p.from, p.to, { limit, log: (m) => beat(m) });
     fetched = batch.companies.length;
     complete = batch.complete;
     sourceTotal = batch.total;
@@ -265,7 +267,7 @@ export async function ingestCompanies(provider: CompanyRegistryProvider, code: s
       const { set, unset, unchanged } = buildCompanyUpdate(n, provider, code, prev, now);
       if (unchanged) {
         out.skipped++;
-        ops.push({ updateOne: { filter: { _id: prev!._id }, update: { $set: { sourceFetchedAt: now } } } });
+        ops.push({ updateOne: { filter: { _id: prev!._id }, update: { $set: { sourceFetchedAt: now, ...(n.source.updatedAt && { sourceUpdatedAt: n.source.updatedAt }), ...(n.source.publishedAt && { sourcePublishedAt: n.source.publishedAt }) } } } });
         continue;
       }
       if (prev) out.updated++;

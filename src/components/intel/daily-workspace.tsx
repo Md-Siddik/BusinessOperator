@@ -22,6 +22,7 @@ import { hasNoFeed, needsAccess, STATE_LABELS, type UiIntegrationState } from "@
 import { RegistrationsTable } from "./registrations-table";
 import { CompanyFilters, CountryDateBar, SyncControls } from "./workspace-controls";
 import type { SourceCapabilities } from "./types";
+import { DailyDelete } from "./daily-delete";
 
 type SP = Record<string, string | string[] | undefined>;
 const str = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -301,6 +302,8 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
             isToday={isToday}
             runningSyncId={overview.running ? String(overview.running._id) : null}
             disabledReason={blocked ? "No connected feed for this country" : undefined}
+            deleteScope={isOwner(actor) && mode === "daily" && dr.singleDay ? { category: "company", day: dr.singleDay, filters: { ...Object.fromEntries(exportParams), range: "custom", from: dr.singleDay, to: dr.singleDay } } : undefined}
+            deleteBackupConfigured={!!process.env.DAILY_BACKUP_DIR}
           />
         )}
         {code === ALL && canExport && (
@@ -308,6 +311,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
             Export CSV
           </a>
         )}
+        {code === ALL && isOwner(actor) && mode === "daily" && dr.singleDay && <DailyDelete key={exportParams.toString()} backupConfigured={!!process.env.DAILY_BACKUP_DIR} scope={{ category: "company", day: dr.singleDay, filters: { ...Object.fromEntries(exportParams), range: "custom", from: dr.singleDay, to: dr.singleDay } }} />}
       </div>
 
       {unavailable && view && (
@@ -393,6 +397,7 @@ export async function DailyWorkspace({ actor, country, searchParams, basePath, m
               </p>
             )}
             {view?.provider?.limitations && <p className="mt-1 text-xs text-ink-500">{view.provider.limitations}</p>}
+            {(code === "SG" || code === ALL) && <p className="mt-2 text-xs text-ink-500">Singapore data: <a href="https://data.gov.sg/collections/2/view" className="underline" target="_blank" rel="noreferrer">ACRA Information on Corporate Entities</a>, accessed at each record&apos;s retrieval timestamp, under the <a href="https://data.gov.sg/open-data-licence" className="underline" target="_blank" rel="noreferrer">Singapore Open Data Licence v1.0</a>. Published monthly; daily polling does not provide daily discovery.</p>}
           </section>
           <Timeline data={overview.timeline} selectedDay={dr.singleDay} hrefFor={(d) => qs({ range: "custom", from: d, to: d })} />
         </div>

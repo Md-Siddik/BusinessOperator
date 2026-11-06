@@ -628,7 +628,8 @@
       "forgot": "Forgot password?",
       "noAccount": "Don't have an account?",
       "createAccount": "Create a client account",
-      "invalid": "Invalid email or password."
+      "invalid": "Invalid email or password.",
+      "unavailable": "Sign-in is temporarily unavailable. Please try again."
     },
     "signup": {
       "title": "Create a client account",

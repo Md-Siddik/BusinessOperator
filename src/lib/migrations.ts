@@ -14,6 +14,36 @@ import { defaultServiceRecord, defaultTranslation } from "@/features/service-cat
  */
 const STEPS: { id: string; run: (log: (m: string) => void) => Promise<void> }[] = [
   {
+    id: "2026-11-personal-handler-unique-v1",
+    async run(log) {
+      const duplicates = await LeadAssignment.aggregate([
+        { $match: { destinationType: "individual", status: "ACTIVE" } },
+        { $group: { _id: "$companyId", n: { $sum: 1 } } },
+        { $match: { n: { $gt: 1 } } },
+        { $limit: 1 },
+      ]);
+      if (duplicates.length) throw new Error("Multiple active personal assignments exist. Review and withdraw extra assignments in the management table before rerunning migrations; no records were changed.");
+      await LeadAssignment.collection.createIndex({ companyId: 1 }, { unique: true, name: "one_active_personal_handler", partialFilterExpression: { destinationType: "individual", status: "ACTIVE" } });
+      log("One active personal handler per client enforced; shared rows and existing client data preserved.");
+    },
+  },
+  {
+    id: "2026-11-client-lifecycle-v1",
+    async run(log) {
+      const { ClientDeletion } = await import("@/models/ClientDeletion");
+      await ClientDeletion.createIndexes();
+      log("Client confirmation token unique index and expiry index created; existing clients and user associations preserved.");
+    },
+  },
+  {
+    id: "2026-11-deleted-identity-v1",
+    async run(log) {
+      const { DeletedIdentity } = await import("@/models/DeletedIdentity");
+      await DeletedIdentity.createIndexes();
+      log("Deleted identity unique email index created. Previously erased password hashes cannot be recovered.");
+    },
+  },
+  {
     id: "2026-10-auth-budget-v1",
     async run(log) {
       const { default: mongoose } = await import("mongoose");

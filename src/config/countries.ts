@@ -11,6 +11,9 @@ import { JURISDICTIONS, type Jurisdiction } from "./jurisdictions";
  */
 export type CountryDefinition = {
   code: string;
+  alpha3?: string;
+  postalCodePattern?: RegExp;
+  administrativeLevel1?: string;
   slug: string;
   name: string;
   flag: string;
@@ -29,6 +32,8 @@ export type CountryDefinition = {
 };
 
 const PATTERNS: Record<string, RegExp> = {
+  SG: /^[A-Z0-9]{9,10}$/,
+  MY: /^(?:\d{12}|\d{1,7}-?[A-Z])$/i,
   NO: /^\d{9}$/,
   SE: /^\d{6}-\d{4}$/,
   DK: /^\d{8}$/,
@@ -43,6 +48,8 @@ const PATTERNS: Record<string, RegExp> = {
 
 export const COUNTRIES: CountryDefinition[] = JURISDICTIONS.map((j) => ({
   code: j.code,
+  ...(j.code === "SG" ? { alpha3: "SGP", postalCodePattern: /^\d{6}$/, administrativeLevel1: "Planning area" } : {}),
+  ...(j.code === "MY" ? { alpha3: "MYS", postalCodePattern: /^\d{5}$/, administrativeLevel1: "State or Federal Territory" } : {}),
   slug: j.code.toLowerCase(),
   name: j.name,
   flag: j.flag,

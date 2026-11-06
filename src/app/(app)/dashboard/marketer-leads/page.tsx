@@ -14,6 +14,6 @@ export default async function MarketerLeadsOwnerPage({ searchParams }: { searchP
   const actor = await requireOwnerPage();
   const sp = await searchParams;
   const pick = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
-  const initial = await listLeadAssignments(actor, { q: pick("q"), outreach: pick("outreach"), status: pick("status"), page: pick("page") }).catch(() => listLeadAssignments(actor, {}));
+  const initial = await listLeadAssignments(actor, { scope: pick("scope"), recipientId: pick("recipientId"), q: pick("q"), outreach: pick("outreach"), status: pick("status"), page: pick("page") }).catch(() => listLeadAssignments(actor, {}));
   return <OwnerLeadsTable initial={JSON.parse(JSON.stringify(initial)) as OwnerLeadPage} />;
 }

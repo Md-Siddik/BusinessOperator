@@ -69,8 +69,9 @@ describe("Send to Marketer: one shared table for every Digital Marketer", () => 
     expect(DIGITAL_MARKETER_HANDOFF_PERMISSIONS).toEqual(["marketerLeads.view"]);
     expect(ROLE_TEMPLATES.DIGITAL_MARKETER).toEqual(["marketerLeads.view"]);
     for (const p of ["users.manage", "companies.delete", "settings.manage", "leads.sendToMarketer", "audit.view"] as const) expect(effectivePermissions("DIGITAL_MARKETER", [], [{ permission: p }])).not.toContain(p);
-    // Only Digital Marketers can hold it.
-    for (const role of ["ADMIN", "MANAGER", "STAFF", "CLIENT"] as const) expect(effectivePermissions(role, [], [{ permission: "marketerLeads.view" }])).toEqual([]);
+    // The existing Admin viewer grant remains eligible; other team roles cannot hold it.
+    expect(effectivePermissions("ADMIN", [], [{ permission: "marketerLeads.view" }])).toEqual(["marketerLeads.view"]);
+    for (const role of ["MANAGER", "STAFF", "CLIENT"] as const) expect(effectivePermissions(role, [], [{ permission: "marketerLeads.view" }])).toEqual([]);
   });
 
   it("one click adds the company to the table; every marketer with the permission sees it and can work it", async () => {

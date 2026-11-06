@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useWorkspaceBase } from "@/hooks/use-workspace-base";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Ban, CheckCircle2, Plus, Trash2, Upload, UserCog, UserPlus } from "lucide-react";
 import { SERVICE_CATEGORIES } from "@/config/services";
 import { CLIENT_SERVICE_STATUSES, CONTACT_REQUEST_STATUSES, DOCUMENT_CATEGORIES, PROJECT_STATUSES } from "@/lib/constants";
@@ -57,13 +57,17 @@ export function OrgStatusActions({ id, status }: { id: string; status: string })
   );
 }
 
-export function AddClientUser({ orgId }: { orgId: string }) {
+export function AddClientUser({ orgId, canLink = false }: { orgId: string; canLink?: boolean }) {
   const { pending, errors, run } = useRun();
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState("invite");
+  const submitting = useRef(false);
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    void run("user", () => apiFetch(`/api/clients/${orgId}/users`, { body: Object.fromEntries(fd.entries()) }), "Invitation sent").then((r) => r && setOpen(false));
+    if (submitting.current) return;
+    submitting.current = true;
+    void run("user", () => apiFetch(`/api/clients/${orgId}/users`, { body: { ...Object.fromEntries(fd.entries()), mode } }), mode === "link" ? "Existing account associated" : "Invitation accepted by email provider").then((r) => r && setOpen(false)).finally(() => { submitting.current = false; });
   }
   return (
     <>
@@ -72,6 +76,8 @@ export function AddClientUser({ orgId }: { orgId: string }) {
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Add client user" description="They receive an email link to set their own password." size="sm">
         <form onSubmit={submit} className="space-y-4">
+          {canLink && <Field label="Account action">{(p) => <Select {...p} value={mode} onChange={(e) => setMode(e.target.value)}><option value="invite">Invite a new account</option><option value="link">Associate an existing eligible account</option></Select>}</Field>}
+          {mode === "link" && <p className="text-sm text-ink-600">Enter the email of an active, unassociated Client or Staff account with no permissions. Its password is preserved and its sessions are revoked.</p>}
           <Field label="Name" error={errors.name}>
             {(p) => <Input {...p} name="name" required />}
           </Field>
@@ -86,7 +92,7 @@ export function AddClientUser({ orgId }: { orgId: string }) {
               Cancel
             </Button>
             <Button type="submit" loading={pending === "user"}>
-              Send invitation
+              {mode === "link" ? "Associate account" : "Send invitation"}
             </Button>
           </div>
         </form>
@@ -107,7 +113,7 @@ export function ClientUserActions({ user }: { user: { id: string; name: string }
     void run("convert", () => apiFetch(`/api/admin/users/${user.id}/convert`, { body: { role } }), `${user.name} is now ${ROLE_LABELS[role]} — manage their access in Users & access`).then((r) => r && setOpen(false));
   }
   function remove() {
-    if (!confirm(`Permanently delete ${user.name}'s account? They are signed out and can't sign in again. The organization's records stay. This can't be undone.`)) return;
+    if (!confirm(`Delete ${user.name}'s application account? They are signed out. The client organization and its records stay. A later valid sign-in creates a basic Staff account without old access.`)) return;
     void run("delete", () => apiFetch(`/api/admin/users/${user.id}`, { method: "DELETE" }), `${user.name}'s account was deleted`);
   }
   return (

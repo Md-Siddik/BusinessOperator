@@ -41,6 +41,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, canSendToMa
   const [hidden, setHidden] = useState<Set<OptionalColumn>>(new Set());
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [overrides, setOverrides] = useState<Record<string, Partial<CompanyRow>>>({});
+  const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -67,6 +68,8 @@ export function RegistrationsTable({ rows, capabilities, canQualify, canSendToMa
   };
   const show = (id: OptionalColumn) => !hidden.has(id);
   const data = rows.map((r) => ({ ...r, ...overrides[r.id] }));
+  const selectedIds = selected.filter((id) => data.some((r) => r.id === id && !r.isDemo));
+  const selection = (r: CompanyRow) => canSendToMarketer && <input type="checkbox" aria-label={`Select ${r.name}`} disabled={r.isDemo} checked={selectedIds.includes(r.id)} onChange={(e) => setSelected((prev) => e.target.checked ? [...prev, r.id] : prev.filter((id) => id !== r.id))} className="mr-2" />;
   const patch = useCallback((id: string, p: Partial<CompanyRow>) => setOverrides((o) => ({ ...o, [id]: { ...o[id], ...p } })), []);
   const emailActions = (r: CompanyRow) => (emailContext && r.email ? <CompanyEmailActions row={r} ctx={emailContext} onSent={(p) => patch(r.id, p)} /> : undefined);
   const sendToMarketer = (r: CompanyRow, size: "sm" | "md" = "sm") =>
@@ -74,6 +77,10 @@ export function RegistrationsTable({ rows, capabilities, canQualify, canSendToMa
 
   return (
     <>
+      {canSendToMarketer && <div className="mb-3 flex items-center gap-3">
+        <span className="text-sm text-ink-600">{selectedIds.length} selected</span>
+        {selectedIds.length > 0 && <SendToMarketerButton companyId={selectedIds[0]} companyIds={selectedIds} companyName={`${selectedIds.length} selected records`} onChange={() => setSelected([])} />}
+      </div>}
       <div className="mb-2 hidden items-center justify-end md:flex">
         <Dropdown
           label="Columns"
@@ -133,6 +140,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, canSendToMa
                 )}
               <tr className={cn("group align-top", r.relevance === "NOT_RELEVANT" && "opacity-60")}>
                 <td className="sticky left-0 z-10 border-b border-ink-100 bg-white px-3 py-3 group-hover:bg-ink-50/80">
+                  {selection(r)}
                   <button type="button" onClick={() => setOpenIndex(i)} className="block text-left font-semibold text-ink-900 hover:text-brand-700 hover:underline">
                     {r.name}
                   </button>
@@ -245,6 +253,7 @@ export function RegistrationsTable({ rows, capabilities, canQualify, canSendToMa
           <li key={r.id} className={cn("rounded-xl border border-ink-200 bg-white p-4", r.relevance === "NOT_RELEVANT" && "opacity-60")}>
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
+                {selection(r)}
                 <p className="font-semibold text-ink-900">{r.name}</p>
                 <p className="text-xs text-ink-500">
                   {showCountry && `${r.countryCode} · `}

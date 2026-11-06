@@ -5,7 +5,7 @@ import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
 import { can, isOwner, isTeamMember, type Actor } from "@/lib/permissions";
 import { parseObjectId } from "@/lib/validation";
-import { todayIn, addDays, isDay } from "@/lib/dates/country-time";
+import { todayIn, addDays, isDay, localDayStartUtc } from "@/lib/dates/country-time";
 import { getOpportunityCountry, OPPORTUNITY_COUNTRIES, OPPORTUNITY_COUNTRY_CODES } from "@/config/opportunity-countries";
 import { Company, CrmActivity, Opportunity, OpportunityEvent, OpportunityFeed, OpportunitySyncRun, type CompanyDoc, type OpportunityDoc, type OpportunityEventDoc, type OpportunityFeedDoc, type OpportunitySyncRunDoc } from "@/models";
 import {
@@ -114,11 +114,7 @@ function escapeRe(s: string) {
 
 /** Midnight of `day` in `timeZone`, as a UTC instant. */
 export function zonedDayStart(day: string, timeZone: string): Date {
-  const guess = new Date(`${day}T00:00:00Z`);
-  const fmt = new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const parts = Object.fromEntries(fmt.formatToParts(guess).map((p) => [p.type, p.value]));
-  const asIfUtc = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
-  return new Date(guess.getTime() - (asIfUtc - guess.getTime()));
+  return localDayStartUtc(day, timeZone);
 }
 
 export type DateWindow = { field: string; label: string; timeZone: string; from?: Date; to?: Date; description: string };

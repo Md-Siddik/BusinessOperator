@@ -459,13 +459,22 @@ const WORLD: Jurisdiction[] = [
     notes: DESK,
   }),
   research("SG", "Singapore", "Singaporean", "🇸🇬", "ASIA", "Asia/Singapore", ["en"], "Accounting and Corporate Regulatory Authority (ACRA)", "https://www.acra.gov.sg", "UEN", {
+    providers: ["acra-sg"], defaultEnabled: true,
     feed: "ACRA “Information on Corporate Entities” — 27 CSV files on data.gov.sg (one per initial letter)",
     updateFrequency: "Monthly (verified 27 Oct 2026: last updated 14 Oct 2026)",
     access: "Open (data.gov.sg)",
     evidence: "DOCUMENTED",
     timeliness: "PERIODIC",
     updateWindow: "Monthly bulk — not a daily feed",
-    notes: "Monthly snapshots only; no adapter built (registrations would appear up to a month late). ACRA's daily BizFile+ data is paid.",
+    notes: "Monthly snapshots polled daily. No verified daily discovery feed. ACRA Marketplace EIQ is a subscription lookup service; no daily feed assumed.",
+    sources: ["https://www.acra.gov.sg/resources/open-data-initiative/", "https://data.gov.sg/collections/2/view"],
+  }),
+  research("MY", "Malaysia", "Malaysian", "🇲🇾", "ASIA", "Asia/Kuala_Lumpur", ["en", "ms"], "Suruhanjaya Syarikat Malaysia (SSM)", "https://www.ssm.com.my", "SSM registration number", {
+    providers: ["ssm-my"], defaultEnabled: true, state: "NEEDS_APPROVAL", evidence: "DOCUMENTED",
+    feed: "Licensed e-CBID / authorized provider export; no verified public daily API",
+    access: "Paid agreement and authorized export required", updateFrequency: "Supplier-dependent; not verified", timeliness: "UNKNOWN",
+    notes: "Internal export ingestion adapter only. Supplier contract, publication cadence and delivery format must be confirmed before activation.",
+    sources: ["https://www.ssm.com.my/Pages/Product/Corporate-and-Business-Information-Data-(CBID).aspx"],
   }),
   research("HK", "Hong Kong", "Hong Kong", "🇭🇰", "ASIA", "Asia/Hong_Kong", ["zh", "en"], "Companies Registry", "https://www.cr.gov.hk", "Company number (CR No.)", {
     state: "NO_VERIFIED_FEED",

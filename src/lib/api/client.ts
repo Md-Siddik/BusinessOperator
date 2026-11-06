@@ -10,6 +10,11 @@ export class ApiError extends Error {
   }
 }
 
+/** Keep credential failures distinct from network and server failures. */
+export function formErrorMessage(error: unknown, fallback: string) {
+  return error instanceof ApiError && error.status < 500 ? error.message : fallback;
+}
+
 /** JSON (or multipart) fetch with consistent error handling — never exposes stack traces. */
 export async function apiFetch<T = unknown>(url: string, opts: { method?: string; body?: unknown; formData?: FormData } = {}): Promise<T> {
   let res: Response;

@@ -11,17 +11,8 @@ import { formatPhone } from "@/lib/company-fields";
 import { safeExternalUrl } from "@/lib/utils/url";
 import { paginate, parseObjectId } from "@/lib/validation";
 
-/**
- * Owner → shared Digital Marketer table.
- *
- *  - Only the Owner sends (from Startup Company Intelligence). "Send to Marketer" adds the company
- *    to the one shared table — there is no recipient to choose.
- *  - Every Digital Marketer holding "View Marketer Table" (`marketerLeads.view`, in the role
- *    template, so every marketer starts with it) sees every active row and can set its outreach
- *    status. The permission is eligible for the Digital Marketer role only, and gives nothing else.
- *  - One row per company (recipient null, unique index); repeats are no-ops, a withdrawn row is
- *    re-activated with history. The Company stays the source of truth.
- */
+/** Owner delivery uses the existing centralized assignment collection. Shared membership
+ * and personal handling are distinct; Company remains the source of client details. */
 
 function assertCanSend(actor: Actor) {
   if (!isOwner(actor) || !can(actor, "leads.sendToMarketer")) throw Errors.forbidden();
@@ -39,6 +30,30 @@ export function canReadMarketerTable(actor: Actor) {
 /** A row of the shared table: no recipient. (Pre-2026-10-29 rows had one; see the model.) */
 export const TABLE_ROW = { recipientId: null };
 
+/** Explicit private marker excludes legacy merged rows from every read and write. */
+export const ASSIGNMENT_ROWS = { mergedInto: { $exists: false }, $or: [{ recipientId: null }, { destinationType: "individual" }] };
+export function accessibleAssignments(actor: Actor, scope = "all", recipientId?: string): Record<string, unknown> {
+  const manager = isOwner(actor) || (actor.role === "ADMIN" && can(actor, "marketerTable.manage"));
+  if (scope === "shared") return TABLE_ROW;
+  if (scope === "mine") return { destinationType: "individual", recipientId: parseObjectId(actor.id) };
+  if (scope === "individual" || recipientId) {
+    if (!manager) throw Errors.forbidden();
+    return { destinationType: "individual", ...(recipientId ? { recipientId: parseObjectId(recipientId) } : {}) };
+  }
+  return manager ? ASSIGNMENT_ROWS : { $or: [TABLE_ROW, { destinationType: "individual", recipientId: parseObjectId(actor.id) }] };
+}
+
+export async function eligibleMarketers(actor: Actor) {
+  assertCanSend(actor);
+  return (await assignmentRecipients()).map((u) => ({ id: String(u._id), name: u.name, email: u.email, role: u.role }));
+}
+
+export const deliverySchema = z.discriminatedUnion("destinationType", [
+  z.object({ destinationType: z.literal("shared"), recipientId: z.never().optional() }).strict(),
+  z.object({ destinationType: z.literal("individual"), recipientId: z.string().regex(/^[a-f\d]{24}$/i) }).strict(),
+]);
+export type Delivery = z.infer<typeof deliverySchema>;
+
 type MarketerUser = Pick<UserDoc, "_id" | "name" | "email" | "role" | "permissions"> & { permissionGrants?: { permission: string }[] };
 const canViewTable = (u: MarketerUser) => effectivePermissions(u.role as Role, u.permissions, u.permissionGrants).includes("marketerLeads.view");
 
@@ -46,6 +61,12 @@ const canViewTable = (u: MarketerUser) => effectivePermissions(u.role as Role, u
 async function tableViewers() {
   const marketers = await User.find({ role: "DIGITAL_MARKETER", status: "ACTIVE" }).select("name email role permissions permissionGrants").lean<MarketerUser[]>();
   return marketers.filter(canViewTable);
+}
+
+/** Active accounts whose existing role grants access to personal leads. */
+export async function assignmentRecipients() {
+  const users = await User.find({ role: { $in: ["DIGITAL_MARKETER", "ADMIN"] }, status: "ACTIVE" }).select("name email role permissions permissionGrants").sort({ name: 1 }).lean<MarketerUser[]>();
+  return users.filter(canViewTable);
 }
 
 export type TableState = { assignment?: { id: string; status: string; sentAt: string }; viewers: number };
@@ -62,12 +83,25 @@ export async function marketerTableState(actor: Actor, companyId: string): Promi
 
 export type SendResult = { status: "sent" | "resent" | "already"; assignmentId: string; /** Marketers who can see the table now. */ viewers: number };
 
-export async function sendLeadToMarketer(actor: Actor, companyId: string): Promise<SendResult> {
+export async function sendLeadToMarketer(actor: Actor, companyId: string, input: Delivery = { destinationType: "shared" }): Promise<SendResult> {
   assertCanSend(actor);
+  const delivery = deliverySchema.parse(input);
+  const viewers = await tableViewers();
+  const recipients = delivery.destinationType === "individual" ? await assignmentRecipients() : [];
+  const recipient = delivery.destinationType === "individual" ? recipients.find((u) => String(u._id) === delivery.recipientId) : undefined;
+  if (delivery.destinationType === "individual" && !recipient) throw Errors.badRequest("Select an active marketer or admin with table access.");
+  const destination = { recipientId: recipient ? recipient._id : null };
   const company = await Company.findById(parseObjectId(companyId)).select("companyName countryCode isDemo").lean<CompanyDoc>();
   if (!company) throw Errors.notFound("Company not found");
   if (company.isDemo) throw Errors.badRequest("Demo companies can't be sent to marketers.");
 
+  if (recipient) {
+    const existing = await LeadAssignment.findOne({ companyId: company._id, destinationType: "individual", status: "ACTIVE", recipientId: { $ne: recipient._id }, mergedInto: { $exists: false } }).lean<LeadAssignmentDoc>();
+    if (existing) {
+      const handler = await User.findById(existing.recipientId).select("name").lean<{ name: string }>();
+      throw Errors.conflict(`Already assigned to ${handler?.name ?? "another user"}; outreach status: ${existing.outreachStatus ?? "NOT_REACHED"}. Reassign from the management table.`);
+    }
+  }
   const now = new Date();
   const sender = new Types.ObjectId(actor.id);
   let status: SendResult["status"] = "sent";
@@ -75,18 +109,19 @@ export async function sendLeadToMarketer(actor: Actor, companyId: string): Promi
   try {
     // Atomic upsert: concurrent requests for the same company resolve to one table row.
     const res = await LeadAssignment.findOneAndUpdate(
-      { companyId: company._id, ...TABLE_ROW },
-      { $setOnInsert: { companyId: company._id, recipientId: null, senderId: sender, countryCode: company.countryCode, status: "ACTIVE", sentAt: now, history: [{ action: "SENT", actorId: sender, at: now }] } },
+      { companyId: company._id, ...destination },
+      { $setOnInsert: { companyId: company._id, ...destination, destinationType: delivery.destinationType, senderId: sender, countryCode: company.countryCode, status: "ACTIVE", sentAt: now, history: [{ action: "SENT", actorId: sender, at: now }] } },
       { upsert: true, new: true, includeResultMetadata: true },
     ).lean<{ value: LeadAssignmentDoc; lastErrorObject?: { updatedExisting?: boolean } }>();
     assignment = res.value;
     if (res.lastErrorObject?.updatedExisting) status = "already";
   } catch (e) {
     if ((e as { code?: number }).code !== 11000) throw e;
-    assignment = await LeadAssignment.findOne({ companyId: company._id, ...TABLE_ROW }).lean<LeadAssignmentDoc>();
+    assignment = await LeadAssignment.findOne({ companyId: company._id, ...destination }).lean<LeadAssignmentDoc>();
     status = "already";
   }
-  if (!assignment) throw Errors.conflict("Could not save the lead — please try again.");
+  if (!assignment) throw Errors.conflict("Another assignment may already exist. Reload and review the assigned person. Could not save the lead — please try again.");
+  if (assignment.mergedInto) throw Errors.conflict("This recipient has an archived legacy assignment. Ask the Owner to review its history before sending.");
 
   if (status === "already" && assignment.status === "WITHDRAWN") {
     const reopened = await LeadAssignment.findOneAndUpdate(
@@ -100,17 +135,17 @@ export async function sendLeadToMarketer(actor: Actor, companyId: string): Promi
     }
   }
 
-  const viewers = await tableViewers();
+  const notified = recipient ? [recipient] : viewers;
   if (status !== "already") {
-    await CrmActivity.create({ companyId: company._id, countryCode: company.countryCode, type: "ASSIGNMENT", body: "Sent to the Digital Marketer table", actorId: actor.id, meta: { leadAssignmentId: String(assignment._id) } });
-    await audit(actor, status === "resent" ? "lead.resent_to_marketer" : "lead.sent_to_marketer", { entityType: "Company", entityId: String(company._id), countryCode: company.countryCode, metadata: { assignmentId: String(assignment._id), table: true, viewers: viewers.length } });
+    await CrmActivity.create({ companyId: company._id, countryCode: company.countryCode, type: "ASSIGNMENT", body: recipient ? "Sent to an individual Digital Marketer" : "Sent to the Digital Marketer table", actorId: actor.id, meta: { leadAssignmentId: String(assignment._id), destinationType: delivery.destinationType, recipientId: recipient ? String(recipient._id) : null } });
+    await audit(actor, status === "resent" ? "lead.resent_to_marketer" : "lead.sent_to_marketer", { entityType: "Company", entityId: String(company._id), countryCode: company.countryCode, metadata: { assignmentId: String(assignment._id), destinationType: delivery.destinationType, recipientId: recipient ? String(recipient._id) : null, viewers: notified.length } });
     // Only marketers who can open the table are told — otherwise the notice itself would leak the lead.
-    if (viewers.length) {
+    if (notified.length) {
       const { notifyUsers } = await import("@/features/notifications/service");
-      await notifyUsers(viewers.map((v) => String(v._id)), { type: "SYSTEM", title: "New client lead", body: company.companyName, link: "/staff/client-leads" }).catch(() => undefined);
+      await notifyUsers(notified.map((v) => String(v._id)), { type: "SYSTEM", title: "New client lead", body: company.companyName, link: "/staff/client-leads" }).catch(() => undefined);
     }
   }
-  return { status, assignmentId: String(assignment._id), viewers: viewers.length };
+  return { status, assignmentId: String(assignment._id), viewers: notified.length };
 }
 
 export async function withdrawLeadAssignment(actor: Actor, assignmentId: string) {
@@ -188,6 +223,9 @@ export function shownFields(e: Effective, company: CompanyDoc | null | undefined
 }
 
 export const marketerLeadQuerySchema = z.object({
+  scope: z.enum(["all", "shared", "mine", "individual"]).default("all"),
+  recipientId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
+  outreach: z.enum(OUTREACH_STATUSES).optional(),
   q: z.string().trim().max(120).optional(),
   /** Company Type from the shared classification (the same value Company Intelligence shows). */
   type: z.enum(Object.keys(COMPANY_TYPE_PARAMS) as [CompanyTypeParam, ...CompanyTypeParam[]]).optional(),
@@ -198,6 +236,13 @@ export const marketerLeadQuerySchema = z.object({
 });
 
 export type MarketerLeadRow = {
+  destinationType?: "shared" | "individual";
+  recipientId?: string;
+  recipientName?: string;
+  handledBy?: string;
+  handlerOutreachStatus?: string;
+  outreachStatusBy?: string;
+  canUpdateOutreach?: boolean;
   id: string;
   companyName: string;
   contactPerson?: string;
@@ -227,12 +272,13 @@ export async function listMarketerLeads(actor: Actor, input: unknown) {
   const sortStage: Record<string, 1 | -1> =
     q.sort === "company" ? { "eff.companyName": dir, _id: 1 } : q.sort === "contact" ? { "eff.contactPerson": dir, _id: 1 } : q.sort === "type" ? { "company.companyType.value": dir, sentAt: -1, _id: 1 } : { sentAt: dir, _id: 1 };
   const base: PipelineStage[] = [
-    { $match: { ...TABLE_ROW, status: "ACTIVE" } },
+    { $match: { ...accessibleAssignments(actor, q.scope, q.recipientId), status: "ACTIVE", mergedInto: { $exists: false } } },
     { $lookup: { from: Company.collection.name, localField: "companyId", foreignField: "_id", as: "company", pipeline: [{ $project: COMPANY_PROJECTION }] } },
     { $unwind: "$company" },
     effectiveStage,
   ];
   const pipeline: PipelineStage[] = [...base];
+  if (q.outreach) pipeline.push({ $match: { outreachStatus: q.outreach === "NOT_REACHED" ? { $in: [null, "NOT_REACHED"] } : q.outreach } });
   if (q.type) {
     const value = COMPANY_TYPE_PARAMS[q.type];
     pipeline.push({ $match: value === "NEEDS_REVIEW" ? { "company.companyType.value": { $nin: ["STARTUP", "ESTABLISHED"] } } : { "company.companyType.value": value } });
@@ -259,9 +305,21 @@ export async function listMarketerLeads(actor: Actor, input: unknown) {
       { $project: { _id: 0, total: 1, recent: 1, withPhone: 1, withWebsite: 1, startup: 1, established: 1, review: { $subtract: ["$total", { $add: ["$startup", "$established"] }] } } },
     ]),
   ]);
+  const handlers = await LeadAssignment.find({ companyId: { $in: (res?.items ?? []).filter((a) => !a.recipientId).map((a) => a.companyId) }, destinationType: "individual", status: "ACTIVE", mergedInto: { $exists: false } }).select("companyId recipientId outreachStatus").lean<LeadAssignmentDoc[]>();
+  const handlerByCompany = new Map(handlers.map((a) => [String(a.companyId), a]));
+  const userIds = [...new Set([...(res?.items ?? []), ...handlers].flatMap((a) => [a.recipientId, a.outreachStatusBy].filter(Boolean).map(String)))];
+  const users = await User.find({ _id: { $in: userIds } }).select("name").lean<{ _id: Types.ObjectId; name: string }[]>();
+  const names = new Map(users.map((u) => [String(u._id), u.name]));
   const items: MarketerLeadRow[] = (res?.items ?? []).map((a) => ({
     ...shownFields(a.eff, a.company),
     id: String(a._id),
+    destinationType: a.recipientId ? "individual" : "shared",
+    recipientId: a.recipientId ? String(a.recipientId) : undefined,
+    recipientName: a.recipientId ? names.get(String(a.recipientId)) ?? "Deleted user" : undefined,
+    outreachStatusBy: a.outreachStatusBy ? names.get(String(a.outreachStatusBy)) ?? "Deleted user" : undefined,
+    handledBy: !a.recipientId && handlerByCompany.has(String(a.companyId)) ? names.get(String(handlerByCompany.get(String(a.companyId))!.recipientId)) ?? "Assigned user" : undefined,
+    handlerOutreachStatus: !a.recipientId ? handlerByCompany.get(String(a.companyId))?.outreachStatus ?? undefined : undefined,
+    canUpdateOutreach: !(!a.recipientId && handlerByCompany.has(String(a.companyId))) && (actor.role === "DIGITAL_MARKETER" || (actor.role === "ADMIN" && String(a.recipientId) === actor.id)),
     sentAt: new Date(a.sentAt).toISOString(),
     outreachStatus: (a.outreachStatus as OutreachStatus | undefined) ?? "NOT_REACHED",
     outreachStatusAt: a.outreachStatusAt ? new Date(a.outreachStatusAt).toISOString() : undefined,
@@ -271,6 +329,8 @@ export async function listMarketerLeads(actor: Actor, input: unknown) {
     sort: q.sort,
     dir: dir === 1 ? ("asc" as const) : ("desc" as const),
     q: q.q ?? "",
+    scope: q.scope,
+    outreach: q.outreach ?? "",
     type: q.type ?? null,
     stats: stats ?? { total: 0, recent: 0, withPhone: 0, withWebsite: 0, startup: 0, established: 0, review: 0 },
   };
@@ -279,25 +339,31 @@ export async function listMarketerLeads(actor: Actor, input: unknown) {
 /** Strict: a payload carrying any other field (company name, contact, details, status …) is rejected, not ignored. */
 export const outreachStatusSchema = z.object({ outreachStatus: z.enum(OUTREACH_STATUSES) }).strict();
 
-/**
- * A Digital Marketer sets the outreach status of an active lead in the table (Admins only read
- * the table — this stays Digital Marketer only). The status is
- * shared by the team (one row per company); only outreachStatus is ever written (strict schema,
- * fixed $set). Recorded with who, when and the previous value in the history and the audit log.
- */
+/** Save an actual outreach change and its history atomically, rejecting stale writes.
+ * Admins may update their own personal assignments; management uses owner-table. */
 export async function updateLeadOutreachStatus(actor: Actor, assignmentId: string, input: unknown) {
-  if (actor.role !== "DIGITAL_MARKETER" || !can(actor, "marketerLeads.view")) throw Errors.forbidden();
+  if (!canReadMarketerTable(actor)) throw Errors.forbidden();
   const { outreachStatus } = outreachStatusSchema.parse(input);
+  const filter = { _id: parseObjectId(assignmentId), ...accessibleAssignments(actor, "all"), mergedInto: { $exists: false }, status: "ACTIVE" };
+  const prev = await LeadAssignment.findOne(filter).lean<LeadAssignmentDoc>();
+  if (!prev) throw Errors.notFound("Lead not found");
+  if (actor.role === "ADMIN" && String(prev.recipientId) !== actor.id) throw Errors.forbidden("Admins may update their personal assignments; shared records require management access.");
+  if (!prev.recipientId) {
+    const assigned = await LeadAssignment.findOne({ companyId: prev.companyId, destinationType: "individual", status: "ACTIVE", mergedInto: { $exists: false } }).lean<LeadAssignmentDoc>();
+    if (assigned) {
+      const handler = await User.findById(assigned.recipientId).select("name").lean<{ name: string }>();
+      throw Errors.conflict(`Handled by ${handler?.name ?? "another user"}; outreach status: ${assigned.outreachStatus ?? "NOT_REACHED"}. Use the personal assignment or ask an authorized admin to reassign it.`);
+    }
+  }
+  const previousOutreachStatus = (prev.outreachStatus as OutreachStatus | undefined) ?? "NOT_REACHED";
+  if (previousOutreachStatus === outreachStatus) return { id: String(prev._id), outreachStatus, outreachStatusAt: prev.outreachStatusAt?.toISOString() };
   const now = new Date();
   const me = new Types.ObjectId(actor.id);
-  const prev = await LeadAssignment.findOneAndUpdate(
-    { _id: parseObjectId(assignmentId), ...TABLE_ROW, status: "ACTIVE" },
-    { $set: { outreachStatus, outreachStatusAt: now, outreachStatusBy: me } },
-    { new: false },
-  ).lean<LeadAssignmentDoc>();
-  if (!prev) throw Errors.notFound("Lead not found");
-  const previousOutreachStatus = (prev.outreachStatus as OutreachStatus | undefined) ?? "NOT_REACHED";
-  await LeadAssignment.updateOne({ _id: prev._id }, { $push: { history: { action: "OUTREACH", actorId: me, at: now, outreachStatus, previousOutreachStatus } } });
+  const result = await LeadAssignment.updateOne(
+    { ...filter, recipientId: prev.recipientId, outreachStatus: prev.outreachStatus ?? null },
+    { $set: { outreachStatus, outreachStatusAt: now, outreachStatusBy: me }, $push: { history: { action: "OUTREACH", actorId: me, at: now, outreachStatus, previousOutreachStatus } } },
+  );
+  if (!result.modifiedCount) throw Errors.conflict("This lead changed. Reload before updating its outreach status.");
   await audit(actor, "lead.outreach_status_changed", { entityType: "Company", entityId: String(prev.companyId), countryCode: prev.countryCode ?? undefined, metadata: { assignmentId: String(prev._id), outreachStatus, previousOutreachStatus } });
   return { id: String(prev._id), outreachStatus, outreachStatusAt: now.toISOString() };
 }
@@ -307,8 +373,8 @@ export async function countMyLeads(actor: Actor) {
   if (!canReadMarketerTable(actor)) throw Errors.forbidden();
   const since = new Date(Date.now() - 7 * 86_400_000);
   const [total, recent] = await Promise.all([
-    LeadAssignment.countDocuments({ ...TABLE_ROW, status: "ACTIVE" }),
-    LeadAssignment.countDocuments({ ...TABLE_ROW, status: "ACTIVE", sentAt: { $gte: since } }),
+    LeadAssignment.countDocuments({ ...accessibleAssignments(actor), mergedInto: { $exists: false }, status: "ACTIVE" }),
+    LeadAssignment.countDocuments({ ...accessibleAssignments(actor), mergedInto: { $exists: false }, status: "ACTIVE", sentAt: { $gte: since } }),
   ]);
   return { total, recent };
 }

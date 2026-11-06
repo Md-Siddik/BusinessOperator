@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DemoBadge, StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader } from "@/components/ui/data";
 import { AddClientUser, ClientServiceEditor, ClientUserActions, DocumentUpload, OrgStatusActions } from "@/components/app/client-admin";
+import { DeleteClient } from "@/components/app/client-lifecycle";
+import { canDeleteClient } from "@/features/clients/deletion";
 
 export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; params: Promise<{ id: string }> }) {
   const actor = await requireWorkspacePage(base, "clients.manage");
@@ -40,7 +42,7 @@ export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; 
           </span>
         }
         title={org.name}
-        actions={manage ? <OrgStatusActions id={String(org._id)} status={org.status} /> : null}
+        actions={manage ? <div className="flex flex-wrap gap-2"><OrgStatusActions id={String(org._id)} status={org.status} />{canDeleteClient(actor) && <DeleteClient key={id} id={id} />}</div> : null}
       />
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
@@ -61,7 +63,7 @@ export async function ClientDetailPage({ base, params }: { base: WorkspaceBase; 
           </CardContent>
         </Card>
         <Card>
-          <CardHeader title={`Users (${users.length})`} action={manage ? <AddClientUser orgId={String(org._id)} /> : null} />
+          <CardHeader title={`Users (${users.length})`} action={manage ? <AddClientUser orgId={String(org._id)} canLink={isOwner} /> : null} />
           <ul className="divide-y divide-ink-100">
             {users.map((u) => (
               <li key={String(u._id)} className="px-5 py-3 text-sm">

@@ -14,6 +14,6 @@ export default async function ClientLeadsPage({ searchParams }: { searchParams: 
   const actor = await requireTeamPage("marketerLeads.view");
   const sp = await searchParams;
   const pick = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
-  const initial = await listMarketerLeads(actor, { q: pick("q"), type: pick("type"), sort: pick("sort"), dir: pick("dir"), page: pick("page") }).catch(() => listMarketerLeads(actor, {}));
+  const initial = await listMarketerLeads(actor, { scope: pick("scope"), outreach: pick("outreach"), q: pick("q"), type: pick("type"), sort: pick("sort"), dir: pick("dir"), page: pick("page") }).catch(() => listMarketerLeads(actor, {}));
   return <MarketerLeadsTable initial={JSON.parse(JSON.stringify(initial)) as MarketerLeadPage} readOnly={actor.role !== "DIGITAL_MARKETER"} />;
 }

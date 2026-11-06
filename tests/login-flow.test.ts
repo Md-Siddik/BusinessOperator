@@ -24,6 +24,8 @@ import { POST as logout } from "@/app/api/auth/logout/route";
 import { POST as refresh } from "@/app/api/auth/refresh/route";
 import { GET as me } from "@/app/api/auth/me/route";
 import { proxy } from "@/proxy";
+import { hashPassword } from "@/lib/auth/password";
+import bcrypt from "bcryptjs";
 
 const sent: OutgoingEmail[] = [];
 beforeAll(() => setEmailProvider({ id: "login-test", isLive: true, send: async mail => { sent.push(mail); return { id: String(sent.length) }; } }));
@@ -39,7 +41,7 @@ function request(path: string, body?: unknown) {
 
 it("registers once, then logs every role in/out five times with no codes, including a new process and browser", async () => {
   const accounts: { email: string; password: string; verifiedAt: string }[] = [];
-  for (const role of ["OWNER", "ADMIN", "STAFF", "CLIENT"] as const) {
+  for (const role of ["OWNER", "ADMIN", "MANAGER", "STAFF", "DIGITAL_MARKETER", "CLIENT"] as const) {
     const email = `flow-${role.toLowerCase()}@example.test`;
     const password = "Verified-login-password-123";
     browser.token = undefined;
@@ -57,7 +59,7 @@ it("registers once, then logs every role in/out five times with no codes, includ
     for (let cycle = 0; cycle < 5; cycle++) {
       expect((await logout(request("/api/auth/logout", {}), context)).status).toBe(200);
       expect(browser.token).toBeUndefined();
-      const response = await login(request("/api/auth/login", { email, password }), context);
+      const response = await login(request("/api/auth/login", { email: cycle % 2 ? email.toUpperCase() : `  ${email}  `, password }), context);
       expect(response.status).toBe(200);
       const result = await response.json();
       const home = role === "OWNER" ? "/dashboard" : role === "CLIENT" ? "/portal" : "/staff";
@@ -84,7 +86,26 @@ it("registers once, then logs every role in/out five times with no codes, includ
     env: { ...process.env, LOGIN_TEST_ACCOUNTS: JSON.stringify(accounts) }, timeout: 30_000,
   });
   expect(child.stdout).toContain("PASS: fresh process, all roles, password-only sessions, no email");
-  expect(sent.filter(mail => accounts.some(account => account.email === mail.to))).toHaveLength(4);
+  expect(sent.filter(mail => accounts.some(account => account.email === mail.to))).toHaveLength(6);
+});
+
+it.each(["2a", "2b", "2y"])("accepts existing %s bcrypt hashes without replacing credentials or identity", async (version) => {
+  const email = `historical-${version}@example.test`, password = "  Original-déjà-123  ";
+  const hash = (await bcrypt.hash(password, "$2a$04$abcdefghijklmnopqrstuu")).replace(/^\$2a\$/, `$${version}$`);
+  const { insertedId } = await User.collection.insertOne({
+    name: "Existing Owner", email, passwordHash: hash, role: "OWNER", status: "ACTIVE",
+    permissions: ["users.manage"], emailVerifiedAt: new Date("2026-10-01T00:00:00Z"),
+  });
+  const before = await User.collection.findOne({ _id: insertedId });
+  const response = await login(request("/api/auth/login", { email: ` ${email.toUpperCase()} `, password }), context);
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ redirect: "/dashboard" });
+  const after = await User.collection.findOne({ _id: insertedId });
+  for (const field of ["_id", "email", "passwordHash", "role", "permissions", "emailVerifiedAt"]) {
+    expect(after![field]).toEqual(before![field]);
+  }
+  expect((await me(request("/api/auth/me"), context)).status).toBe(200);
+  expect((await login(request("/api/auth/login", { email, password: password.trim() }), context)).status).toBe(401);
 });
 
 it("does not send a code or create a session for an unfinished registration during login", async () => {
@@ -97,4 +118,21 @@ it("does not send a code or create a session for an unfinished registration duri
   expect(browser.token).toBeUndefined();
   expect(sent).toHaveLength(before);
   expect((await me(request("/api/auth/me"), context)).status).toBe(401);
+});
+
+it("does not silently verify historical accounts or change their credentials during login", async () => {
+  const email = "legacy-login@example.test", password = "Old-password-123";
+  const passwordHash = await hashPassword(password);
+  // Insert the historical shape directly so current schema defaults do not apply.
+  const { insertedId } = await User.collection.insertOne({ name: "Legacy", email, passwordHash, role: "STAFF", status: "ACTIVE" });
+  browser.token = undefined;
+  const before = sent.length;
+  expect((await login(request("/api/auth/login", { email, password: "wrong" }), context)).status).toBe(401);
+  expect((await User.findById(insertedId).lean<UserDoc>())!.emailVerifiedAt).toBeUndefined();
+  const response = await login(request("/api/auth/login", { email, password }), context);
+  expect(await response.json()).toEqual({ registrationRequired: true, email });
+  expect(browser.token).toBeUndefined();
+  expect((await User.findById(insertedId).lean<UserDoc>())!.emailVerifiedAt).toBeUndefined();
+  expect(sent).toHaveLength(before);
+  expect((await User.findById(insertedId).select("+passwordHash").lean<UserDoc>())!.passwordHash).toBe(passwordHash);
 });
