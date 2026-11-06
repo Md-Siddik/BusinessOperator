@@ -241,6 +241,8 @@ export function CompanyDrawer({
           <Section title="Source">
             <dl>
               <Row label="Source">{row.sourceName ?? "—"}</Row>
+              {d?.company.sourceUpdatedAt && <Row label="Source updated">{new Date(d.company.sourceUpdatedAt).toLocaleString("en-GB", { timeZone: "UTC" })} UTC</Row>}
+              {(row.countryCode === "SG" || row.countryCode === "MY") && <Row label="Verification">Partially verified — registry identity; contact availability and marketing eligibility require separate checks.</Row>}
               <Row label="Freshness">
                 <FreshnessBadge freshness={row.freshness} />
               </Row>

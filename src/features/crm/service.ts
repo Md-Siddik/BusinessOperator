@@ -190,7 +190,10 @@ export async function convertToClient(actor: Actor, companyId: string) {
   if (!can(actor, "clients.manage")) throw Errors.forbidden();
   const company = await Company.findById(parseObjectId(companyId)).lean<CompanyDoc>();
   if (!company) throw Errors.notFound();
-  if (company.lead?.organizationId) return Organization.findById(company.lead.organizationId).lean();
+  if (company.lead?.organizationId) {
+    const existing = await Organization.findById(company.lead.organizationId).lean();
+    if (existing) return existing;
+  }
   const org = await Organization.create({
     name: company.companyName,
     slug: `${slugify(company.companyName)}-${company._id.toString().slice(-6)}`,

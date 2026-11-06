@@ -1,4 +1,6 @@
 export * from "./User";
+export * from "./DeletedIdentity";
+export * from "./ClientDeletion";
 export * from "./Organization";
 export * from "./Country";
 export * from "./Company";

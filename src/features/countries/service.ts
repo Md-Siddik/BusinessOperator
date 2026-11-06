@@ -29,7 +29,7 @@ export async function ensureCountries() {
 }
 
 /** Credential-free successors for adapters that need access the Owner may not have. */
-const PROVIDER_UPGRADES: Record<string, string> = { rik: "rik-open-data", "insee-sirene": "bodacc" };
+const PROVIDER_UPGRADES: Record<string, string> = { rik: "rik-open-data", "insee-sirene": "bodacc", "catalogue-sg": "acra-sg" };
 
 /**
  * Effective integration state shown in the UI — derived honestly from the

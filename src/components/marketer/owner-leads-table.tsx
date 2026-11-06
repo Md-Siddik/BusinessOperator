@@ -16,6 +16,8 @@ import { OUTREACH, type OutreachStatus } from "./marketer-leads-table";
 type Values = { companyName: string; contactPerson: string; contactRole: string; phone: string; website: string };
 type HistoryEntry = { action: string; at: string; by: string; outreachStatus?: OutreachStatus; previousOutreachStatus?: OutreachStatus; fields?: string[] };
 export type OwnerLead = {
+  destinationType?: "shared" | "individual";
+  recipientId?: string;
   id: string;
   companyId: string;
   companyName: string;
@@ -36,7 +38,7 @@ export type OwnerLead = {
   edited?: { at: string; by: string; fields: string[] };
   history: HistoryEntry[];
 };
-type Filters = { q: string; outreach: OutreachStatus | null; status: "ACTIVE" | "WITHDRAWN" | "ALL" };
+type Filters = { q: string; outreach: OutreachStatus | null; status: "ACTIVE" | "WITHDRAWN" | "ALL"; scope?: string; recipientId?: string };
 type Stats = { total: number; active: number; withdrawn: number; NOT_REACHED: number; MESSAGED: number; GOT_RESPONSE: number };
 export type OwnerLeadPage = { items: OwnerLead[]; total: number; page: number; pageSize: number; pageCount: number; filters: Filters; marketers: { id: string; name: string; email: string; active: boolean }[]; stats: Stats };
 
@@ -70,7 +72,7 @@ export function OwnerLeadsTable({ initial }: { initial: OwnerLeadPage }) {
     const id = ++seq.current;
     setLoading(true);
     setError(null);
-    const qs = new URLSearchParams({ status: f.status, page: String(f.page), ...(f.q && { q: f.q }), ...(f.outreach && { outreach: f.outreach }) });
+    const qs = new URLSearchParams({ status: f.status, scope: f.scope ?? "all", page: String(f.page), ...(f.recipientId && { recipientId: f.recipientId }), ...(f.q && { q: f.q }), ...(f.outreach && { outreach: f.outreach }) });
     try {
       const res = await apiFetch<OwnerLeadPage>(`/api/marketer/assignments?${qs}`);
       if (id !== seq.current) return;
@@ -138,6 +140,8 @@ export function OwnerLeadsTable({ initial }: { initial: OwnerLeadPage }) {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden />
           <input id="owner-lead-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Company, contact, phone or website" className="h-10 w-full rounded-lg border border-ink-200 pl-9 pr-3 text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20" />
         </div>
+        <Select aria-label="Assignment destination" value={filters.scope ?? "all"} onChange={(e) => setFilters((f) => ({ ...f, scope: e.target.value, recipientId: "", page: 1 }))}><option value="all">All assignments</option><option value="shared">Shared Leads</option><option value="individual">All Individual Assignments</option></Select>
+        <Select aria-label="Filter by marketer" value={filters.recipientId ?? ""} onChange={(e) => setFilters((f) => ({ ...f, recipientId: e.target.value, scope: e.target.value ? "individual" : "all", page: 1 }))}><option value="">All marketers</option>{data.marketers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</Select>
         <Select aria-label="Outreach status" value={filters.outreach ?? ""} onChange={(e) => setFilters((f) => ({ ...f, outreach: (e.target.value || null) as OutreachStatus | null, page: 1 }))} className="lg:w-44">
           <option value="">Any outreach status</option>
           {OUTREACH.map((o) => (
@@ -185,6 +189,7 @@ export function OwnerLeadsTable({ initial }: { initial: OwnerLeadPage }) {
                       <p className="font-semibold text-ink-900">{r.companyName}</p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-ink-500">
                         {r.countryCode && <span className="rounded bg-ink-100 px-1 font-medium text-ink-600">{r.countryCode}</span>}
+                        <span>{r.destinationType === "individual" ? `Private: ${data.marketers.find((m) => m.id === r.recipientId)?.name ?? "Deleted marketer"}` : "Shared"}</span>
                         <CompanyTypeTag short value={r.companyType.value} reason={r.companyType.reason} manual={r.companyType.manual} />
                         {r.status === "WITHDRAWN" && <span className="rounded bg-ink-200 px-1 font-medium text-ink-700">Withdrawn</span>}
                         {r.edited && <span className="rounded bg-violet-50 px-1 font-medium text-violet-700" title={`Edited by ${r.edited.by} ${formatDateTime(r.edited.at)}`}>Edited</span>}
@@ -274,7 +279,7 @@ export function OwnerLeadsTable({ initial }: { initial: OwnerLeadPage }) {
         </nav>
       )}
 
-      {editing && <EditLead lead={editing} onClose={() => setEditing(null)} onSaved={(row) => { replaceRow(row); setEditing(null); }} />}
+      {editing && <EditLead lead={editing} marketers={data.marketers} onClose={() => setEditing(null)} onSaved={(row) => { replaceRow(row); setEditing(null); }} />}
       {deleting && <DeleteLead lead={deleting} onClose={() => setDeleting(null)} onDeleted={() => { setDeleting(null); refresh(); }} />}
     </div>
   );
@@ -314,7 +319,8 @@ function OwnerOutreachSelect({ lead, onSaved }: { lead: OwnerLead; onSaved: (row
   );
 }
 
-function EditLead({ lead, onClose, onSaved }: { lead: OwnerLead; onClose: () => void; onSaved: (row: OwnerLead) => void }) {
+function EditLead({ lead, marketers, onClose, onSaved }: { lead: OwnerLead; marketers: OwnerLeadPage["marketers"]; onClose: () => void; onSaved: (row: OwnerLead) => void }) {
+  const [recipientId, setRecipient] = useState(lead.recipientId ?? "");
   const [values, setValues] = useState<Values>(lead.values);
   const [status, setStatus] = useState(lead.status);
   const [saving, setSaving] = useState(false);
@@ -347,6 +353,7 @@ function EditLead({ lead, onClose, onSaved }: { lead: OwnerLead; onClose: () => 
       }
     >
       <div className="grid gap-4">
+        {lead.destinationType === "individual" && <div className="space-y-2"><label htmlFor="reassign-recipient">Assigned marketer</label><Select id="reassign-recipient" value={recipientId} onChange={(e) => setRecipient(e.target.value)}>{marketers.filter((m) => m.active || m.id === lead.recipientId).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</Select><Button variant="outline" disabled={saving || recipientId === lead.recipientId} onClick={async () => { setSaving(true); try { onSaved(await apiFetch<OwnerLead>(`/api/marketer/assignments/${lead.id}`, { method: "PATCH", body: { recipientId } })); } catch (err) { setError(err instanceof Error ? err.message : "Reassignment failed"); } finally { setSaving(false); } }}>Reassign</Button></div>}
         {(Object.keys(FIELD_LABELS) as (keyof Values)[]).map((k) => (
           <Field key={k} label={FIELD_LABELS[k]} hint={lead.original[k] !== undefined && lead.original[k] !== values[k] ? `Company Intelligence value: ${lead.original[k] || "—"}` : undefined}>
             {(p) => <Input {...p} value={values[k]} onChange={(e) => setValues((v) => ({ ...v, [k]: e.target.value }))} required={k === "companyName"} />}

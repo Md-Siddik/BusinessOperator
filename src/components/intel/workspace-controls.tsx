@@ -9,6 +9,8 @@ import { DATE_PRESETS, DATE_PRESET_LABELS } from "@/lib/dates/country-time";
 import { formatRelative } from "@/lib/utils/format";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { DailyDelete } from "./daily-delete";
+import type { DailyScope } from "@/features/daily-records/deletion";
 
 function useParamsNav() {
   const router = useRouter();
@@ -120,6 +122,8 @@ export function SyncControls({
   isToday,
   runningSyncId,
   disabledReason,
+  deleteScope,
+  deleteBackupConfigured,
 }: {
   country: string;
   canSync: boolean;
@@ -132,6 +136,8 @@ export function SyncControls({
   isToday: boolean;
   runningSyncId?: string | null;
   disabledReason?: string;
+  deleteScope?: DailyScope;
+  deleteBackupConfigured?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -229,6 +235,7 @@ export function SyncControls({
             <Download className="h-4 w-4" aria-hidden /> Export CSV
           </a>
         )}
+        {deleteScope && <DailyDelete key={JSON.stringify(deleteScope)} scope={deleteScope} backupConfigured={deleteBackupConfigured} />}
       </div>
       <div className="flex flex-wrap items-center gap-3 text-xs text-ink-500" aria-live="polite">
         {running ? <span className="font-medium text-brand-700">{sync?.progress ?? "Syncing…"}</span> : lastFetchedAt ? <span>Last fetched {formatRelative(lastFetchedAt)}</span> : <span>Not fetched yet</span>}

@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Accessible modal built on <dialog> (focus trap, Esc, backdrop handled natively). */
-export function Modal({ open, onClose, title, description, children, footer, size = "md" }: { open: boolean; onClose: () => void; title: ReactNode; description?: ReactNode; children: ReactNode; footer?: ReactNode; size?: "sm" | "md" | "lg" }) {
+export function Modal({ open, onClose, title, description, children, footer, size = "md", dismissible = true }: { open: boolean; onClose: () => void; title: ReactNode; description?: ReactNode; children: ReactNode; footer?: ReactNode; size?: "sm" | "md" | "lg"; dismissible?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -18,8 +18,9 @@ export function Modal({ open, onClose, title, description, children, footer, siz
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      onClose={onClose}
-      onClick={(e) => e.target === ref.current && onClose()}
+      onCancel={(e) => { if (!dismissible) e.preventDefault(); }}
+      onClose={() => { if (dismissible) onClose(); }}
+      onClick={(e) => e.target === ref.current && dismissible && onClose()}
       className={cn(
         "m-auto w-[calc(100%-2rem)] rounded-2xl border border-ink-200 bg-white p-0 text-ink-900 shadow-lifted backdrop:bg-ink-950/40 backdrop:backdrop-blur-[2px]",
         size === "sm" ? "max-w-md" : size === "lg" ? "max-w-3xl" : "max-w-xl",
@@ -32,7 +33,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
           </h2>
           {description && <p className="mt-0.5 text-sm text-ink-500">{description}</p>}
         </div>
-        <button type="button" onClick={onClose} className="rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700" aria-label="Close">
+        <button type="button" onClick={onClose} disabled={!dismissible} className="rounded-md p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700" aria-label="Close">
           <X className="h-5 w-5" />
         </button>
       </div>

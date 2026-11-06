@@ -7,7 +7,7 @@ import { Errors } from "@/lib/errors";
 import { can, isOwner, type Actor } from "@/lib/permissions";
 import { safeExternalUrl } from "@/lib/utils/url";
 import { paginate, parseObjectId } from "@/lib/validation";
-import { COMPANY_PROJECTION, effectiveStage, searchMatch, shownFields, TABLE_ROW, type Effective, type MarketerLeadRow } from "./service";
+import { ASSIGNMENT_ROWS, accessibleAssignments, COMPANY_PROJECTION, effectiveStage, searchMatch, shownFields, type Effective, type MarketerLeadRow } from "./service";
 
 /**
  * Management table: the Owner, and Admins the Owner granted "Manage Marketer Table" (the
@@ -26,6 +26,8 @@ function assertOwnerTable(actor: Actor) {
 }
 
 export const ownerLeadQuerySchema = z.object({
+  scope: z.enum(["all", "shared", "individual"]).default("all"),
+  recipientId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
   q: z.string().trim().max(120).optional(),
   outreach: z.enum(OUTREACH_STATUSES).optional(),
   status: z.enum(["ACTIVE", "WITHDRAWN", "ALL"]).default("ALL"),
@@ -62,7 +64,7 @@ const originalOf = (c: CompanyDoc | null | undefined): Effective => ({
 
 async function ownerRows(match: Record<string, unknown>, q?: OwnerLeadQuery) {
   const pipeline: PipelineStage[] = [
-    { $match: { ...match, ...TABLE_ROW } },
+    { $match: { $and: [ASSIGNMENT_ROWS, match] } },
     // A company deleted elsewhere keeps its row here, so the Owner can still see and delete it.
     { $lookup: { from: Company.collection.name, localField: "companyId", foreignField: "_id", as: "company", pipeline: [{ $project: COMPANY_PROJECTION }] } },
     { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
@@ -76,6 +78,7 @@ async function ownerRows(match: Record<string, unknown>, q?: OwnerLeadQuery) {
   const items = res?.items ?? [];
   const userIds = new Set<string>();
   for (const a of items) {
+    if (a.recipientId) userIds.add(String(a.recipientId));
     if (a.outreachStatusBy) userIds.add(String(a.outreachStatusBy));
     if (a.details?.editedBy) userIds.add(String(a.details.editedBy));
     for (const h of a.history ?? []) userIds.add(String(h.actorId));
@@ -88,6 +91,9 @@ async function ownerRows(match: Record<string, unknown>, q?: OwnerLeadQuery) {
     return {
       ...shownFields(a.eff, a.company),
       id: String(a._id),
+      destinationType: a.recipientId ? "individual" : "shared",
+      recipientId: a.recipientId ? String(a.recipientId) : undefined,
+      recipientName: a.recipientId ? who(a.recipientId) : undefined,
       companyId: String(a.companyId),
       countryCode: a.company?.countryCode ?? a.countryCode ?? undefined,
       sentAt: new Date(a.sentAt).toISOString(),
@@ -114,13 +120,13 @@ async function ownerRows(match: Record<string, unknown>, q?: OwnerLeadQuery) {
 export async function listLeadAssignments(actor: Actor, input: unknown) {
   assertOwnerTable(actor);
   const q = ownerLeadQuerySchema.parse(input);
-  const match: Record<string, unknown> = {};
+  const match: Record<string, unknown> = accessibleAssignments(actor, q.scope, q.recipientId);
   if (q.status !== "ALL") match.status = q.status;
   if (q.outreach) match.outreachStatus = q.outreach === "NOT_REACHED" ? { $in: [null, "NOT_REACHED"] } : q.outreach;
   const [{ rows, total }, marketers, counts] = await Promise.all([
     ownerRows(match, q),
-    User.find({ role: "DIGITAL_MARKETER" }).select("name email status").sort({ name: 1 }).lean<Pick<UserDoc, "_id" | "name" | "email" | "status">[]>(),
-    LeadAssignment.aggregate<{ _id: { s: string; o: OutreachStatus }; n: number }>([{ $match: TABLE_ROW }, { $group: { _id: { s: "$status", o: { $ifNull: ["$outreachStatus", "NOT_REACHED"] } }, n: { $sum: 1 } } }]),
+    User.find({ role: { $in: ["DIGITAL_MARKETER", "ADMIN"] } }).select("name email status").sort({ name: 1 }).lean<Pick<UserDoc, "_id" | "name" | "email" | "status">[]>(),
+    LeadAssignment.aggregate<{ _id: { s: string; o: OutreachStatus }; n: number }>([{ $match: ASSIGNMENT_ROWS }, { $group: { _id: { s: "$status", o: { $ifNull: ["$outreachStatus", "NOT_REACHED"] } }, n: { $sum: 1 } } }]),
   ]);
   const stats = { total: 0, active: 0, withdrawn: 0, NOT_REACHED: 0, MESSAGED: 0, GOT_RESPONSE: 0 };
   for (const c of counts) {
@@ -132,7 +138,7 @@ export async function listLeadAssignments(actor: Actor, input: unknown) {
   }
   return {
     ...paginate(rows, total, q.page, q.pageSize),
-    filters: { q: q.q ?? "", outreach: q.outreach ?? null, status: q.status },
+    filters: { q: q.q ?? "", outreach: q.outreach ?? null, status: q.status, scope: q.scope, recipientId: q.recipientId ?? "" },
     marketers: marketers.map((m) => ({ id: String(m._id), name: m.name, email: m.email, active: m.status === "ACTIVE" })),
     stats,
   };
@@ -159,9 +165,10 @@ export const ownerLeadUpdateSchema = z
  */
 export async function updateLeadAssignment(actor: Actor, assignmentId: string, input: unknown) {
   assertOwnerTable(actor);
+  if (input && typeof input === "object" && "recipientId" in input) return reassignLead(actor, assignmentId, input);
   const patch = ownerLeadUpdateSchema.parse(input);
   const id = parseObjectId(assignmentId);
-  const a = await LeadAssignment.findOne({ _id: id, ...TABLE_ROW }).lean<LeadAssignmentDoc & { details?: Details }>();
+  const a = await LeadAssignment.findOne({ _id: id, ...ASSIGNMENT_ROWS }).lean<LeadAssignmentDoc & { details?: Details }>();
   if (!a) throw Errors.notFound("Lead not found");
   const original = originalOf(await Company.findById(a.companyId).select("companyName contactPerson phone mobile website").lean<CompanyDoc>());
   const now = new Date();
@@ -194,7 +201,8 @@ export async function updateLeadAssignment(actor: Actor, assignmentId: string, i
     history.push({ action: patch.status === "WITHDRAWN" ? "WITHDRAWN" : "RESENT", actorId: me, at: now });
   }
   if (history.length) {
-    await LeadAssignment.updateOne({ _id: id }, { ...(Object.keys($set).length && { $set }), ...(Object.keys($unset).length && { $unset }), $push: { history: { $each: history } } });
+    const result = await LeadAssignment.updateOne({ _id: id, updatedAt: a.updatedAt }, { ...(Object.keys($set).length && { $set }), ...(Object.keys($unset).length && { $unset }), $push: { history: { $each: history } } });
+    if (!result.modifiedCount) throw Errors.conflict("This lead changed. Reload before saving.");
     await audit(actor, "lead.assignment_updated", {
       entityType: "LeadAssignment",
       entityId: String(id),
@@ -205,10 +213,37 @@ export async function updateLeadAssignment(actor: Actor, assignmentId: string, i
   return (await ownerRows({ _id: id })).rows[0]!;
 }
 
+/** Atomic document update retains history and fails rather than overwriting a target assignment. */
+async function reassignLead(actor: Actor, assignmentId: string, input: unknown) {
+  const { recipientId } = z.object({ recipientId: z.string().regex(/^[a-f\d]{24}$/i) }).strict().parse(input);
+  const recipient = await User.findOne({ _id: parseObjectId(recipientId), role: { $in: ["DIGITAL_MARKETER", "ADMIN"] }, status: "ACTIVE" }).lean<UserDoc>();
+  const { effectivePermissions } = await import("@/lib/permissions");
+  if (!recipient || !effectivePermissions(recipient.role, recipient.permissions, recipient.permissionGrants).includes("marketerLeads.view")) throw Errors.badRequest("Select an active eligible marketer or admin.");
+  if (await LeadAssignment.exists({ _id: parseObjectId(assignmentId), recipientId: null })) throw Errors.badRequest("Shared table records cannot be reassigned. Send a separate individual assignment.");
+  const a = await LeadAssignment.findOne({ _id: parseObjectId(assignmentId), destinationType: "individual", mergedInto: { $exists: false }, status: "ACTIVE" }).lean<LeadAssignmentDoc>();
+  if (!a) throw Errors.notFound("Active individual assignment not found");
+  if (String(a.recipientId) === recipientId) return (await ownerRows({ _id: a._id })).rows[0]!;
+  const at = new Date();
+  try {
+    const result = await LeadAssignment.updateOne({ _id: a._id, recipientId: a.recipientId, status: "ACTIVE" }, {
+      $set: { recipientId: recipient._id },
+      $push: { history: { action: "REASSIGNED", at, actorId: parseObjectId(actor.id), previousRecipientId: a.recipientId, recipientId: recipient._id } },
+    });
+    if (!result.modifiedCount) throw Errors.conflict("Assignment changed; reload before reassigning.");
+  } catch (err) {
+    if ((err as { code?: number }).code === 11000) throw Errors.conflict("This company already has an assignment for that marketer. Review it before reassigning.");
+    throw err;
+  }
+  await audit(actor, "lead.reassigned", { entityType: "LeadAssignment", entityId: String(a._id), metadata: { companyId: String(a.companyId), previousRecipientId: String(a.recipientId), recipientId } });
+  const { notifyUsers } = await import("@/features/notifications/service");
+  await notifyUsers([recipientId], { type: "SYSTEM", title: "Client lead assigned to you", body: "A private lead has been assigned to you.", link: "/staff/client-leads" }).catch(() => undefined);
+  return (await ownerRows({ _id: a._id })).rows[0]!;
+}
+
 /** Owner: permanently delete one record from the Digital Marketer table (the Company record stays). */
 export async function deleteLeadAssignment(actor: Actor, assignmentId: string) {
   assertOwnerTable(actor);
-  const a = await LeadAssignment.findOneAndDelete({ _id: parseObjectId(assignmentId), ...TABLE_ROW }).lean<LeadAssignmentDoc>();
+  const a = await LeadAssignment.findOneAndDelete({ _id: parseObjectId(assignmentId), ...ASSIGNMENT_ROWS }).lean<LeadAssignmentDoc>();
   if (!a) throw Errors.notFound("Lead not found");
   await CrmActivity.create({ companyId: a.companyId, countryCode: a.countryCode, type: "ASSIGNMENT", body: "Removed from the Digital Marketer table", actorId: actor.id, meta: { leadAssignmentId: String(a._id) } });
   await audit(actor, "lead.assignment_deleted", {

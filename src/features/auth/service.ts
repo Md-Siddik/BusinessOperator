@@ -13,13 +13,32 @@ import { slugify } from "@/lib/utils";
 import { absoluteUrl } from "@/config/site";
 import { sendTransactionalEmail, transactionalTemplates } from "@/lib/email/transactional";
 import { notifyInternal } from "@/features/notifications/service";
+import { DeletedIdentity, type DeletedIdentityDoc } from "@/models/DeletedIdentity";
 
 export const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(200) });
 
 /** Returns the user on success. Errors are deliberately generic (no account enumeration). */
 export async function authenticate(input: unknown, ip?: string) {
   const { email, password } = loginSchema.parse(input);
-  const user = await User.findOne({ email }).select("+passwordHash").lean<UserDoc & { passwordHash: string }>();
+  let user = await User.findOne({ email }).select("+passwordHash").lean<UserDoc & { passwordHash: string }>();
+  if (!user) {
+    const identity = await DeletedIdentity.findOne({ email }).select("+passwordHash").lean<DeletedIdentityDoc>();
+    if (identity && !identity.blocked && identity.passwordHash && await verifyPassword(password, identity.passwordHash)) {
+      try {
+        user = await User.findOneAndUpdate({ email }, { $setOnInsert: {
+          _id: identity.returnUserId, email, name: identity.name, passwordHash: identity.passwordHash,
+          role: "STAFF", status: "ACTIVE", permissions: [], permissionGrants: [], sessionVersion: 0,
+          emailVerifiedAt: identity.emailVerifiedAt,
+        } }, { upsert: true, new: true }).select("+passwordHash").lean<UserDoc & { passwordHash: string }>();
+      } catch (err) {
+        if ((err as { code?: number }).code !== 11000) throw err;
+        user = await User.findOne({ email }).select("+passwordHash").lean<UserDoc & { passwordHash: string }>();
+      }
+      if (user && String(user._id) === String(identity.returnUserId)) {
+        await audit(null, "auth.account_recreated", { entityType: "User", entityId: String(user._id), metadata: { previousUserId: String(identity.previousUserId), role: "STAFF" }, ip });
+      }
+    }
+  }
   if (!user) {
     await dummyPasswordCheck(password);
     await audit(null, "auth.login_failed", { metadata: { email }, ip });
@@ -59,6 +78,11 @@ export const signupSchema = z.object({
  */
 export async function signupClient(input: unknown, ip?: string, opts: { onCreated?: (userId: string) => Promise<unknown> } = {}) {
   const data = signupSchema.parse(input);
+  // Deleting a security-blocked identity must not turn self-signup into an unblock.
+  if (await DeletedIdentity.exists({ email: data.email, blocked: true })) {
+    await hashPassword(data.password);
+    return { ok: true };
+  }
   if (!getEmailProvider().isLive && process.env.NODE_ENV !== "test") throw Errors.badRequest("Account verification is unavailable. Please retry later.");
   if (await User.exists({ email: data.email })) {
     // Same response as success to avoid account enumeration; the owner gets nothing new.

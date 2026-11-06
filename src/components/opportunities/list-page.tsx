@@ -9,6 +9,9 @@ import { Alert, EmptyState } from "@/components/ui/feedback";
 import { buttonClasses } from "@/components/ui/button";
 import { OpportunityFilters } from "./filters";
 import { OpportunityTable, type OpportunityRow } from "./opportunity-table";
+import { DailyDelete } from "@/components/intel/daily-delete";
+import { isOwner } from "@/lib/permissions";
+import { todayIn } from "@/lib/dates/country-time";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -27,6 +30,8 @@ export async function OpportunityListPage({ basePath, searchParams, fixed = {}, 
   const res = await listOpportunities(actor, input, { lenient: true });
   const rows = JSON.parse(JSON.stringify(res.items)) as OpportunityRow[];
   const exportHref = withParams("/api/opportunities/export", input, { page: undefined, pageSize: undefined });
+  const day = res.query.preset === "today" ? todayIn(res.dateWindow?.timeZone ?? "UTC") : res.query.preset === "custom" && res.query.from === res.query.to ? res.query.from : undefined;
+  const deleteFilters = Object.fromEntries(Object.entries(input).filter(([, value]) => value !== undefined && value !== "")) as Record<string, string>;
   return (
     <div className="space-y-4">
       {header}
@@ -46,6 +51,7 @@ export async function OpportunityListPage({ basePath, searchParams, fixed = {}, 
               <Download className="h-4 w-4" aria-hidden /> Export CSV
             </a>
           )}
+          {!readOnly && isOwner(actor) && res.query.type === "HIRING" && day && res.ignored.length === 0 && <DailyDelete key={JSON.stringify(deleteFilters)} backupConfigured={!!process.env.DAILY_BACKUP_DIR} scope={{ category: "job", day, filters: { ...deleteFilters, type: "HIRING", preset: "custom", from: day, to: day } }} />}
         </div>
         {rows.length ? (
           <OpportunityTable rows={rows} readOnly={readOnly} detailBase={detailBase} />

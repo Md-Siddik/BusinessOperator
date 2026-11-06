@@ -15,6 +15,7 @@ import { Input, Select } from "@/components/ui/form";
 import { LinkTabs, PageHeader, Pagination, Table, TBody, TD, TH, THead, TR, withParams } from "@/components/ui/data";
 import { EmptyState } from "@/components/ui/feedback";
 import { InquiryStatus } from "@/components/app/client-admin";
+import { NewClient } from "@/components/app/client-lifecycle";
 
 const ENGAGEMENT_LABELS: Record<string, string> = { monthly: "Monthly salary-based", growth: "Growth partnership", project: "Task-based", notSure: "Not sure yet" };
 
@@ -79,7 +80,7 @@ export async function ClientsPage({ base, searchParams }: { base: WorkspaceBase;
   const result = await listOrganizations(actor, { q: sp.q, status: sp.status, page: Number(sp.page ?? 1) || 1 });
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Clients" title="Client organizations" description="Every client is an isolated organization — users, services, projects, requests, documents and conversations all belong to it." />
+      <PageHeader eyebrow="Clients" title="Client organizations" description="Every client is an isolated organization — users, services, projects, requests, documents and conversations all belong to it." actions={can(actor, "clients.manage") ? <NewClient /> : null} />
       <LinkTabs active={activeTab} tabs={tabs} />
       <Card>
         <form method="get" className="flex flex-col gap-3 p-5 sm:flex-row">

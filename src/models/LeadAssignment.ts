@@ -10,7 +10,9 @@ export type OutreachStatus = (typeof OUTREACH_STATUSES)[number];
 
 const historySchema = new Schema(
   {
-    action: { type: String, enum: ["SENT", "RESENT", "WITHDRAWN", "OUTREACH", "EDITED", "MERGED"], required: true },
+    action: { type: String, enum: ["SENT", "RESENT", "WITHDRAWN", "OUTREACH", "EDITED", "MERGED", "REASSIGNED"], required: true },
+    previousRecipientId: { type: ObjectId, ref: "User" },
+    recipientId: { type: ObjectId, ref: "User" },
     actorId: { type: ObjectId, ref: "User", required: true },
     at: { type: Date, required: true },
     /** For OUTREACH entries: the status chosen (and the one it replaced). */
@@ -35,8 +37,10 @@ const historySchema = new Schema(
 const leadAssignmentSchema = new Schema(
   {
     companyId: { type: ObjectId, ref: "Company", required: true },
-    /** Null: a row of the shared marketer table. Set only on rows from before 2026-10-29. */
+    /** Null identifies shared membership; a user ID identifies personal assignment. */
     recipientId: { type: ObjectId, ref: "User", default: null },
+    /** Explicit marker protects new private rows from the historical shared-table migration. */
+    destinationType: { type: String, enum: ["shared", "individual"] },
     /** Merge trail (migration 2026-10-marketer-table-v1), for its revert. */
     formerRecipientId: { type: ObjectId, ref: "User" },
     mergedInto: { type: ObjectId, ref: "LeadAssignment" },
@@ -68,6 +72,8 @@ const leadAssignmentSchema = new Schema(
 );
 
 leadAssignmentSchema.index({ companyId: 1, recipientId: 1 }, { unique: true });
+// One active personal handler per company; shared membership remains independent.
+leadAssignmentSchema.index({ companyId: 1 }, { unique: true, name: "one_active_personal_handler", partialFilterExpression: { destinationType: "individual", status: "ACTIVE" } });
 leadAssignmentSchema.index({ recipientId: 1, status: 1, sentAt: -1 });
 
 export type LeadAssignmentDoc = InferSchemaType<typeof leadAssignmentSchema> & { _id: Id; createdAt: Date; updatedAt: Date };

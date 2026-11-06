@@ -7,6 +7,7 @@ import { canAssignRole, can, effectivePermissions, PERMISSIONS, type Actor, type
 import { applyRoleChange, changeAccess, getRoleTemplates, grantDecision, grantInitialAccess, revalidateGrantsIssuedBy } from "@/features/access/service";
 import { hashPassword } from "@/lib/auth/password";
 import { escapeRegex } from "@/lib/utils";
+import { DeletedIdentity } from "@/models/DeletedIdentity";
 import { emailSchema, paginate, parseObjectId, passwordSchema } from "@/lib/validation";
 
 function requireUsersManage(actor: Actor) {
@@ -174,13 +175,19 @@ export async function deleteUserAccount(actor: Actor, userId: string) {
   requireOwner(actor);
   const id = parseObjectId(userId);
   if (String(id) === actor.id) throw Errors.badRequest("You can't delete your own account.");
-  const target = await User.findById(id).select("name email role status organizationId").lean<UserDoc>();
+  const target = await User.findById(id).select("name email role status organizationId emailVerifiedAt +passwordHash").lean<UserDoc>();
   if (!target) throw Errors.notFound();
   if (target.role === "OWNER") {
     const owners = await User.countDocuments({ role: "OWNER", status: "ACTIVE", _id: { $ne: id } });
     if (owners < 1) throw Errors.badRequest("There must always be at least one active owner.");
   }
 
+  // Save credentials before removal; a fresh ID prevents old sessions and historical
+  // assignments from becoming accessible when the person returns.
+  await DeletedIdentity.updateOne({ email: target.email }, { $set: {
+    name: target.name, passwordHash: target.passwordHash ?? null, emailVerifiedAt: target.emailVerifiedAt ?? null, blocked: target.status === "SUSPENDED",
+    previousUserId: id, returnUserId: new Types.ObjectId(), deletedAt: new Date(),
+  } }, { upsert: true });
   await User.deleteOne({ _id: id });
   await Promise.all([
     Notification.deleteMany({ userId: id }),

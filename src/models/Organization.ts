@@ -24,9 +24,15 @@ const organizationSchema = new Schema(
     companyId: { type: ObjectId, ref: "Company" },
     notes: String,
     isDemo: { type: Boolean, default: false },
+    deletedAt: Date,
+    deletedBy: { type: ObjectId, ref: "User" },
+    lifecycleVersion: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
+
+// Deleted clients are identity tombstones for retained history, never live tenants.
+organizationSchema.pre(["find", "findOne", "findOneAndUpdate", "countDocuments", "updateOne", "updateMany"], function () { this.where({ deletedAt: null }); });
 
 export type OrganizationDoc = InferSchemaType<typeof organizationSchema> & { _id: Id; createdAt: Date; updatedAt: Date };
 export const Organization = defineModel("Organization", organizationSchema);

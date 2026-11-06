@@ -214,6 +214,8 @@ export interface CompanyRegistryProvider {
    * would never be fetched. Re-reading is safe: records are upserted by registry id.
    */
   lookbackDays?: number;
+  /** Periodic snapshots need room for a publication's delayed registrations. Explicit global caps still win. */
+  recommendedBatchLimit?: number;
 
   /**
    * What getRegistrations' day window selects. "registration" (default): companies

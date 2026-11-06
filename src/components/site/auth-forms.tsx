@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { localizedPath } from "@/config/languages";
-import { apiFetch, ApiError } from "@/lib/api/client";
+import { apiFetch, ApiError, formErrorMessage } from "@/lib/api/client";
 import { rememberAccount } from "./auth-button";
 import { createTranslator, type Messages } from "@/lib/i18n/translator";
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,8 @@ function useFormState() {
     } catch (err) {
       if (err instanceof ApiError) {
         setFieldErrors(err.fieldErrors ?? {});
-        setError(err.status === 401 || err.status === 429 || err.status === 400 ? err.message : fallback);
-      } else setError(fallback);
+      }
+      setError(formErrorMessage(err, fallback));
     } finally {
       setPending(false);
     }
@@ -46,7 +46,7 @@ export function LoginForm({ locale, messages, next }: { locale: string; messages
       if (res.registrationRequired) { setRegistration({ email: String(res.email) }); return; }
       rememberAccount();
       window.location.assign(res.redirect || "/portal");
-    }, t("auth.login.invalid"));
+    }, t("auth.login.unavailable"));
   }
   if (registration) return <VerificationForm {...registration} next={next} onComplete={(redirect) => window.location.assign(redirect)} />;
   return (
