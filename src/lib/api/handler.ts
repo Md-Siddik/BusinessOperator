@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { safeFailure } from "@/lib/diagnostics";
 import { z, ZodError } from "zod";
 import { connectToDatabase, DatabaseUnavailableError } from "@/lib/db/connect";
 import { isDatabaseCapacityError } from "@/lib/db/errors";
@@ -11,6 +12,7 @@ import { audit } from "@/lib/audit";
 import { enforceRateLimit, type RateLimitRule } from "@/lib/rate-limit";
 
 type Options = {
+  diagnostics?: boolean;
   auth?: "required" | "optional" | "none";
   /**
    * Internal API of the owner dashboard → OWNER only. ADMIN/STAFF never reach these
@@ -69,7 +71,7 @@ function assertSameOrigin(req: NextRequest) {
   if (originHost !== host) throw Errors.forbidden("Cross-site request blocked");
 }
 
-export function errorResponse(err: unknown) {
+export function errorResponse(err: unknown, logUnhandled = true) {
   if (err instanceof ZodError) {
     return NextResponse.json(
       { error: { code: "VALIDATION", message: "Please check the highlighted fields.", fieldErrors: z.flattenError(err).fieldErrors } },
@@ -83,7 +85,7 @@ export function errorResponse(err: unknown) {
     if (isDatabaseCapacityError(err)) console.error("[db] Storage quota exceeded; database writes are unavailable.");
     return NextResponse.json({ error: { code: "UNAVAILABLE", message: "Service temporarily unavailable." } }, { status: 503 });
   }
-  console.error("[api] unhandled error", err);
+  if (logUnhandled) console.error("[api] unhandled error", err);
   return NextResponse.json({ error: { code: "INTERNAL", message: "Something went wrong. Please try again." } }, { status: 500 });
 }
 
@@ -103,12 +105,16 @@ export function route<P = Record<string, string>>(
 export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => Promise<unknown>) {
   const auth = options.auth ?? "required";
   return async (req: NextRequest, ctx: { params: Promise<P> }) => {
+    const started = Date.now();
+    let stage = "origin_and_rate_limit";
     try {
       assertSameOrigin(req);
       const ip = clientIp(req);
       const durable = options.rateLimit && ["login", "signup", "password-reset", "contact"].includes(options.rateLimit.bucket);
       if (options.rateLimit && !durable) enforceRateLimit(options.rateLimit, ip);
+      stage = "database_connect";
       await connectToDatabase();
+      stage = "authentication";
       if (options.rateLimit && durable) await enforceDurableAuthLimit(options.rateLimit, ip);
 
       let actor: Actor | null = null;
@@ -121,6 +127,7 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
           throw Errors.previewReadOnly();
         }
       }
+      stage = "authorization";
       if (auth === "required" && !actor) throw Errors.unauthorized();
       if (options.internal && !(isOwner(actor) || (options.staff && isStaffMember(actor)))) throw Errors.forbidden();
       if (options.staff && !options.internal && !isInternal(actor)) throw Errors.forbidden();
@@ -131,11 +138,13 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       if (options.permission && !can(actor, options.permission)) throw Errors.forbidden();
 
       const params = ctx?.params ? await ctx.params : ({} as P);
+      stage = "handler";
       const result = await handler({ req, actor: actor as Actor, params, ip });
       if (result instanceof Response) return result;
       return NextResponse.json(result ?? { ok: true });
     } catch (err) {
-      return errorResponse(err);
+      if (options.diagnostics) console.error("[registry.sync]", { stage, durationMs: Date.now() - started, ...safeFailure(err) });
+      return errorResponse(err, !options.diagnostics);
     }
   };
 }
