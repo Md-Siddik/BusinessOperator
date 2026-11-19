@@ -85,6 +85,14 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     await ensureDemoSeed();
     return state.conn;
   }
+  // A fulfilled promise belongs to the old connection. Reusing it after a
+  // disconnect never calls connect again, leaving subsequent queries buffered.
+  // Clear only an established, disconnected connection so concurrent initial
+  // callers still share the same in-flight promise.
+  if (state.conn && mongoose.connection.readyState === 0) {
+    state.conn = undefined;
+    state.promise = undefined;
+  }
   if (!state.promise) {
     state.promise = (async () => {
       const uri = await resolveUri();

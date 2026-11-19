@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
 import { Company, Opportunity, OpportunityFeed, OpportunitySyncRun, User, type OpportunityDoc, type OpportunityFeedDoc, type OpportunitySyncRunDoc, type UserDoc } from "@/models";
@@ -298,6 +298,11 @@ describe("Ingestion", () => {
 /* ───────────────────────── Sync, failures, removal ───────────────────────── */
 
 describe("Synchronization and status", () => {
+  // Exercise the enabled synchronization path; storage-pause coverage separately
+  // verifies that the default never collects employment data.
+  beforeEach(() => vi.stubEnv("JOB_COLLECTION_ENABLED", "true"));
+  afterEach(() => vi.unstubAllEnvs());
+
   it("a failed provider run is reported and never closes or deletes existing records", async () => {
     const { provider, script } = makeTestProvider("fail");
     const feed = await feedFor(provider);

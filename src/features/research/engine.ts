@@ -1,3 +1,4 @@
+import { transientRow } from "@/lib/db/transient-registry";
 import "server-only";
 import type { Types } from "mongoose";
 import { Company, Contact, type CompanyDoc, type ContactDoc } from "@/models";
@@ -48,6 +49,7 @@ function cohortPriority(registrationDay?: string | null) {
 
 /** Queue research for a company without delaying its appearance in the table. */
 export async function enqueueResearch(companyId: Types.ObjectId | string, opts: { reason?: string; runAt?: Date; registrationDay?: string | null } = {}) {
+  if (transientRow(Company.collection.name, companyId)) return;
   await enqueueJob("research", `research:${companyId}`, { companyId: String(companyId), reason: opts.reason ?? "new" }, { runAt: opts.runAt, priority: cohortPriority(opts.registrationDay) });
   await Company.updateOne({ _id: companyId, "research.status": { $in: ["NOT_STARTED", null] } }, { $set: { "research.status": "SEARCHING" } });
 }
@@ -78,7 +80,7 @@ async function paidCall<T>(ctx: Ctx, provider: PaidProviderId, operation: string
     ctx.costCents += decision.costCents;
     const found = Array.isArray(result) ? result.length > 0 : !!result;
     await recordUsage({ provider, operation, companyId: ctx.company._id, countryCode: ctx.company.countryCode, costCents: decision.costCents, outcome: found ? "FOUND" : "NOT_FOUND" });
-    await setCached(cacheKey, provider, result ?? null, found ? 90 : ctx.settings.negativeCacheDays);
+    if (!transientRow(Company.collection.name, ctx.company._id)) await setCached(cacheKey, provider, result ?? null, found ? 90 : ctx.settings.negativeCacheDays);
     return { result };
   } catch (err) {
     ctx.providerErrors++;
@@ -102,6 +104,7 @@ async function stepRegistry(ctx: Ctx) {
       return;
     }
     const { set, unset } = buildCompanyUpdate(fresh, provider, c.countryCode, c as unknown as ExistingCompany, new Date());
+    delete set.sourceData;
     await Company.updateOne({ _id: c._id }, { $set: set, ...(Object.keys(unset).length && { $unset: unset }) });
     const values: ContactInput[] = [];
     if (fresh.contact.email) values.push({ type: "EMAIL", value: fresh.contact.email, sourceKind: "REGISTRY", source: provider.sourceName, sourceUrl: fresh.source.url });

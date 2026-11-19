@@ -1,3 +1,5 @@
+import { transientRow, forgetTransient } from "@/lib/db/transient-registry";
+import { reloadTransientCompany } from "@/features/registry/request-data";
 import "server-only";
 import { Types, type PipelineStage } from "mongoose";
 import { z } from "zod";
@@ -91,6 +93,7 @@ export async function sendLeadToMarketer(actor: Actor, companyId: string, input:
   const recipient = delivery.destinationType === "individual" ? recipients.find((u) => String(u._id) === delivery.recipientId) : undefined;
   if (delivery.destinationType === "individual" && !recipient) throw Errors.badRequest("Select an active marketer or admin with table access.");
   const destination = { recipientId: recipient ? recipient._id : null };
+  await reloadTransientCompany(companyId);
   const company = await Company.findById(parseObjectId(companyId)).select("companyName countryCode isDemo").lean<CompanyDoc>();
   if (!company) throw Errors.notFound("Company not found");
   if (company.isDemo) throw Errors.badRequest("Demo companies can't be sent to marketers.");
@@ -101,6 +104,14 @@ export async function sendLeadToMarketer(actor: Actor, companyId: string, input:
       const handler = await User.findById(existing.recipientId).select("name").lean<{ name: string }>();
       throw Errors.conflict(`Already assigned to ${handler?.name ?? "another user"}; outreach status: ${existing.outreachStatus ?? "NOT_REACHED"}. Reassign from the management table.`);
     }
+  }
+  const selected = transientRow(Company.collection.name, companyId);
+  if (selected) {
+    // Persist only the explicitly selected company, never its raw registry payload.
+    const { sourceData: _raw, sourceHash: _hash, ...required } = selected;
+    void _raw; void _hash;
+    await Company.collection.updateOne({ _id: company._id }, { $setOnInsert: required }, { upsert: true });
+    forgetTransient(Company.collection.name, companyId);
   }
   const now = new Date();
   const sender = new Types.ObjectId(actor.id);

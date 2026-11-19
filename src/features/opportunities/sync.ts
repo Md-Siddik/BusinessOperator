@@ -61,6 +61,7 @@ export type RunOutcome = { feed: string; status: "SUCCESS" | "PARTIAL" | "FAILED
 
 /** Run one feed now (if not locked). */
 export async function runFeed(feedId: Types.ObjectId | string, trigger: "SCHEDULED" | "MANUAL" = "SCHEDULED", actorId?: string, log: (m: string) => void = () => undefined): Promise<RunOutcome> {
+  if (process.env.JOB_COLLECTION_ENABLED !== "true") return { feed: String(feedId), status: "SKIPPED", error: "Job collection is temporarily disabled." };
   const now = new Date();
   const feed = await OpportunityFeed.findOneAndUpdate({ _id: feedId, $or: [{ lockedUntil: null }, { lockedUntil: { $lt: now } }] }, { $set: { lockedUntil: new Date(now.getTime() + LOCK_MS) } }, { new: true }).lean<OpportunityFeedDoc>();
   if (!feed) return { feed: String(feedId), status: "SKIPPED", error: "Already running" };
@@ -158,6 +159,7 @@ async function listingDiff(provider: OpportunityProvider, feed: OpportunityFeedD
 
 /** Check one record's activity at its source now. Failures never close a record. */
 export async function checkOpportunity(id: Types.ObjectId | string, now = new Date()) {
+  if (process.env.JOB_COLLECTION_ENABLED !== "true") return;
   const doc = await Opportunity.findById(id).lean<OpportunityDoc>();
   if (!doc) return null;
   const provider = getOpportunityProvider(doc.providerId);
@@ -284,6 +286,7 @@ export async function verifyEmployerFeed(feedId: Types.ObjectId | string) {
 
 /** Slow-tick entry point: ensure feeds, run due feeds, checks and maintenance within a time budget. */
 export async function opportunityTick(log: (m: string) => void = (m) => console.info(`[opportunities] ${m}`), budgetMs = 4 * 60_000) {
+  if (process.env.JOB_COLLECTION_ENABLED !== "true") return { outcomes: [], checked: 0, maintenance: { changed: 0, archived: 0 } };
   await ensureProviderFeeds();
   const deadline = Date.now() + budgetMs;
   const due = await OpportunityFeed.find({ enabled: true, nextRunAt: { $lte: new Date() }, $or: [{ lockedUntil: null }, { lockedUntil: { $lt: new Date() } }] })

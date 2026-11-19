@@ -22,6 +22,10 @@ it("creates readable BSON backups, restores exact fields/types and rejects chang
   expect(await fingerprint(restored, "users")).toEqual(await fingerprint(source, "users"));
   const userEntry = manifest.collections.find(entry => entry.name === "users")!;
   expect(userEntry.indexes).toEqual(expect.arrayContaining([expect.objectContaining({ name: "email_1", unique: true })]));
+  await source.collection("companies").createIndex({ companyName: 1 }, { name: "changed_after_backup" });
+  await expect(verifySourceBackup(source, file)).rejects.toThrow("metadata changed");
+  await source.collection("companies").dropIndex("changed_after_backup");
+  await verifySourceBackup(source, file);
   await source.collection("companies").updateOne({}, { $set: { companyName: "changed" } });
   await expect(verifySourceBackup(source, file)).rejects.toThrow("changed");
   const archive = path.join(directory, userEntry.file);

@@ -17,6 +17,7 @@ export function registerJobHandler(type: string, handler: Handler) {
 }
 
 export async function enqueueJob(type: string, key: string, payload: Record<string, unknown> = {}, opts: { runAt?: Date; priority?: number; maxAttempts?: number } = {}) {
+  if (process.env.JOB_COLLECTION_ENABLED !== "true" && type.startsWith("opportunity-")) return;
   const runAt = opts.runAt ?? new Date();
   const existing = await Job.findOne({ key }).lean<JobDoc>();
   if (!existing) {
@@ -45,7 +46,8 @@ async function claim(types?: string[]) {
     {
       status: { $in: ["QUEUED", "FAILED"] },
       runAt: { $lte: now },
-      ...(types && { type: { $in: types } }),
+      ...(process.env.REGISTRY_BACKGROUND_COLLECTION !== "on" && { $nor: [{ type: "research", "payload.reason": { $in: ["new", "registry-change", "backfill", "retry"] } }] }),
+      ...(process.env.JOB_COLLECTION_ENABLED !== "true" ? { type: { ...(types && { $in: types }), $nin: ["opportunity-feed-sync", "opportunity-check"] } } : types ? { type: { $in: types } } : {}),
       $or: [{ lockedUntil: null }, { lockedUntil: { $lt: now } }],
     },
     { $set: { status: "RUNNING", lockedUntil: new Date(now.getTime() + LEASE_MS) }, $inc: { attempts: 1 } },
@@ -55,7 +57,7 @@ async function claim(types?: string[]) {
 
 /** Re-queue RUNNING jobs whose lease expired (worker crashed / restarted). */
 export async function recoverExpiredLeases() {
-  await Job.updateMany({ status: "RUNNING", lockedUntil: { $lt: new Date() } }, { $set: { status: "FAILED", lastError: "Lease expired (worker restarted)" } });
+  await Job.updateMany({ status: "RUNNING", lockedUntil: { $lt: new Date() }, ...(process.env.JOB_COLLECTION_ENABLED !== "true" && { type: { $nin: ["opportunity-feed-sync", "opportunity-check"] } }) }, { $set: { status: "FAILED", lastError: "Lease expired (worker restarted)" } });
 }
 
 /** Process due jobs for up to `budgetMs`, `concurrency` at a time. */

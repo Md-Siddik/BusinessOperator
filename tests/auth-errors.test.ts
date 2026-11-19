@@ -44,6 +44,9 @@ describe("login failure reporting", () => {
     expect(await response.json()).toEqual({ error: { code: "UNAVAILABLE", message: "Service temporarily unavailable." } });
     expect(lookup).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledWith("[db] Storage quota exceeded; database writes are unavailable.");
+    expect(log).toHaveBeenCalledWith("[api.database]", expect.objectContaining({ stage: "durable_rate_limit", category: "database_capacity", errorCode: 8000 }));
+    expect(JSON.stringify(log.mock.calls)).not.toContain("existing-owner@example.test");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("513 MB");
   });
   it("keeps network, origin and rate-limit failures distinguishable", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));

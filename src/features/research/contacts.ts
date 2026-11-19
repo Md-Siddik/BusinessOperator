@@ -1,3 +1,4 @@
+import { transientRow, rememberRegistryRow } from "@/lib/db/transient-registry";
 import "server-only";
 import type { Types } from "mongoose";
 import { Company, Contact, type CompanyDoc, type ContactDoc } from "@/models";
@@ -95,6 +96,11 @@ export async function recordContact(company: { _id: Types.ObjectId | string; cou
   if (review && (!existing || existing.review === "NONE")) set.review = review;
   const evidence = (input.evidence ?? []).map((e) => ({ ...e, at: now }));
 
+  if (transientRow(Company.collection.name, company._id)) {
+    const row = new Contact({ ...existing, ...set, companyId: company._id, type: input.type, value: input.value, collectedAt: existing?.collectedAt ?? now, evidence: [...(existing?.evidence ?? []), ...evidence].slice(-20), createdAt: existing?.createdAt ?? now, updatedAt: now });
+    rememberRegistryRow(Contact.collection.name, row.toObject());
+    return row.toObject();
+  }
   await Contact.updateOne(
     { companyId: company._id, type: input.type, value: input.value },
     {
@@ -112,7 +118,7 @@ export async function recordContact(company: { _id: Types.ObjectId | string; cou
  * intermediary (formation agent, accountant, registered-office provider).
  * Such values are kept but never counted as the company's own direct contact.
  */
-export async function flagSharedContacts(values: string[], threshold = Number(process.env.SHARED_CONTACT_THRESHOLD || 3)) {
+export async function flagSharedContacts(values: string[], threshold = Number(process.env.SHARED_CONTACT_THRESHOLD || 3), transientOnly = false) {
   if (!values.length) return [];
   const shared = await Contact.aggregate<{ _id: string; companies: Types.ObjectId[] }>([
     { $match: { value: { $in: [...new Set(values)] }, type: { $in: ["EMAIL", "PHONE", "MOBILE"] } } },
@@ -120,13 +126,18 @@ export async function flagSharedContacts(values: string[], threshold = Number(pr
     { $match: { [`companies.${threshold - 1}`]: { $exists: true } } },
   ]);
   for (const s of shared) {
+    if (transientOnly) {
+      const rows = await Contact.find({ value: s._id, review: { $ne: "APPROVED" } }).lean<ContactDoc[]>();
+      for (const row of rows) if (transientRow(Contact.collection.name, row._id)) await Contact.updateOne({ _id: row._id }, { $set: { ownership: "INTERMEDIARY" } });
+      continue;
+    }
     await Contact.updateMany(
       { value: s._id, review: { $ne: "APPROVED" } },
       { $set: { ownership: "INTERMEDIARY" }, $push: { evidence: { kind: "SHARED_VALUE", detail: `Used by ${s.companies.length} different companies — likely an intermediary (agent, accountant or registered office).`, at: new Date() } } },
     );
   }
   const affected = shared.flatMap((s) => s.companies);
-  for (const id of affected) await recomputeCompanyContacts(id);
+  for (const id of affected) if (!transientOnly || transientRow(Company.collection.name, id)) await recomputeCompanyContacts(id);
   return shared.map((s) => s._id);
 }
 

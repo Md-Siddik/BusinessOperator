@@ -1,3 +1,4 @@
+import { rememberRegistryRow, registryRowId } from "@/lib/db/transient-registry";
 import "server-only";
 import type { PipelineStage } from "mongoose";
 import { z } from "zod";
@@ -155,9 +156,14 @@ export async function storeEstablished(provider: Pick<CompanyRegistryProvider, "
     });
   if (!ops.length) return out;
   try {
-    const res = await EstablishedCompany.bulkWrite(ops, { ordered: false });
-    out.imported = res.upsertedCount;
-    out.updated = res.modifiedCount;
+    for (const op of ops) {
+      const { filter, update } = op.updateOne;
+      const previous = await EstablishedCompany.findOne(filter).lean<EstablishedCompanyDoc>();
+      if (!previous && await EstablishedCompany.exists({ identityKeys: { $in: update.$set.identityKeys } })) { out.failed++; continue; }
+      const row = new EstablishedCompany({ ...previous, ...update.$setOnInsert, ...update.$set, _id: previous?._id ?? registryRowId(code, undefined, provider.id, filter.sourceId), createdAt: previous?.createdAt ?? now, updatedAt: now });
+      rememberRegistryRow(EstablishedCompany.collection.name, row.toObject());
+      if (previous) out.updated++; else out.imported++;
+    }
   } catch (err) {
     // Unique identity keys: the same registered company under another id is refused, the rest is stored.
     const e = err as { writeErrors?: unknown[]; result?: { upsertedCount?: number; modifiedCount?: number } };

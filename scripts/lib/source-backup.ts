@@ -10,7 +10,7 @@ import { KEEP, canonical, fingerprint } from "./selective-migration";
 
 type Db = mongoose.mongo.Db;
 type Entry = { name: string; file: string; count: number; sha256: string; options: unknown; indexes: unknown[] };
-export type BackupManifest = { version: number; database: string; createdAt: string; verified: boolean; collections: Entry[] };
+export type BackupManifest = { version: number; database: string; createdAt: string; verified: boolean; allCollections?: boolean; collections: Entry[] };
 
 export async function* readBackupDocuments(file: string) {
   const input = createReadStream(file);
@@ -40,11 +40,11 @@ async function archiveFingerprint(file: string) {
   return { count, sha256: hash.digest("hex") };
 }
 
-export async function createSourceBackup(source: Db, directory: string) {
+export async function createSourceBackup(source: Db, directory: string, allCollections = false) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
-  const manifest: BackupManifest = { version: 1, database: source.databaseName, createdAt: new Date().toISOString(), verified: false, collections: [] };
+  const manifest: BackupManifest = { version: 1, database: source.databaseName, createdAt: new Date().toISOString(), verified: false, ...(allCollections && { allCollections }), collections: [] };
   for (const info of await source.listCollections({ type: "collection" }).toArray()) {
-    if (!KEEP.has(info.name)) continue;
+    if (!allCollections && !KEEP.has(info.name)) continue;
     const hash = createHash("sha256"); let count = 0;
     const file = `${String(manifest.collections.length).padStart(4, "0")}.bson.gz`;
     async function* documents() {
@@ -74,13 +74,17 @@ export async function createSourceBackup(source: Db, directory: string) {
 export async function verifySourceBackup(source: Db, manifestFile: string) {
   const manifest = mongoose.mongo.BSON.EJSON.parse(await readFile(manifestFile, "utf8")) as BackupManifest;
   if (manifest.version !== 1 || !manifest.verified || manifest.database !== source.databaseName) throw new Error("Source backup manifest is invalid or for another database.");
-  const expected = (await source.listCollections({ type: "collection" }).toArray()).filter(info => KEEP.has(info.name)).map(info => info.name).sort();
+  const expected = (await source.listCollections({ type: "collection" }).toArray()).filter(info => manifest.allCollections || KEEP.has(info.name)).map(info => info.name).sort();
   if (JSON.stringify(expected) !== JSON.stringify(manifest.collections.map(entry => entry.name).sort())) throw new Error("Source backup does not cover all retained collections.");
   for (const entry of manifest.collections) {
     if (!/^\d{4}\.bson\.gz$/.test(entry.file)) throw new Error("Invalid source backup filename.");
     const archive = await archiveFingerprint(path.join(path.dirname(manifestFile), entry.file));
     const live = await fingerprint(source, entry.name);
     if (archive.count !== entry.count || archive.sha256 !== entry.sha256 || live.count !== entry.count || live.sha256 !== entry.sha256) throw new Error("Source backup or live source changed. Create and verify a fresh backup.");
+    const info = (await source.listCollections({ name: entry.name }).toArray())[0];
+    const indexes = await source.collection(entry.name).listIndexes().toArray();
+    const byName = (items: unknown[]) => [...items].sort((a, b) => String((a as { name: string }).name).localeCompare(String((b as { name: string }).name)));
+    if (canonical({ options: info && "options" in info ? info.options : {}, indexes: byName(indexes) }) !== canonical({ options: entry.options, indexes: byName(entry.indexes) })) throw new Error("Source collection metadata changed. Create and verify a fresh backup.");
   }
   return manifest;
 }

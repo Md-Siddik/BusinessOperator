@@ -165,7 +165,10 @@ export async function cachedRows<T>(key: string, opts: { http: HttpClient; url: 
       }
       const rows = await opts.parse(res, opts.since);
       const entry: CacheEntry<T> = { version: version ?? `${Date.now()}`, since: opts.since, rows, lastModified };
-      if (version) cache.set(key, entry as CacheEntry<unknown>);
+      if (version) {
+        cache.set(key, entry as CacheEntry<unknown>);
+        setTimeout(() => { if (cache.get(key) === entry) cache.delete(key); }, 15 * 60_000).unref();
+      }
       return entry;
     })().finally(() => inflight.delete(flightKey));
     inflight.set(flightKey, p as Promise<CacheEntry<unknown>>);
