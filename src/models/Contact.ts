@@ -1,3 +1,4 @@
+import { withTransientRegistry } from "@/lib/db/transient-registry";
 import { Schema, type InferSchemaType } from "mongoose";
 import { CONTACT_OWNERSHIP, CONTACT_PURPOSES, CONTACT_SOURCE_KINDS, EMAIL_VERIFICATION, PHONE_VERIFICATION, REVIEW_STATES } from "@/lib/company-fields";
 import { defineModel, ObjectId, type Id } from "./_helpers";
@@ -64,4 +65,4 @@ contactSchema.index({ countryCode: 1, createdAt: -1 });
 contactSchema.index({ review: 1, createdAt: -1 });
 
 export type ContactDoc = InferSchemaType<typeof contactSchema> & { _id: Id; createdAt: Date; updatedAt: Date };
-export const Contact = defineModel("Contact", contactSchema);
+export const Contact = withTransientRegistry(defineModel("Contact", contactSchema));

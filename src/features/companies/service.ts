@@ -1,3 +1,5 @@
+import { loadRegistryWindow, reloadTransientCompany } from "@/features/registry/request-data";
+import { transientRow } from "@/lib/db/transient-registry";
 import "server-only";
 import { Types, type FilterQuery } from "mongoose";
 import { z } from "zod";
@@ -284,6 +286,7 @@ export const LIST_FIELDS =
 export async function listCompanies(actor: Actor, input: unknown) {
   assertCanReadCompanies(actor);
   const q = companyQuerySchema.parse(input);
+  await loadRegistryWindow(q.country, q.range, q.from, q.to);
   const filter = buildCompanyFilter(actor, q);
   const [items, total] = await Promise.all([
     Company.find(filter).select(LIST_FIELDS).sort(sortFor(q.sort)).skip((q.page - 1) * q.pageSize).limit(q.pageSize).lean<CompanyDoc[]>(),
@@ -330,6 +333,7 @@ export async function getNeighbors(company: Pick<CompanyDoc, "_id" | "countryCod
 
 export async function getCompanyDetail(actor: Actor, id: string) {
   assertCanReadCompanies(actor);
+  await reloadTransientCompany(id);
   const company = await Company.findOne({ _id: parseObjectId(id), ...companyVisibilityFilter() }).lean<CompanyDoc>();
   if (!company) throw Errors.notFound();
   const [contacts, activities, followUps, emails, audits, assignee, neighbors] = await Promise.all([
@@ -504,6 +508,12 @@ export async function rescoreCompanies(filter: FilterQuery<CompanyDoc>) {
   for await (const c of cursor) {
     const result = scoreCompany({ ...c, phone: c.phone ?? c.mobile }, settings, now);
     if (result.qualified) aboveThreshold++;
+    const scoreUpdate = { $set: { "lead.score": result.score, "lead.scoreBreakdown": result.breakdown, "lead.scoredAt": now, digitalOpportunity: result.digitalOpportunity } };
+    if (transientRow(Company.collection.name, c._id)) {
+      await Company.updateOne({ _id: c._id }, scoreUpdate);
+      processed++;
+      continue;
+    }
     batch.push({
       updateOne: {
         filter: { _id: c._id },

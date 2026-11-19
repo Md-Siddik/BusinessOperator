@@ -1,3 +1,4 @@
+import { withTransientRegistry } from "@/lib/db/transient-registry";
 import { Schema, type InferSchemaType } from "mongoose";
 import { defineModel, type Id } from "./_helpers";
 
@@ -62,4 +63,4 @@ establishedCompanySchema.index({ countryCode: 1, nameKey: 1 });
 establishedCompanySchema.index({ companyName: 1 });
 
 export type EstablishedCompanyDoc = InferSchemaType<typeof establishedCompanySchema> & { _id: Id; createdAt: Date; updatedAt: Date };
-export const EstablishedCompany = defineModel("EstablishedCompany", establishedCompanySchema);
+export const EstablishedCompany = withTransientRegistry(defineModel("EstablishedCompany", establishedCompanySchema));

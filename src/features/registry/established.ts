@@ -3,7 +3,7 @@ import { COUNTRIES, getCountry } from "@/config/countries";
 import { SystemSetting } from "@/models";
 import { addDays, todayIn, type Day } from "@/lib/dates/country-time";
 import { getEstablishedConfig } from "@/features/established/config";
-import { qualifyEstablished, storeEstablished, sweepStartupOverlap } from "@/features/established/service";
+import { qualifyEstablished, storeEstablished } from "@/features/established/service";
 import { getRegistryProvider } from "./providers";
 import type { CompanyRegistryProvider, NormalizedCompany } from "./types";
 
@@ -129,6 +129,6 @@ export async function collectEstablished(opts: { countries?: string[]; days?: nu
   const targets = (opts.countries?.length ? opts.countries : enabled).map((c) => c.toUpperCase());
   const out: EstablishedRunResult[] = [];
   for (const code of targets) out.push(await collectEstablishedCountry(code, opts));
-  if (out.some((r) => r.imported)) await sweepStartupOverlap();
+  // Historical cleanup requires a verified backup and explicit approval.
   return out;
 }

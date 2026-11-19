@@ -1,3 +1,4 @@
+import { withTransientRegistry } from "@/lib/db/transient-registry";
 import { Schema, type InferSchemaType } from "mongoose";
 import { LEAD_STAGES } from "@/lib/constants";
 import { CONTACT_SOURCE_KINDS, ELIGIBILITY_STATES, RELEVANCE_VALUES, RESEARCH_STATUSES } from "@/lib/company-fields";
@@ -271,4 +272,4 @@ companySchema.index({ "companyType.at": 1 });
 
 export type CompanyDoc = InferSchemaType<typeof companySchema> & { _id: Id; createdAt: Date; updatedAt: Date };
 export type ScoreItem = { ruleId: string; label: string; points: number };
-export const Company = defineModel("Company", companySchema);
+export const Company = withTransientRegistry(defineModel("Company", companySchema));

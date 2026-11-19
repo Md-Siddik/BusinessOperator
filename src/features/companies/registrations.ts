@@ -1,3 +1,4 @@
+import { loadRegistryWindow } from "@/features/registry/request-data";
 import "server-only";
 import type { FilterQuery } from "mongoose";
 import { getCountry } from "@/config/countries";
@@ -215,6 +216,7 @@ export async function getRegistrationOverview(actor: Actor, countryParam: string
   if (code !== ALL && !view) throw Errors.notFound("Country not enabled");
   const tz = getCountry(code === ALL ? "NO" : code)!.timezone;
   const range = resolveDayRange(tz, preset, from, to);
+  await loadRegistryWindow(code, preset, from, to);
 
   let selected: RegistrationOverview["selected"] = { ...EMPTY, known: false, coveredDays: 0, totalDays: 0, complete: true };
   const quick = { today: null as number | null, yesterday: null as number | null, last7: null as number | null, month: null as number | null };
@@ -326,6 +328,7 @@ export async function exportCompanies(actor: Actor, input: unknown) {
   const raw = input as Record<string, unknown>;
   const approvedOnly = raw.approved === "yes";
   const q = companyQuerySchema.parse({ ...raw, page: 1, pageSize: 200, ...(approvedOnly && { eligibility: "CLEARED" }) });
+  await loadRegistryWindow(q.country, q.range, q.from, q.to);
   const filter = buildCompanyFilter(actor, q);
   const rows = await Company.find(filter).sort(sortFor(q.sort)).limit(EXPORT_MAX).lean<CompanyDoc[]>();
   // Restrictions apply to exports too: suppressed / restricted contacts are withheld.

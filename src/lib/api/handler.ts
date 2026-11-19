@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { safeFailure } from "@/lib/diagnostics";
 import { z, ZodError } from "zod";
 import { connectToDatabase, DatabaseUnavailableError } from "@/lib/db/connect";
-import { isDatabaseCapacityError } from "@/lib/db/errors";
+import { databaseFailureCategory, isDatabaseCapacityError } from "@/lib/db/errors";
 import { AppError, Errors } from "@/lib/errors";
 import { getSessionUser } from "@/lib/auth/session";
 import { isActiveSessionUser, isPendingClientUser } from "@/lib/auth/actor";
@@ -71,7 +71,17 @@ function assertSameOrigin(req: NextRequest) {
   if (originHost !== host) throw Errors.forbidden("Cross-site request blocked");
 }
 
-export function errorResponse(err: unknown, logUnhandled = true) {
+/**
+ * True for database infrastructure failures (not configured, unreachable — e.g. an Atlas IP
+ * Access List rejection —, rejected database credentials, storage quota). Any failure while
+ * connecting also counts: SRV/DNS lookup errors carry no driver-specific error name.
+ */
+export function isDatabaseFailure(err: unknown, duringConnect = false) {
+  if (err instanceof AppError || err instanceof ZodError) return false;
+  return duringConnect || err instanceof DatabaseUnavailableError || !!databaseFailureCategory(err);
+}
+
+export function errorResponse(err: unknown, logUnhandled = true, duringConnect = false) {
   if (err instanceof ZodError) {
     return NextResponse.json(
       { error: { code: "VALIDATION", message: "Please check the highlighted fields.", fieldErrors: z.flattenError(err).fieldErrors } },
@@ -81,7 +91,8 @@ export function errorResponse(err: unknown, logUnhandled = true) {
   if (err instanceof AppError) {
     return NextResponse.json({ error: { code: err.code, message: err.message, ...err.details } }, { status: err.status });
   }
-  if (err instanceof DatabaseUnavailableError || isDatabaseCapacityError(err)) {
+  // Never "Invalid email or password": the client shows its generic unavailable message for 5xx.
+  if (isDatabaseFailure(err, duringConnect)) {
     if (isDatabaseCapacityError(err)) console.error("[db] Storage quota exceeded; database writes are unavailable.");
     return NextResponse.json({ error: { code: "UNAVAILABLE", message: "Service temporarily unavailable." } }, { status: 503 });
   }
@@ -114,8 +125,11 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       if (options.rateLimit && !durable) enforceRateLimit(options.rateLimit, ip);
       stage = "database_connect";
       await connectToDatabase();
+      if (options.rateLimit && durable) {
+        stage = "durable_rate_limit";
+        await enforceDurableAuthLimit(options.rateLimit, ip);
+      }
       stage = "authentication";
-      if (options.rateLimit && durable) await enforceDurableAuthLimit(options.rateLimit, ip);
 
       let actor: Actor | null = null;
       if (auth !== "none") {
@@ -143,8 +157,14 @@ export function route<P>(options: Options, handler: (ctx: AuthedContext<P>) => P
       if (result instanceof Response) return result;
       return NextResponse.json(result ?? { ok: true });
     } catch (err) {
+      const duringConnect = stage === "database_connect";
       if (options.diagnostics) console.error("[registry.sync]", { stage, durationMs: Date.now() - started, ...safeFailure(err) });
-      return errorResponse(err, !options.diagnostics);
+      else if (isDatabaseFailure(err, duringConnect)) {
+        const failure = safeFailure(err);
+        if (duringConnect && failure.category === "operation_failed") failure.category = "database_connect";
+        console.error("[api.database]", { stage, path: req.nextUrl.pathname, durationMs: Date.now() - started, ...failure });
+      }
+      return errorResponse(err, !options.diagnostics, duringConnect);
     }
   };
 }

@@ -186,6 +186,8 @@ const CONTACT_FIELDS = "type value personName role sourceKind source sourceUrl e
  */
 export async function getIntelDetail(actor: Actor, id: string) {
   assertCanReadCompanies(actor);
+  const { reloadTransientCompany } = await import("@/features/registry/request-data");
+  await reloadTransientCompany(id);
   const c = await Company.findById(parseObjectId(id)).lean<CompanyDoc>();
   if (!c) throw Errors.notFound("Company not found");
   const hold = withheld(c);

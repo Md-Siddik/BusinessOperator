@@ -1,13 +1,14 @@
 import "server-only";
-import type { AnyBulkWriteOperation, Types } from "mongoose";
+import type { Types } from "mongoose";
 import { getCountry } from "@/config/countries";
-import { Company, Country, DailyRegistrationSnapshot, RegistrySync, type CountryDoc, type RegistrySyncDoc } from "@/models";
+import { Company, Country, DailyRegistrationSnapshot, LeadAssignment, RegistrySync, type CompanyDoc, type CountryDoc, type RegistrySyncDoc } from "@/models";
 import { audit } from "@/lib/audit";
 import { Errors } from "@/lib/errors";
 import { contactQuality } from "@/lib/company-fields";
 import { addDays, daysBetween, eachDay, todayIn, type Day } from "@/lib/dates/country-time";
 import type { Actor } from "@/lib/permissions";
 import { rescoreCompanies } from "@/features/companies/service";
+import { registryRowId, rememberRegistryRow, transientRow } from "@/lib/db/transient-registry";
 import { getRegistryProvider } from "./providers";
 import { mapLimit } from "./http";
 import { safeFailure, syncStage } from "@/lib/diagnostics";
@@ -23,7 +24,7 @@ import type { CompanyRegistryProvider, NormalizedCompany, ProviderStatus } from 
  *                              (first run backfills `backfillDays`)
  *
  * fetch → normalize → dedupe (country + registration number / source id) →
- * merge with existing contact provenance → upsert → people/roles for recent
+ * merge with existing contact provenance → temporary memory → people/roles for recent
  * companies → score → daily snapshots. Every run is logged in RegistrySync.
  *
  * On failure nothing is replaced: the provider is marked unavailable and the
@@ -186,7 +187,7 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
     sourceTotal = batch.total;
     if (!batch.complete) errors.push(`The source reported ${batch.total ?? "more"} records; ${fetched} were imported (per-run cap ${MAX_PER_RUN}).`);
 
-    beat(`Saving ${batch.companies.length} companies…`, true);
+    beat(`Loading ${batch.companies.length} companies…`, true);
     stage = "ingest_companies";
     const r = await ingestCompanies(p.provider, code, batch.companies, { onProgress: (m) => beat(m) });
     imported += r.imported;
@@ -245,10 +246,10 @@ async function execute(syncId: string, p: Prepared, req: SyncRequest): Promise<S
 export type IngestResult = { imported: number; updated: number; skipped: number; failed: number; errors: string[]; records: NormalizedCompany[]; newIds: string[]; days: Day[] };
 
 /**
- * Store a batch of normalized companies (shared by day syncs and live feeds):
- * dedupe → merge with contact provenance → idempotent upsert → registry contacts
+ * Hold a batch of normalized companies (shared by day syncs and live feeds):
+ * dedupe → merge with contact provenance → bounded memory → registry contacts
  * with classification → shared-contact detection → direct-contact ranking →
- * research queued for new companies (never blocks their appearance).
+ * without automatic research queue writes.
  */
 export async function ingestCompanies(provider: CompanyRegistryProvider, code: string, input: NormalizedCompany[], opts: { onProgress?: (m: string) => void; discoveredVia?: "NEW_REGISTRATIONS" | "ESTABLISHED_COLLECTION" } = {}): Promise<IngestResult> {
   const out: IngestResult = { imported: 0, updated: 0, skipped: 0, failed: 0, errors: [], records: [], newIds: [], days: [] };
@@ -264,57 +265,28 @@ export async function ingestCompanies(provider: CompanyRegistryProvider, code: s
   const records = [...byId.values()];
   out.records = records;
   const now = new Date();
-  for (let i = 0; i < records.length; i += 500) {
-    const chunk = records.slice(i, i + 500);
-    const existing = await Company.find({ countryCode: code, source: provider.id, sourceId: { $in: chunk.map((r) => r.identity.sourceId) } })
-      .select("+sourceHash sourceId email phone mobile website address contactPerson contactSources eligibility companyType.manual")
-      .lean<(ExistingCompany & { sourceId: string })[]>();
-    const existingById = new Map(existing.map((e) => [e.sourceId, e]));
-    const ops: AnyBulkWriteOperation[] = [];
-    for (const n of chunk) {
-      const prev = existingById.get(n.identity.sourceId);
-      const { set, unset, unchanged } = buildCompanyUpdate(n, provider, code, prev, now);
-      if (unchanged) {
-        out.skipped++;
-        ops.push({ updateOne: { filter: { _id: prev!._id }, update: { $set: { sourceFetchedAt: now, ...(n.source.updatedAt && { sourceUpdatedAt: n.source.updatedAt }), ...(n.source.publishedAt && { sourcePublishedAt: n.source.publishedAt }) } } } });
-        continue;
-      }
-      if (prev) out.updated++;
-      ops.push({
-        updateOne: {
-          filter: { countryCode: code, source: provider.id, sourceId: n.identity.sourceId },
-          update: {
-            $set: set,
-            ...(Object.keys(unset).length && { $unset: unset }),
-            $setOnInsert: { countryCode: code, source: provider.id, sourceId: n.identity.sourceId, firstSeenAt: now, discoveredVia: opts.discoveredVia ?? "NEW_REGISTRATIONS", lead: { stage: "NEW", score: 0, saved: false } },
-          },
-          upsert: true,
-        },
-      });
-    }
-    try {
-      const res = await Company.bulkWrite(ops, { ordered: false });
-      out.imported += res.upsertedCount;
-      out.newIds.push(...Object.values(res.upsertedIds ?? {}).map(String));
-    } catch (err) {
-      console.error("[registry.sync]", { stage: "company_bulk_write", provider: provider.id, ...safeFailure(err) });
-      // Duplicate registration numbers from another source etc. — count, keep going.
-      const e = err as { writeErrors?: { errmsg?: string }[]; result?: { upsertedCount?: number; upsertedIds?: Record<string, unknown> } };
-      out.imported += e.result?.upsertedCount ?? 0;
-      out.newIds.push(...Object.values(e.result?.upsertedIds ?? {}).map(String));
-      out.failed += e.writeErrors?.length || 1;
-      if (out.errors.length < 50) out.errors.push(e.writeErrors?.[0]?.errmsg ?? (err instanceof Error ? err.message : String(err)));
-    }
-    await recordRegistryContacts(code, provider, chunk);
-    opts.onProgress?.(`Saved ${Math.min(i + 500, records.length)}/${records.length}`);
+  const existing = await Company.find({ countryCode: code, source: provider.id, sourceId: { $in: records.map(r => r.identity.sourceId) } }).select("+sourceHash").lean<CompanyDoc[]>();
+  const bySource = new Map(existing.map(row => [row.sourceId, row]));
+  const assigned = new Set((await LeadAssignment.find({ companyId: { $in: existing.map(row => row._id) } }).select("companyId").lean<{ companyId: unknown }[]>()).map(row => String(row.companyId)));
+  for (const n of records) {
+    const prev = bySource.get(n.identity.sourceId);
+    // Marketer records are durable application data; registry browsing must not shadow their edits.
+    if (prev && assigned.has(String(prev._id))) { out.skipped++; continue; }
+    const { set, unset, unchanged } = buildCompanyUpdate(n, provider, code, prev, now);
+    const row = new Company({ ...prev, _id: prev?._id ?? registryRowId(code, n.registration.registrationDay, provider.id, n.identity.sourceId), countryCode: code, source: provider.id, sourceId: n.identity.sourceId, firstSeenAt: prev?.firstSeenAt ?? now, discoveredVia: opts.discoveredVia ?? "NEW_REGISTRATIONS", createdAt: prev?.createdAt ?? now, updatedAt: now });
+    for (const [key, value] of Object.entries(set)) row.set(key, value);
+    for (const key of Object.keys(unset)) row.set(key, undefined);
+    rememberRegistryRow(Company.collection.name, row.toObject());
+    if (unchanged) out.skipped++;
+    else if (prev) out.updated++;
+    else { out.imported++; out.newIds.push(String(row._id)); }
   }
-  out.days = [...new Set(records.map((r) => r.registration.registrationDay).filter((d): d is Day => !!d))];
-  // Research is queued, never awaited: new companies appear in the table immediately.
-  if (!provider.isDemo && out.newIds.length) {
-    const fresh = await Company.find({ _id: { $in: out.newIds } }).select("_id registrationDay").lean<{ _id: unknown; registrationDay?: string }[]>();
-    const { enqueueResearch } = await import("@/features/research/engine");
-    for (const c of fresh) await enqueueResearch(String(c._id), { reason: "new", registrationDay: c.registrationDay }).catch(() => undefined);
-  }
+  await recordRegistryContacts(code, provider, records.filter(n => {
+    const id = bySource.get(n.identity.sourceId)?._id ?? registryRowId(code, n.registration.registrationDay, provider.id, n.identity.sourceId);
+    return !!transientRow(Company.collection.name, id);
+  }));
+  out.days = [...new Set(records.map(r => r.registration.registrationDay).filter((d): d is Day => !!d))];
+  opts.onProgress?.(`Loaded ${records.length} companies in temporary memory`);
   return out;
 }
 
@@ -337,7 +309,7 @@ async function recordRegistryContacts(countryCode: string, provider: CompanyRegi
     }
     await recomputeCompanyContacts(company._id);
   }
-  await flagSharedContacts(values);
+  await flagSharedContacts(values, undefined, true);
 }
 
 /**

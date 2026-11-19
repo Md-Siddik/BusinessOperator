@@ -127,7 +127,7 @@ async function connectOnce(): Promise<"retry" | "gap" | "throttled" | "stop"> {
 
 /** Start the persistent worker (idempotent). */
 export function startCompaniesHouseStream() {
-  if (state.running || !KEY() || process.env.UK_STREAM_WORKER === "off") return;
+  if (process.env.REGISTRY_BACKGROUND_COLLECTION !== "on" || state.running || !KEY() || process.env.UK_STREAM_WORKER === "off") return;
   state.running = true;
   void (async () => {
     let backoff = 60_000;

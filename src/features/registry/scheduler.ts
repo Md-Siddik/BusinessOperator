@@ -30,7 +30,7 @@ async function ready() {
 /** Live feeds + research jobs. Exported for /api/jobs/cron. */
 export async function fastTick(log: (m: string) => void = (m) => console.info(`[worker] ${m}`)) {
   const { runLiveFeeds } = await import("./live");
-  const feeds = await runLiveFeeds(log);
+  const feeds = process.env.REGISTRY_BACKGROUND_COLLECTION === "on" ? await runLiveFeeds(log) : [];
   await import("@/features/research/engine"); // registers the "research" job handler
   await import("@/features/opportunities/sync"); // registers owner-only opportunity sync / check handlers
   const { processDueJobs } = await import("@/features/jobs/queue");
@@ -55,13 +55,13 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
   const { ensureServicePackages } = await import("@/features/service-fit/service");
   await ensureServicePackages();
   const { runDueSyncs, checkLatestPublications } = await import("./sync");
-  const syncs = await runDueSyncs(log);
+  const syncs = process.env.REGISTRY_BACKGROUND_COLLECTION === "on" ? await runDueSyncs(log) : [];
   for (const r of syncs) log(`${r.country}: ${r.status}${r.imported !== undefined ? ` (${r.imported} new)` : ""}${r.error ? ` — ${r.error}` : ""}`);
   await checkLatestPublications();
   const { scheduleBackfill, scheduleDueRetries } = await import("@/features/research/engine");
-  const queued = await scheduleBackfill();
+  const queued = process.env.REGISTRY_BACKGROUND_COLLECTION === "on" ? await scheduleBackfill() : 0;
   if (queued) log(`research backfill: ${queued} companies queued`);
-  const retries = await scheduleDueRetries();
+  const retries = process.env.REGISTRY_BACKGROUND_COLLECTION === "on" ? await scheduleDueRetries() : 0;
   if (retries) log(`research retries: ${retries} due companies queued`);
   try {
     // Company Type ages with the company (startup → needs review → established); manual decisions are kept.
@@ -71,7 +71,7 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
   } catch (err) {
     log(`company type: re-evaluation failed — ${err instanceof Error ? err.message : String(err)}`);
   }
-  if (process.env.ESTABLISHED_COLLECTION !== "off") {
+  if (process.env.REGISTRY_BACKGROUND_COLLECTION === "on" && process.env.ESTABLISHED_COLLECTION !== "off") {
     // Established companies from the same official sources (bounded, once a day per country). Isolated from the daily syncs.
     try {
       const { collectEstablished } = await import("./established");
@@ -82,14 +82,7 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
       log(`established: run failed — ${err instanceof Error ? err.message : String(err)}`);
     }
   }
-  try {
-    // Old company Intelligence never shows a company Startup Company Intelligence holds (reads Company, deletes only Old records).
-    const { sweepStartupOverlap } = await import("@/features/established/service");
-    const s = await sweepStartupOverlap();
-    if (s.removed) log(`established: ${s.removed} of ${s.checked} old-company records now in Startup Company Intelligence — removed from Old company Intelligence`);
-  } catch (err) {
-    log(`established: overlap sweep failed — ${err instanceof Error ? err.message : String(err)}`);
-  }
+  // Historical overlap cleanup is paused pending backup and explicit approval.
   try {
     // Website analytics: keep today's and yesterday's daily statistics current and freeze closed days.
     const { rollupPending } = await import("@/features/website-analytics/rollup");
@@ -99,7 +92,7 @@ export async function slowTick(log: (m: string) => void = (m) => console.info(`[
   }
   const { dispatchDueFollowUpReminders } = await import("@/features/crm/service");
   await dispatchDueFollowUpReminders();
-  if (process.env.OPPORTUNITY_SCHEDULER !== "off") {
+  if (process.env.JOB_COLLECTION_ENABLED === "true" && process.env.OPPORTUNITY_SCHEDULER !== "off") {
     // Owner-only Verified Opportunity Intelligence feeds. Isolated: a failure here never blocks registry work.
     try {
       const { opportunityTick } = await import("@/features/opportunities/sync");

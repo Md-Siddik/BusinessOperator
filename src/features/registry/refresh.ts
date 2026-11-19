@@ -6,8 +6,8 @@ import { can, type Actor } from "@/lib/permissions";
 import { parseObjectId } from "@/lib/validation";
 import { rescoreCompanies } from "@/features/companies/service";
 import { getRegistryProvider } from "./providers";
-import { buildCompanyUpdate, type ExistingCompany } from "./normalize";
-import { applyPeople } from "./sync";
+import { type ExistingCompany } from "./normalize";
+import { applyPeople, ingestCompanies } from "./sync";
 
 type CompanyForRefresh = CompanyDoc & ExistingCompany;
 
@@ -26,8 +26,7 @@ export async function refreshCompanyFromRegistry(actor: Actor, id: string) {
     throw Errors.badRequest(`${provider.sourceName} is unavailable right now: ${e instanceof Error ? e.message : "request failed"}`);
   }
   if (!fresh) throw Errors.notFound(`${provider.sourceName} no longer lists this company.`);
-  const { set, unset } = buildCompanyUpdate(fresh, provider, company.countryCode, company, new Date());
-  await Company.updateOne({ _id: company._id }, { $set: set, ...(Object.keys(unset).length && { $unset: unset }) });
+  await ingestCompanies(provider, company.countryCode, [fresh]);
   if (provider.getPeople) {
     try {
       const { people, contactPerson } = await provider.getPeople(company.registrationNumber, { signal: AbortSignal.timeout(15_000) });
